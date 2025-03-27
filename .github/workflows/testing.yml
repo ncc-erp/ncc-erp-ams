@@ -1,4 +1,4 @@
-name: Testing
+name: Unit Test
 
 on:
   pull_request:
@@ -97,12 +97,9 @@ jobs:
         uses: actions/github-script@v5
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-
           script: |
             const fs = require('fs');
-
             const coverageContent = fs.readFileSync('./tests/_output/coverage.txt', 'utf-8');
-
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
