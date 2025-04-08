@@ -1,0 +1,5 @@
+ams_manager:
+  urls:
+    - /dx-merchant-manager/member/withdraw/onlinePay/record/list/export
+    # 枚举值国际化示例-该接口未使用
+    
