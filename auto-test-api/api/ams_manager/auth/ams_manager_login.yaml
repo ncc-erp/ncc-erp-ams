@@ -1,0 +1,15 @@
+- name: $ddt{name}
+  env: $ddt{env}
+  parameterize:
+    path: /datas/ams_manager/common/login_data.yaml
+  request:
+    method: POST
+    url: /auth/mezon-login
+    json:
+      code: $ddt{mezon_code}
+      state: $ddt{state}
+  validate:
+#    - equals: $ddt{code}
+    - contains: $ddt{assert_str}
+#  extract:
+#    token: $..token

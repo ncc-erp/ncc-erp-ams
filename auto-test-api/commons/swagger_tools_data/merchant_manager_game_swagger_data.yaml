@@ -1,0 +1,19 @@
+req_url : http://172.31.24.105:8008/dx-merchant-manager/v2/api-docs?group=5-%E6%B8%B8%E6%88%8F
+module_path : merchant_manager/game/
+class_module_name : merchantManagerGame
+module_desc_name : 中控后台
+module_name : merchant_manager
+mark : merchant_manager_game
+sub_module_desc_name : 游戏模块
+base_url_path : 
+tag_map : {
+     场馆接入管理: venueConnect,
+     场馆管理: venue,
+     德信-注单管理-游戏注单: dxGameRecords,
+     德信-游戏管理-结算详情: dxGameSettlement,
+     手牌管理: dxHand,
+     注单管理-游戏注单: venueGameRecords,
+     游戏管理: game,
+     游戏规则: dxConfig,
+     牌桌管理: dxTable
+}

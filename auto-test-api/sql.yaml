@@ -1,0 +1,115 @@
+dev:
+  dx_settlement_commission_proxy_record_insert:
+    database: bw_dw_qa
+    sql: |-
+      INSERT INTO dx_settlement_commission_proxy_record (id, report_ym, order_no, cycle_type, cycle_name,
+                                                              cycle_start_date, cycle_end_date, proxy_id, proxy_name,
+                                                              proxy_level, parent_proxy_id, parent_proxy_name,
+                                                              top_proxy_id, top_proxy_name, merchant_id, merchant_name,
+                                                              currency, commission_amount, commission_adjust_amount,
+                                                              commission_adjust_back_add_amount,
+                                                              commission_adjust_back_sub_amount,
+                                                              commission_adjust_wallet_amount, commission_pay_amount,
+                                                              commission_last_amount, person_commission_amount,
+                                                              child_commission_amount, rush_amount, proxy_netwin_amount,
+                                                              member_netwin_amount, platform_net_amount, venue_amount,
+                                                              bet_count, bet_amount, valid_bet_amount, bet_member_num,
+                                                              active_member_num, effecactive_member_num,
+                                                              new_active_member_num, contract_id, contract_level,
+                                                              member_rebate_amount, member_rebate_add_amount,
+                                                              member_rebate_sub_amount, order_status, payout_status,
+                                                              payout_time, recive_date, lock_status, lock_time,
+                                                              lock_account_id, lock_account, audit1_operator_id,
+                                                              audit1_operator, audit1_result, audit1_time, audit1_desc,
+                                                              audit1_cost, audit2_operator_id, audit2_operator,
+                                                              audit2_result, audit2_time, audit2_desc, audit2_cost,
+                                                              created_at, audit_desc)VALUES (2023120500002032024, ${get_now_time_sub_day_format(60,%Y%m)}, '93515769717794204912220231141', 2, ${get_now_time_sub_day_format(60,%Y-%m)}, 20231101, 20231130,
+          '${read_config(merchant_manager,proxy_user_id)}', '${read_config(merchant_manager,proxy_user_name)}', 1, 935157328079190067, '${read_config(merchant_manager,proxy_user_name)}', 878610895649980466, 'dzzd06',
+          878597836592201781, '德州总商户', 'USDT', 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000,
+          0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0, 0.0000, 0.0000, 0, 0, 0, 0, null, null, 0.0000, 0.0000,
+          0.0000, 0, 1, null, null, 0, null, 0, null, 0, null, 0, null, null, 0, null, null, 0, null, null, 0,
+          '${get_now_time()}', null)
+  dx_settlement_commission_proxy_record_delete:
+    database: bw_dw_qa
+    sql: delete  from dx_settlement_commission_proxy_record where id = 2023120500002032024
+
+  dx_proxy_manager_insurance_info_insert:
+    database: bw_game_record
+    sql: INSERT INTO dx_insurance_info 
+                (id, table_id, table_code, table_name, table_type, club_id, club_name, hand_id, hand_code, round_no, event_id, order_id, insured_order_id, buy_type, round_code, user_id, user_name, nick_name, max_insured_amount, min_insured_amount, bet_amount, insured_rewards, insured_amount, insured_net_amount, pot_amount, pot_no, public_cards, hand_cards, create_time, create_by, update_time, update_by, merchant_id, merchant_name, merchant_path, parent_merchant_id, parent_merchant_path, top_merchant_id, top_merchant_name, proxy_level, parent_proxy_id, parent_proxy_name, parent_proxy_path, top_proxy_id, top_proxy_name)
+         VALUES
+                ('444444444444444444', '180207', 'D935251894683072578', '自动化测试创建房444', '2001', '100003', '德州总代俱乐部9', '444444444444444444', 'H20231122182512636037', '14', '444444444444444444', '935254104438188073', '444444444444444444', '1', '4', '885545513666035735', 'robot527', 'robot527', '10', '0', '20.0000', '20.0000', '10.0000', '20.0000', '60.0000', '0', '[8,34,30,31]', '[15,12]', '1700648751397', 'DX-SYSTEM', '1700648754703', 'DX-SYSTEM', '878597836592201781', '德州总商户', '/0/878597836592201781', '0', '/0', '878597836592201781', '德州总商户', '0', '444444444444444444', 'dzzd01', '/444444444444444444/', '444444444444444444', 'dzzd01'),
+                ('555555555555555555', '180204', 'D935250836812494934', '自动化测试创建房555', '2002', '100003', '德州总代俱乐部9', '555555555555555555', 'H20231122182447509039', '18', '555555555555555555', '935254130270906448', '555555555555555555', '0', '4', '885545231334850647', 'robot19', 'robot19', '231', '0', '461.2200', '0.0000', '0.0000', '0.0000', '922.4400', '0', '[51,27,48,3]', '[0,31]', '1700648760880', 'DX-SYSTEM', '1700648760880', 'DX-SYSTEM', '878597836592201781', '德州总商户', '/0/878597836592201781', '0', '/0', '878597836592201781', '德州总商户', '0', '444444444444444444', 'dzzd01', '/444444444444444444/', '444444444444444444', 'dzzd01')
+
+  dx_proxy_manager_insurance_info_delete:
+    database: bw_game_record
+    sql: DELETE FROM dx_insurance_info where id in (444444444444444444, 555555555555555555)
+
+test:
+  dx_settlement_commission_proxy_record_insert:
+    database: bw_dw_qa
+    sql: |-
+      INSERT INTO dx_settlement_commission_proxy_record (id, report_ym, order_no, cycle_type, cycle_name,
+                                                              cycle_start_date, cycle_end_date, proxy_id, proxy_name,
+                                                              proxy_level, parent_proxy_id, parent_proxy_name,
+                                                              top_proxy_id, top_proxy_name, merchant_id, merchant_name,
+                                                              currency, commission_amount, commission_adjust_amount,
+                                                              commission_adjust_back_add_amount,
+                                                              commission_adjust_back_sub_amount,
+                                                              commission_adjust_wallet_amount, commission_pay_amount,
+                                                              commission_last_amount, person_commission_amount,
+                                                              child_commission_amount, rush_amount, proxy_netwin_amount,
+                                                              member_netwin_amount, platform_net_amount, venue_amount,
+                                                              bet_count, bet_amount, valid_bet_amount, bet_member_num,
+                                                              active_member_num, effecactive_member_num,
+                                                              new_active_member_num, contract_id, contract_level,
+                                                              member_rebate_amount, member_rebate_add_amount,
+                                                              member_rebate_sub_amount, order_status, payout_status,
+                                                              payout_time, recive_date, lock_status, lock_time,
+                                                              lock_account_id, lock_account, audit1_operator_id,
+                                                              audit1_operator, audit1_result, audit1_time, audit1_desc,
+                                                              audit1_cost, audit2_operator_id, audit2_operator,
+                                                              audit2_result, audit2_time, audit2_desc, audit2_cost,
+                                                              created_at, audit_desc)VALUES (2023120500002032024, ${get_now_time_sub_day_format(60,%Y%m)}, '93515769717794204912220231141', 2, ${get_now_time_sub_day_format(60,%Y-%m)}, 20231101, 20231130,
+          '${read_config(merchant_manager,proxy_user_id)}', '${read_config(merchant_manager,proxy_user_name)}', 1, 935157328079190067, '${read_config(merchant_manager,proxy_user_name)}', 878610895649980466, 'dzzd06',
+          878597836592201781, '德州总商户', 'USDT', 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000,
+          0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0, 0.0000, 0.0000, 0, 0, 0, 0, null, null, 0.0000, 0.0000,
+          0.0000, 0, 1, null, null, 0, null, 0, null, 0, null, 0, null, null, 0, null, null, 0, null, null, 0,
+          '${get_now_time()}', null)
+  dx_settlement_commission_proxy_record_delete:
+    database: bw_dw_qa
+    sql: delete  from dx_settlement_commission_proxy_record where id = 2023120500002032024
+pre:
+  dx_settlement_commission_proxy_record_insert:
+    database: bw_dw_qa
+    sql: |-
+      INSERT INTO dx_settlement_commission_proxy_record (id, report_ym, order_no, cycle_type, cycle_name,
+                                                              cycle_start_date, cycle_end_date, proxy_id, proxy_name,
+                                                              proxy_level, parent_proxy_id, parent_proxy_name,
+                                                              top_proxy_id, top_proxy_name, merchant_id, merchant_name,
+                                                              currency, commission_amount, commission_adjust_amount,
+                                                              commission_adjust_back_add_amount,
+                                                              commission_adjust_back_sub_amount,
+                                                              commission_adjust_wallet_amount, commission_pay_amount,
+                                                              commission_last_amount, person_commission_amount,
+                                                              child_commission_amount, rush_amount, proxy_netwin_amount,
+                                                              member_netwin_amount, platform_net_amount, venue_amount,
+                                                              bet_count, bet_amount, valid_bet_amount, bet_member_num,
+                                                              active_member_num, effecactive_member_num,
+                                                              new_active_member_num, contract_id, contract_level,
+                                                              member_rebate_amount, member_rebate_add_amount,
+                                                              member_rebate_sub_amount, order_status, payout_status,
+                                                              payout_time, recive_date, lock_status, lock_time,
+                                                              lock_account_id, lock_account, audit1_operator_id,
+                                                              audit1_operator, audit1_result, audit1_time, audit1_desc,
+                                                              audit1_cost, audit2_operator_id, audit2_operator,
+                                                              audit2_result, audit2_time, audit2_desc, audit2_cost,
+                                                              created_at, audit_desc)VALUES (2023120500002032024, ${get_now_time_sub_day_format(60,%Y%m)}, '93515769717794204912220231141', 2, ${get_now_time_sub_day_format(60,%Y-%m)}, 20231101, 20231130,
+          '${read_config(merchant_manager,proxy_user_id)}', '${read_config(merchant_manager,proxy_user_name)}', 1, 935157328079190067, '${read_config(merchant_manager,proxy_user_name)}', 878610895649980466, 'dzzd06',
+          878597836592201781, '德州总商户', 'USDT', 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000,
+          0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0, 0.0000, 0.0000, 0, 0, 0, 0, null, null, 0.0000, 0.0000,
+          0.0000, 0, 1, null, null, 0, null, 0, null, 0, null, 0, null, null, 0, null, null, 0, null, null, 0,
+          '${get_now_time()}', null)
+  dx_settlement_commission_proxy_record_delete:
+    database: bw_dw_qa
+    sql: delete  from dx_settlement_commission_proxy_record where id = 2023120500002032024

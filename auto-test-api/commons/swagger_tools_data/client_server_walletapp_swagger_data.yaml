@@ -1,0 +1,20 @@
+
+req_url : http://172.31.24.105:8007/dx-client-server/v2/api-docs?group=OB%E5%8C%85%E7%BD%91
+module_path : client_server/wallet_app/
+class_module_name : clientServerWalletApp
+module_desc_name : 信用盘后台
+module_name : client_server
+mark : client_server_wallet_app
+sub_module_desc_name :  钱包资产财务模块
+base_url_path :
+tag_map : {
+     帮信用还款: helpCreditRepay,
+     我的钱包: wallet,
+     数据统计: settlementCommissionProxyRecordStatistics,
+     财务操作--借还款: loanRepay,
+     财务操作--账变明细: proxyWalletDetail,
+     财务操作-上下分: upDown,
+     资金接口: capital,
+     资金明细页: fundRecord,
+     银行卡、虚拟币: bank
+}

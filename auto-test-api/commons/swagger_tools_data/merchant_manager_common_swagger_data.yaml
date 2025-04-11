@@ -1,0 +1,15 @@
+req_url : http://172.31.24.105:8008/dx-merchant-manager/v2/api-docs?group=2-%E5%85%AC%E5%85%B1%E6%8E%A5%E5%8F%A3
+module_path : merchant_manager/common/
+class_module_name : merchantManagerCommon
+module_desc_name : 中控后台
+module_name : merchant_manager
+mark : merchant_manager_common
+sub_module_desc_name : 公共接口模块
+base_url_path : 
+tag_map : {
+     国际化测试接口: i18n,
+     审核待办数量: upcoming,
+     文件上传--neko: uploadFile,
+     枚举接口: dict,
+     通用接口: common
+}

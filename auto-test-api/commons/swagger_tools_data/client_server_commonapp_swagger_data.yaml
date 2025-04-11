@@ -1,0 +1,24 @@
+req_url : http://172.31.24.105:8007/dx-client-server/v2/api-docs?group=OB%E5%8C%85%E7%BD%91
+module_path : client_server/common_app/
+class_module_name : clientServerCommonApp
+module_desc_name : 信用盘后台
+module_name : client_server
+mark : client_server_common_app
+sub_module_desc_name : 通用模块
+base_url_path : 
+tag_map : {
+     二维码接口: qrCode,
+     公共接口: common,
+     前端下拉框接口: selection,
+     国际化测试接口: i18n,
+     好友邀请活动: activityInvite,
+     字典表配置获取接口: kv,
+     登陆注册接口: sign,
+     消息接口: message,
+     用户接口: user,
+     活动接口: activity,
+     记录接口: records,
+     设置接口: setting,
+     首页调用接口: main,
+     配置接口: config
+}

@@ -1,0 +1,49 @@
+req_url: http://172.31.24.105:8008/dx-merchant-manager/v2/api-docs?group=8-%E6%8A%A5%E8%A1%A8
+module_path: merchant_manager/report/
+class_module_name: merchantManagerReport
+module_desc_name: 中控后台
+module_name: merchant_manager
+mark: merchant_manager_report
+sub_module_desc_name: 报表模块
+base_url_path:
+tag_map: {
+  会员盈亏报表: memberNetAmount,
+  代理盈亏报表: proxyNetAmount ,
+  场馆盈亏报表: venueNetAmount,
+  游戏盈亏报表: gameProfit,
+  每日盈亏报表: dayNetAmount,
+  会员报表: memberStaticInfo,
+  业务报表-返点报表: previousRebate,
+  返佣相关接口管理: settlementCommissionProxy,
+  代理报表: proxyReport,
+  平台出入款报表-存取报表: reportXXX,
+  佣金报表: reportToDO,
+  活动优惠报表: reportToDO,
+  每日会员反水报表: reportToDO,
+  会员场馆类型盈亏统计-报表: reportToDO,
+  业务报表-佣金收付报表: reportToDO,
+  返水报表: reportToDO,
+
+  专属域名管理: exclusiveDomain,
+  代理借款账单: proxyLoanBill,
+  代理列表管理: proxyList,
+  代理备注: proxyRemark,
+  代理层级配置: proxyLevel,
+  代理登录日志: proxyLoginLog,
+  代理相关: proxy,
+  代理详情相关: proxyDetail,
+  代理账户修改审核: updateProxyAudit,
+  代理账户资料修改审核相关: proxyData,
+  代理银行卡卡记录和代理虚拟币记录: bankProxyRecord,
+  会员(代理)活动排除名单: activityMember,
+  会员转代: memberTransfer,
+  契约政策配置: minContract,
+  契约模板配置: contract,
+  契约管理配置: contractManage,
+  推广图片管理: materialImage,
+  推广域名管理: promoteDomain,
+  新增代理&新增代理审核: newProxy,
+  返佣比例接口: commissionRate,
+  返点比例接口: rebateRate,
+  返点比例配置接口: rebateRate
+}

@@ -1,0 +1,59 @@
+req_url: http://172.31.24.105:8008/dx-merchant-manager/v2/api-docs?group=6-%E8%B5%84%E9%87%91
+module_path: merchant_manager/fund/
+class_module_name: merchantManagerFund
+module_desc_name: 中控后台
+module_name: merchant_manager
+mark: merchant_manager_fund
+sub_module_desc_name: 资金模块
+base_url_path:
+tag_map: {
+  USDT汇率配置: virtualRateConfig,
+  代理人工加额管理: proxyAccountAdd,
+  代理佣金审核: proxyAudit,
+  代理提款审核: proxyAudit,
+  代理结佣审核: proxyAudit,
+  代理资金记录: proxyFundsRecords,
+  代理返点审核: proxyRebate,
+  会员人工加额管理: memberAccountAdd,
+  会员代理人工扣钱操作: artificialPatch,
+  会员存款优惠记录: memberAudit,
+  会员提现取款审核: memberAudit,
+  会员提现取款审核记录: memberAudit,
+  会员活动记录: memberRecord,
+  会员账变记录: memberRecord,
+  会员资金记录: memberRecord,
+  会员转账记录: memberRecord,
+  会员返水审核: memberAudit,
+  会员存款记录: memberRecord,
+  充提管理: paymentChannelConfig,
+  出入款厂商配置: merchantConfig,
+  出入款管理: merchantConfig,
+  前端下拉框接口: bizAndChangeTypes,
+  支付厂商: paymentMerchant,
+  红利管理: bonusAudit,
+  资金->代理资金记录->(非)总代佣金记录: generalProxyCommission,
+  资金->代理资金记录->佣金收付记录: proxyCommissionPayment,
+  银行管理: bankManage,
+  会员账单提现下分审核记录--审核详情: memberAudit,
+  资金-审核记录-会员取款审核--审核详情: memberAudit,
+  会员账单提现下分审核--审核详情: memberAudit,
+  会员取款审核--审核详情: memberAudit,
+  会员取款审核--待一审: memberAudit,
+  会员取款审核--待二审: memberAudit,
+  会员提款审核待三审: memberAudit,
+  会员提款审核待出款审核: memberAudit,
+  点击IP或设备号出现会员列表: member,
+  会员账单提现下分审核--待一审: memberAudit,
+  会员账单提现下分审核--待二审: memberAudit,
+  会员提现审核: memberAudit,
+  会员提现审核--锁单解锁: memberAudit,
+  代理取款审核记录详情: proxyAudit,
+  资金-资金审核记录-代理取款审核记录: proxyAudit,
+  代理取款审核详情: proxyAudit,
+  代理提款审核列表待一审: proxyAudit,
+  代理提款审核列表待二审: proxyAudit,
+  代理提款审核列表待三审: proxyAudit,
+  代理提款审核列表待出款: proxyAudit,
+  代理提现审核: proxyAudit,
+  代理提现锁单: proxyAudit
+}

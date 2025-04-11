@@ -1,0 +1,21 @@
+req_url : http://172.31.24.105:8008/dx-merchant-manager/v2/api-docs?group=9-%E5%95%86%E6%88%B7
+module_path : merchant_manager/merchant/
+class_module_name : merchantManagerMerchant
+module_desc_name : 中控后台
+module_name : merchant_manager
+mark : merchant_manager_merchant
+sub_module_desc_name : 商户模块
+base_url_path : 
+tag_map : {
+     商户下载地址: merchantGameUrl,
+     商户个性化配置: merchantPersonConfig,
+     商户场馆配置: merchantVenue,
+     商户基本配置: merchantConfig,
+     商户客服等地址配置: merchantCustomer,
+     商户层级配置: manageLevelConfig,
+     商户支付通道配置: merchantChannel,
+     商户管理: manage,
+     商户详情: manageDetail,
+     商户配置-短信配置: sms,
+     新增商户&新增商户审核: manageAuditAndAdd
+}

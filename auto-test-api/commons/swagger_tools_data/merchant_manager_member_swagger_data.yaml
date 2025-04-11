@@ -1,0 +1,28 @@
+req_url : http://172.31.24.105:8008/dx-merchant-manager/v2/api-docs?group=3-%E4%BC%9A%E5%91%98
+module_path : merchant_manager/member/
+class_module_name : merchantManagerMember
+module_desc_name : 中控后台
+module_name : merchant_manager
+mark : merchant_manager_member
+sub_module_desc_name : 会员模块
+base_url_path : 
+tag_map : {
+     vip信息 : memberVipInfo,
+#     会员vip等级变更记录 : memberVipChangeRecord,
+     会员vip晋级优惠配置 : memberVipPromotion,
+     会员vip等级配置 : memberVipGrade,
+     会员代理信用等级配置 : creditLevelConf,
+     会员场馆管理 : gameMember,
+     会员备注 : memberRemark,
+     会员权益配置 : memberInCom,
+     会员模块-会员标签 : memberLabel,
+     会员模块-会员登录记录 : loginLog,
+     会员模块-新增会员审核 : memberAudit,
+     会员模块-用户管理 : memberController,
+     会员账户修改审核 : updateMemberAudit,
+     会员返水 : memberVipRebate,
+     会员银行卡管理和会员虚拟币账号管理 : userBankAndVirtualManagement,
+     用户详情 : memberDetail,
+     账户 : accountController,
+     运营模块-会员反馈意见 : feedBackController
+}
