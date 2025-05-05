@@ -1,0 +1,68 @@
+req_url : http://172.31.24.105:8007/dx-client-server/v2/api-docs?group=OB%E5%8C%85%E7%BD%91
+module_path : client_server/proxy_app/
+class_module_name : clientServerProxyApp
+module_desc_name : 信用盘后台
+module_name : client_server
+mark : client_server_proxy_app
+sub_module_desc_name : 代理模块
+base_url_path : 
+tag_map : {
+     会员代理备注: userRemark,
+     会员管理-接口: memberManager,
+     代理-代下级存款相关: proxyAssitDeposit,
+     代理-佣金相关: proxyCommission,
+     代理-基础接口: proxy,
+     代理-推广图片素材: proxyMaterialImage,
+     代理-提款相关: proxyWithdraw,
+     代理-溢出申请: proxyOverflowMember,
+     代理-账变记录: proxyFundsRecords,
+     代理-返点相关: proxyRebate,
+     代理-额度充值相关: proxyDeposit,
+     代理中心--会员管理--会员详情--资金明细: memberWalletDetail,
+     代理中心--财务操作--会员提现审核: memberWithdrawAudit,
+     代理中心会员模块: proxyMemberGame,
+     代理俱乐部-基础接口: proxyClub,
+     代理列表-接口: proxyList,
+     多级代理app会员，代理盈亏相关接口: multiAgentApp,
+
+
+
+     二维码接口: qrCode,
+     公共接口: common,
+     前端下拉框接口: selection,
+     国际化测试接口: i18n,
+     好友邀请活动: activityInvite,
+     字典表配置获取接口: kv,
+     登陆注册接口: sign,
+     消息接口: message,
+     用户接口: user,
+     活动接口: activity,
+     记录接口: records,
+     设置接口: setting,
+     首页调用接口: main,
+     配置接口: config,
+
+
+     场馆调用接口: dxVenue,
+     游戏模块: game,
+     美播真人调用接口: meibo,
+
+
+     帮信用还款: helpCreditRepay,
+     我的钱包: wallet,
+     数据统计: settlementCommissionProxyRecordStatistics,
+     财务操作--借还款: loanRepay,
+     财务操作--账变明细: proxyWalletDetail,
+     财务操作-上下分: upDown,
+     资金接口: capital,
+     资金明细页: fundRecord,
+     银行卡、虚拟币: bank,
+
+     返佣比例接口: commissionRate,
+     返佣比例管理: dxSettlementCommissionProxyRecord,
+     返点报表相关接口: rebateRateReport,
+     返点比例接口: rebateRate,
+     返点比例配置接口: rebateRateConfig,
+     报表: report,
+
+}
