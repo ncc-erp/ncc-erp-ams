@@ -32,47 +32,47 @@ class AssetsTransformer
             'serial' => e($asset->serial),
             'model' => ($asset->model) ? [
                 'id' => (int) $asset->model->id,
-                'name'=> e($asset->model->name),
+                'name' => e($asset->model->name),
             ] : null,
             'model_number' => (($asset->model) && ($asset->model->model_number)) ? e($asset->model->model_number) : null,
             'eol' => ($asset->purchase_date != '') ? Helper::getFormattedDateObject($asset->present()->eol_date(), 'date') : null,
             'status_label' => ($asset->assetstatus) ? [
                 'id' => (int) $asset->assetstatus->id,
-                'name'=> e($asset->assetstatus->name),
-                'status_type'=> e($asset->assetstatus->getStatuslabelType()),
+                'name' => e($asset->assetstatus->name),
+                'status_type' => e($asset->assetstatus->getStatuslabelType()),
                 'status_meta' => e($asset->present()->statusMeta),
             ] : null,
             'category' => (($asset->model) && ($asset->model->category)) ? [
                 'id' => (int) $asset->model->category->id,
-                'name'=> e($asset->model->category->name),
+                'name' => e($asset->model->category->name),
             ] : null,
             'manufacturer' => (($asset->model) && ($asset->model->manufacturer)) ? [
                 'id' => (int) $asset->model->manufacturer->id,
-                'name'=> e($asset->model->manufacturer->name),
+                'name' => e($asset->model->manufacturer->name),
             ] : null,
             'supplier' => ($asset->supplier) ? [
                 'id' => (int) $asset->supplier->id,
-                'name'=> e($asset->supplier->name),
+                'name' => e($asset->supplier->name),
             ] : null,
             'notes' => ($asset->notes) ? e($asset->notes) : null,
             'order_number' => ($asset->order_number) ? e($asset->order_number) : null,
             'company' => ($asset->company) ? [
                 'id' => (int) $asset->company->id,
-                'name'=> e($asset->company->name),
+                'name' => e($asset->company->name),
             ] : null,
             'location' => ($asset->location) ? [
                 'id' => (int) $asset->location->id,
-                'name'=> e($asset->location->name),
+                'name' => e($asset->location->name),
             ] : null,
             'rtd_location' => ($asset->defaultLoc) ? [
                 'id' => (int) $asset->defaultLoc->id,
-                'name'=> e($asset->defaultLoc->name),
+                'name' => e($asset->defaultLoc->name),
             ] : null,
             'image' => ($asset->image_url) ? $asset->image_url : null,
-            'qr' => ($setting->qr_code=='1') ? config('app.url').'/uploads/barcodes/qr-'.str_slug($asset->asset_tag).'-'.str_slug($asset->id).'.png' : null,
-            'alt_barcode' => ($setting->alt_barcode_enabled=='1') ? config('app.url').'/uploads/barcodes/'.str_slug($setting->alt_barcode).'-'.str_slug($asset->asset_tag).'.png' : null,
+            'qr' => ($setting->qr_code == '1') ? config('app.url') . '/uploads/barcodes/qr-' . str_slug($asset->asset_tag) . '-' . str_slug($asset->id) . '.png' : null,
+            'alt_barcode' => ($setting->alt_barcode_enabled == '1') ? config('app.url') . '/uploads/barcodes/' . str_slug($setting->alt_barcode) . '-' . str_slug($asset->asset_tag) . '.png' : null,
             'assigned_to' => $this->transformAssignedTo($asset),
-            'warranty_months' =>  ($asset->warranty_months > 0) ? e($asset->warranty_months.' '.trans('admin/hardware/form.months')) : null,
+            'warranty_months' => ($asset->warranty_months > 0) ? e($asset->warranty_months . ' ' . trans('admin/hardware/form.months')) : null,
             'warranty_expires' => ($asset->warranty_months > 0) ? Helper::getFormattedDateObject($asset->warranty_expires, 'date') : null,
             'created_at' => Helper::getFormattedDateObject($asset->created_at, 'datetime'),
             'updated_at' => Helper::getFormattedDateObject($asset->updated_at, 'datetime'),
@@ -92,6 +92,8 @@ class AssetsTransformer
             'requests_counter' => (int) $asset->requests_counter,
             'user_can_checkout' => (bool) $asset->availableForCheckout(),
             'user_can_checkin' => (bool) $asset->availableForCheckin(),
+            'maintenance_date' => Helper::getFormattedDateObject($asset->maintenance_date, 'date'),
+            'maintenance_cycle' => ($asset->maintenance_cycle > 0) ? e($asset->maintenance_cycle . ' ' . trans('admin/hardware/form.months')) : null,
         ];
 
 
@@ -104,10 +106,10 @@ class AssetsTransformer
                     $value = (Gate::allows('superadmin')) ? $decrypted : strtoupper(trans('admin/custom_fields/general.encrypted'));
 
                     $fields_array[$field->name] = [
-                            'field' => e($field->convertUnicodeDbSlug()),
-                            'value' => e($value),
-                            'field_format' => $field->format,
-                        ];
+                        'field' => e($field->convertUnicodeDbSlug()),
+                        'value' => e($value),
+                        'field_format' => $field->format,
+                    ];
 
                 } else {
                     $fields_array[$field->name] = [
@@ -125,37 +127,37 @@ class AssetsTransformer
         }
 
         $permissions_array['available_actions'] = [
-            'checkout'      => ($asset->deleted_at=='' && Gate::allows('checkout', Asset::class)) ? true : false,
-            'checkin'       => ($asset->deleted_at=='' && Gate::allows('checkin', Asset::class)) ? true : false,
-            'clone'         => Gate::allows('create', Asset::class) ? true : false,
-            'restore'       => ($asset->deleted_at!='' && Gate::allows('create', Asset::class)) ? true : false,
-            'update'        => ($asset->deleted_at=='' && Gate::allows('update', Asset::class)) ? true : false,
-            'delete'        => ($asset->deleted_at=='' && $asset->assigned_to =='' && Gate::allows('delete', Asset::class)) ? true : false,
-        ];      
+            'checkout' => ($asset->deleted_at == '' && Gate::allows('checkout', Asset::class)) ? true : false,
+            'checkin' => ($asset->deleted_at == '' && Gate::allows('checkin', Asset::class)) ? true : false,
+            'clone' => Gate::allows('create', Asset::class) ? true : false,
+            'restore' => ($asset->deleted_at != '' && Gate::allows('create', Asset::class)) ? true : false,
+            'update' => ($asset->deleted_at == '' && Gate::allows('update', Asset::class)) ? true : false,
+            'delete' => ($asset->deleted_at == '' && $asset->assigned_to == '' && Gate::allows('delete', Asset::class)) ? true : false,
+        ];
 
 
-        if (request('components')=='true') {
-        
+        if (request('components') == 'true') {
+
             if ($asset->components) {
                 $array['components'] = [];
-    
+
                 foreach ($asset->components as $component) {
                     $array['components'][] = [
-                        
-                            'id' => $component->id,
-                            'pivot_id' => $component->pivot->id,
-                            'name' => e($component->name),
-                            'qty' => $component->pivot->assigned_qty,
-                            'price_cost' => $component->purchase_cost,
-                            'purchase_total' => $component->purchase_cost * $component->pivot->assigned_qty,
-                            'checkout_date' => Helper::getFormattedDateObject($component->pivot->created_at, 'datetime') ,
-                        
+
+                        'id' => $component->id,
+                        'pivot_id' => $component->pivot->id,
+                        'name' => e($component->name),
+                        'qty' => $component->pivot->assigned_qty,
+                        'price_cost' => $component->purchase_cost,
+                        'purchase_total' => $component->purchase_cost * $component->pivot->assigned_qty,
+                        'checkout_date' => Helper::getFormattedDateObject($component->pivot->created_at, 'datetime'),
+
                     ];
                 }
             }
 
         }
-        
+
         $array += $permissions_array;
 
         return $array;
@@ -170,14 +172,14 @@ class AssetsTransformer
     {
         if ($asset->checkedOutToUser()) {
             return $asset->assigned ? [
-                    'id' => (int) $asset->assigned->id,
-                    'username' => e($asset->assigned->username),
-                    'name' => e($asset->assigned->getFullNameAttribute()),
-                    'first_name'=> e($asset->assigned->first_name),
-                    'last_name'=> ($asset->assigned->last_name) ? e($asset->assigned->last_name) : null,
-                    'employee_number' =>  ($asset->assigned->employee_num) ? e($asset->assigned->employee_num) : null,
-                    'type' => 'user',
-                ] : null;
+                'id' => (int) $asset->assigned->id,
+                'username' => e($asset->assigned->username),
+                'name' => e($asset->assigned->getFullNameAttribute()),
+                'first_name' => e($asset->assigned->first_name),
+                'last_name' => ($asset->assigned->last_name) ? e($asset->assigned->last_name) : null,
+                'employee_number' => ($asset->assigned->employee_num) ? e($asset->assigned->employee_num) : null,
+                'type' => 'user',
+            ] : null;
         }
 
         return $asset->assigned ? [
@@ -210,7 +212,7 @@ class AssetsTransformer
             'model_number' => (($asset->model) && ($asset->model->model_number)) ? e($asset->model->model_number) : null,
             'expected_checkin' => Helper::getFormattedDateObject($asset->expected_checkin, 'date'),
             'location' => ($asset->location) ? e($asset->location->name) : null,
-            'status'=> ($asset->assetstatus) ? $asset->present()->statusMeta : null,
+            'status' => ($asset->assetstatus) ? $asset->present()->statusMeta : null,
             'assigned_to_self' => ($asset->assigned_to == \Auth::user()->id),
         ];
 
