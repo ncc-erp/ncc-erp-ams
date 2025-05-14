@@ -82,7 +82,8 @@ class Asset extends Depreciable
         'last_checkout',
         'expected_checkin',
         'last_audit_date',
-        'next_audit_date'
+        'next_audit_date',
+        'maintenance_date'
     ];
 
 
@@ -92,35 +93,39 @@ class Asset extends Depreciable
         'expected_checkin' => 'datetime',
         'last_audit_date' => 'datetime',
         'next_audit_date' => 'datetime',
-        'model_id'       => 'integer',
-        'status_id'      => 'integer',
+        'model_id' => 'integer',
+        'status_id' => 'integer',
         'assigned_status' => 'integer',
-        'company_id'     => 'integer',
-        'location_id'    => 'integer',
+        'company_id' => 'integer',
+        'location_id' => 'integer',
         'rtd_company_id' => 'integer',
-        'supplier_id'    => 'integer',
+        'supplier_id' => 'integer',
         'checkout_at' => 'datetime:Y-m-d H:i:s',
         'checkin_at' => 'datetime:Y-m-d H:i:s',
+        'maintenance_date' => 'datetime:Y-m-d',
+        'maintenance_cycle' => 'integer',
     ];
 
     protected $rules = [
-        'name'            => 'max:255|nullable',
-        'model_id'        => 'required|integer|exists:models,id',
-        'status_id'       => 'required|integer|exists:status_labels,id',
-        'company_id'      => 'integer|nullable',
+        'name' => 'max:255|nullable',
+        'model_id' => 'required|integer|exists:models,id',
+        'status_id' => 'required|integer|exists:status_labels,id',
+        'company_id' => 'integer|nullable',
         'warranty_months' => 'numeric|nullable|digits_between:0,240',
-        'physical'        => 'numeric|max:1|nullable',
-        'checkout_date'   => 'date|max:10|min:10|nullable',
-        'checkin_date'    => 'date|max:10|min:10|nullable',
-        'supplier_id'     => 'exists:suppliers,id|numeric|nullable',
-        'location_id'     => 'exists:locations,id|nullable',
+        'physical' => 'numeric|max:1|nullable',
+        'checkout_date' => 'date|max:10|min:10|nullable',
+        'checkin_date' => 'date|max:10|min:10|nullable',
+        'supplier_id' => 'exists:suppliers,id|numeric|nullable',
+        'location_id' => 'exists:locations,id|nullable',
         'rtd_location_id' => 'exists:locations,id|nullable',
-        'asset_tag'       => 'required|min:1|max:255|unique_undeleted',
-        'status'          => 'integer',
-        'serial'          => 'unique_serial|nullable',
-        'purchase_cost'   => 'numeric|nullable|min:1',
+        'asset_tag' => 'required|min:1|max:255|unique_undeleted',
+        'status' => 'integer',
+        'serial' => 'unique_serial|nullable',
+        'purchase_cost' => 'numeric|nullable|min:1',
         'next_audit_date' => 'date|nullable',
         'last_audit_date' => 'date|nullable',
+        'maintenance_date' => 'date|nullable|after_or_equal:purchase_date',
+        'maintenance_cycle' => 'integer|nullable|min:0',
     ];
 
     /**
@@ -150,6 +155,8 @@ class Asset extends Depreciable
         'last_checkout',
         'expected_checkin',
         'is_external',
+        'maintenance_date',
+        'maintenance_cycle',
     ];
 
     use Searchable;
@@ -180,13 +187,13 @@ class Asset extends Depreciable
      * @var array
      */
     protected $searchableRelations = [
-        'assetstatus'        => ['name'],
-        'supplier'           => ['name'],
-        'company'            => ['name'],
-        'defaultLoc'         => ['name'],
-        'location'           => ['name'],
-        'model'              => ['name', 'model_number'],
-        'model.category'     => ['name'],
+        'assetstatus' => ['name'],
+        'supplier' => ['name'],
+        'company' => ['name'],
+        'defaultLoc' => ['name'],
+        'location' => ['name'],
+        'model' => ['name', 'model_number'],
+        'model.category' => ['name'],
         'model.manufacturer' => ['name'],
     ];
 
@@ -1074,12 +1081,12 @@ class Asset extends Depreciable
                     ['users.location_id', '=', $location->id],
                     ['assets.assigned_type', '=', User::class],
                 ])->orWhere([
-                    ['locations.id', '=', $location->id],
-                    ['assets.assigned_type', '=', Location::class],
-                ])->orWhere([
-                    ['assets.rtd_location_id', '=', $location->id],
-                    ['assets.assigned_type', '=', self::class],
-                ]);
+                            ['locations.id', '=', $location->id],
+                            ['assets.assigned_type', '=', Location::class],
+                        ])->orWhere([
+                            ['assets.rtd_location_id', '=', $location->id],
+                            ['assets.assigned_type', '=', self::class],
+                        ]);
             })->orWhere(function ($query) use ($location) {
                 $query->where('assets.rtd_location_id', '=', $location->id);
                 $query->whereNull('assets.assigned_to');
@@ -1541,7 +1548,8 @@ class Asset extends Depreciable
                  *
                  */
 
-                if (($fieldname != 'category') && ($fieldname != 'model_number') && ($fieldname != 'rtd_location') && ($fieldname != 'location') && ($fieldname != 'supplier')
+                if (
+                    ($fieldname != 'category') && ($fieldname != 'model_number') && ($fieldname != 'rtd_location') && ($fieldname != 'location') && ($fieldname != 'supplier')
                     && ($fieldname != 'status_label') && ($fieldname != 'assigned_to') && ($fieldname != 'model') && ($fieldname != 'company') && ($fieldname != 'manufacturer')
                 ) {
                     $query->where('assets.' . $fieldname, 'LIKE', '%' . $search_val . '%');
@@ -1845,7 +1853,12 @@ class Asset extends Depreciable
     public function isStatusAssign($status_id)
     {
         $found = Statuslabel::where('id', $status_id)->where('name', 'Assign')->first();
-        if ($found != null) return true;
+        if ($found != null)
+            return true;
         return false;
+    }
+    public function scopeHasMaintenanceDate($query)
+    {
+        return $query->whereNotNull('assets.maintenance_date');
     }
 }

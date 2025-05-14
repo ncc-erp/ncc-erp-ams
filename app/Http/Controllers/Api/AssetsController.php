@@ -115,6 +115,8 @@ class AssetsController extends Controller
             'checkout_counter',
             'checkin_counter',
             'requests_counter',
+            'maintenance_date',
+            'maintenance_cycle',
         ];
 
         $all_custom_fields = CustomField::all(); //used as a 'cache' of custom fields throughout this page load
@@ -132,7 +134,7 @@ class AssetsController extends Controller
                 'model.category',
                 'model.manufacturer',
                 'model.fieldset',
-                'supplier'
+                'supplier',
             );
         $assets = $this->filters($assets, $request);
 
@@ -211,11 +213,12 @@ class AssetsController extends Controller
          * Include additional associated relationships
          */
         if ($request->input('components')) {
-            $assets->loadMissing(['components' => function ($query) {
-                $query->orderBy('created_at', 'desc');
-            }]);
+            $assets->loadMissing([
+                'components' => function ($query) {
+                    $query->orderBy('created_at', 'desc');
+                }
+            ]);
         }
-
 
         /**
          * Here we're just determining which Transformer (via $transformer) to use based on the 
@@ -360,7 +363,9 @@ class AssetsController extends Controller
             $to = Carbon::createFromFormat('Y-m-d', $request->to)->endOfDay()->toDateTimeString();
             $assets = $assets->where('created_at', '<=', $to);
         }
-
+        if ($request->filled('maintenance_date') && $request->input('maintenance_date') == 1) {
+            $assets->hasMaintenanceDate();
+        }
         $assets = $assets->where('assets.is_external', '=', false);
 
         return $assets;
@@ -616,9 +621,11 @@ class AssetsController extends Controller
          * Include additional associated relationships
          */
         if ($request->input('components')) {
-            $assets->loadMissing(['components' => function ($query) {
-                $query->orderBy('created_at', 'desc');
-            }]);
+            $assets->loadMissing([
+                'components' => function ($query) {
+                    $query->orderBy('created_at', 'desc');
+                }
+            ]);
         }
 
 
@@ -630,9 +637,10 @@ class AssetsController extends Controller
 
         $data = [];
         $data['total'] = 0;
-        $assets =  (new $transformer)->transformAssets($assets, $total, $request);
+        $assets = (new $transformer)->transformAssets($assets, $total, $request);
         foreach ($assets['rows'] as $asset) {
-            if (!$asset['warranty_expires']) continue;
+            if (!$asset['warranty_expires'])
+                continue;
             if ((new Carbon($asset['warranty_expires']['date']))->lte($expiration)) {
                 $data['rows'][] = $asset;
                 $data['total'] += 1;
@@ -669,8 +677,9 @@ class AssetsController extends Controller
     public function showBySerial(Request $request, $serial)
     {
         $this->authorize('index', Asset::class);
-        if ($assets = Asset::with('assetstatus')->with('assignedTo')
-            ->withTrashed()->where('serial', $serial)->get()
+        if (
+            $assets = Asset::with('assetstatus')->with('assignedTo')
+                ->withTrashed()->where('serial', $serial)->get()
         ) {
             return (new AssetsTransformer)->transformAssets($assets, $assets->count());
         }
@@ -700,8 +709,9 @@ class AssetsController extends Controller
      */
     public function show(Request $request, $id)
     {
-        if ($asset = Asset::with('assetstatus')->with('assignedTo')->withTrashed()
-            ->withCount('checkins as checkins_count', 'checkouts as checkouts_count', 'userRequests as user_requests_count')->findOrFail($id)
+        if (
+            $asset = Asset::with('assetstatus')->with('assignedTo')->withTrashed()
+                ->withCount('checkins as checkins_count', 'checkouts as checkouts_count', 'userRequests as user_requests_count')->findOrFail($id)
         ) {
             $this->authorize('view', $asset);
 
@@ -963,9 +973,11 @@ class AssetsController extends Controller
          * Include additional associated relationships
          */
         if ($request->input('components')) {
-            $assets->loadMissing(['components' => function ($query) {
-                $query->orderBy('created_at', 'desc');
-            }]);
+            $assets->loadMissing([
+                'components' => function ($query) {
+                    $query->orderBy('created_at', 'desc');
+                }
+            ]);
         }
 
         /**
@@ -1060,27 +1072,47 @@ class AssetsController extends Controller
         $asset = new Asset();
         $asset->model()->associate(AssetModel::find((int) $request->get('model_id')));
 
-        $asset->name                    = $request->get('name');
-        $asset->serial                  = $request->get('serial');
-        $asset->company_id              = Company::getIdForCurrentUser($request->get('company_id'));
-        $asset->model_id                = $request->get('model_id');
-        $asset->order_number            = $request->get('order_number');
-        $asset->notes                   = $request->get('notes');
-        $asset->asset_tag               = $request->get('asset_tag', Asset::autoincrement_asset());
-        $asset->user_id                 = Auth::id();
-        $asset->archived                = '0';
-        $asset->physical                = '1';
-        $asset->depreciate              = '0';
-        $asset->status_id               = $request->get('status_id', 0);
-        $asset->warranty_months         = $request->get('warranty_months', null);
-        $asset->purchase_cost           = Helper::ParseCurrency($request->get('purchase_cost')); // this is the API's store method, so I don't know that I want to do this? Confusing. FIXME (or not?!)
-        $asset->purchase_date           = $request->get('purchase_date', null);
-        $asset->assigned_to             = $request->get('assigned_to', null);
-        $asset->supplier_id             = $request->get('supplier_id', 0);
-        $asset->requestable             = $request->get('requestable', 0);
-        $asset->rtd_location_id         = $request->get('rtd_location_id', null);
-        $asset->location_id             = $request->get('location_id', null);
-        $asset->assigned_status         = $request->get('assigned_status', 0);
+        $asset->name = $request->get('name');
+        $asset->serial = $request->get('serial');
+        $asset->company_id = Company::getIdForCurrentUser($request->get('company_id'));
+        $asset->model_id = $request->get('model_id');
+        $asset->order_number = $request->get('order_number');
+        $asset->notes = $request->get('notes');
+        $asset->asset_tag = $request->get('asset_tag', Asset::autoincrement_asset());
+        $asset->user_id = Auth::id();
+        $asset->archived = '0';
+        $asset->physical = '1';
+        $asset->depreciate = '0';
+        $asset->status_id = $request->get('status_id', 0);
+        $asset->warranty_months = $request->get('warranty_months', null);
+        $asset->purchase_cost = Helper::ParseCurrency($request->get('purchase_cost')); // this is the API's store method, so I don't know that I want to do this? Confusing. FIXME (or not?!)
+        $asset->purchase_date = $request->get('purchase_date', null);
+        $asset->assigned_to = $request->get('assigned_to', null);
+        $asset->supplier_id = $request->get('supplier_id', 0);
+        $asset->requestable = $request->get('requestable', 0);
+        $asset->rtd_location_id = $request->get('rtd_location_id', null);
+        $asset->location_id = $request->get('location_id', null);
+        $asset->assigned_status = $request->get('assigned_status', 0);
+        $maintenance = (int) $request->get('maintenance');
+        $maintenanceCycle = (int) $request->get('maintenance_cycle');
+        $maintenanceDate = $request->get('maintenance_date');
+
+        if ($maintenance > 0) {
+            $baseDate = $asset->purchase_date ?? Carbon::now();
+            $asset->maintenance_date = $baseDate->copy()->addMonths($maintenance)->toDateString();
+        } else {
+            $asset->maintenance_date = $maintenanceDate;
+            if ($maintenance <= 0) {
+                $asset->maintenance_date = null;
+            }
+        }
+
+        if (!$asset->purchase_date && !$asset->maintenance_date && $maintenanceCycle > 0) {
+            $asset->maintenance_date = Carbon::now()->addMonths($maintenanceCycle)->toDateString();
+        }
+
+        $asset->maintenance_cycle = $request->get('maintenance_cycle', null);
+
 
         /**
          * this is here just legacy reasons. Api\AssetController
@@ -1089,6 +1121,7 @@ class AssetsController extends Controller
         if ($request->has('image_source')) {
             $request->offsetSet('image', $request->offsetGet('image_source'));
         }
+
 
         $asset = $request->handleImages($asset);
         // Update custom fields in the database.
@@ -1126,7 +1159,6 @@ class AssetsController extends Controller
                 $asset->{$field->convertUnicodeDbSlug()} = $field_val;
             }
         }
-
         if ($asset->save()) {
             if ($asset->image) {
                 $asset->image = $asset->image_url;
@@ -1135,7 +1167,7 @@ class AssetsController extends Controller
             return response()->json(Helper::formatStandardApiResponse('success', $asset, trans('admin/hardware/message.create.success')));
         }
 
-        return response()->json(Helper::formatStandardApiResponse('error', null, $asset->getErrors()),  Response::HTTP_UNPROCESSABLE_ENTITY);
+        return response()->json(Helper::formatStandardApiResponse('error', null, $asset->getErrors()), Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
 
@@ -1162,6 +1194,29 @@ class AssetsController extends Controller
                 $asset->company_id = Company::getIdForCurrentUser($request->get('company_id')) : '';
             ($request->filled('rtd_location_id')) ?
                 $asset->location_id = $request->get('rtd_location_id') : null;
+            $maintenance = (int) $request->get('maintenance');
+            $maintenanceCycle = (int) $request->get('maintenance_cycle');
+            $maintenanceDate = $request->get('maintenance_date');
+
+            if ($maintenance !== 0) {
+                $baseDate = $asset->purchase_date ?? Carbon::now();
+                $asset->maintenance_date = $baseDate->copy()->addMonths($maintenance)->toDateString();
+            } else {
+                $asset->maintenance_date = $maintenanceDate;
+                if ($maintenance <= 0) {
+                    $asset->maintenance_date = null;
+                }
+            }
+
+            if (!$asset->maintenance_date && $maintenanceCycle > 0) {
+                $baseDate = $asset->purchase_date ?? Carbon::now();
+                $asset->maintenance_date = $baseDate->copy()->addMonths($maintenanceCycle)->toDateString();
+            }
+
+            if ($request->filled('maintenance_cycle')) {
+                $asset->maintenance_cycle = $maintenanceCycle;
+            }
+
             /**
              * this is here just legacy reasons. Api\AssetController
              * used image_source  once to allow encoded image uploads.
@@ -1456,7 +1511,7 @@ class AssetsController extends Controller
             $logaction = new Actionlog();
             $logaction->item_type = Asset::class;
             $logaction->item_id = $asset->id;
-            $logaction->created_at =  date("Y-m-d H:i:s");
+            $logaction->created_at = date("Y-m-d H:i:s");
             $logaction->user_id = Auth::user()->id;
             $logaction->logaction('restored');
 
@@ -1815,7 +1870,6 @@ class AssetsController extends Controller
      * @return JsonResponse
      */
     public function audit(Request $request)
-
     {
         $this->authorize('audit', Asset::class);
         $rules = [
