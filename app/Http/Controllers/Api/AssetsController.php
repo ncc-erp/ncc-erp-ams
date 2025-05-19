@@ -1093,25 +1093,8 @@ class AssetsController extends Controller
         $asset->rtd_location_id = $request->get('rtd_location_id', null);
         $asset->location_id = $request->get('location_id', null);
         $asset->assigned_status = $request->get('assigned_status', 0);
-        $maintenance = (int) $request->get('maintenance');
-        $maintenanceCycle = (int) $request->get('maintenance_cycle');
-        $maintenanceDate = $request->get('maintenance_date');
-
-        if ($maintenance > 0) {
-            $baseDate = $asset->purchase_date ?? Carbon::now();
-            $asset->maintenance_date = $baseDate->copy()->addMonths($maintenance)->toDateString();
-        } else {
-            $asset->maintenance_date = $maintenanceDate;
-            if ($maintenance <= 0) {
-                $asset->maintenance_date = null;
-            }
-        }
-
-        if (!$asset->purchase_date && !$asset->maintenance_date && $maintenanceCycle > 0) {
-            $asset->maintenance_date = Carbon::now()->addMonths($maintenanceCycle)->toDateString();
-        }
-
-        $asset->maintenance_cycle = $request->get('maintenance_cycle', null);
+        $asset->maintenance_cycle = $request->get('maintenance_cycle', 0);
+        $asset->maintenance_date = $request->get('maintenance', null);
 
 
         /**
@@ -1194,28 +1177,14 @@ class AssetsController extends Controller
                 $asset->company_id = Company::getIdForCurrentUser($request->get('company_id')) : '';
             ($request->filled('rtd_location_id')) ?
                 $asset->location_id = $request->get('rtd_location_id') : null;
-            $maintenance = (int) $request->get('maintenance');
-            $maintenanceCycle = (int) $request->get('maintenance_cycle');
-            $maintenanceDate = $request->get('maintenance_date');
+            ($request->filled('rtd_location_id')) ?
+                $asset->location_id = $request->get('rtd_location_id') : null;
 
-            if ($maintenance !== 0) {
-                $baseDate = $asset->purchase_date ?? Carbon::now();
-                $asset->maintenance_date = $baseDate->copy()->addMonths($maintenance)->toDateString();
-            } else {
-                $asset->maintenance_date = $maintenanceDate;
-                if ($maintenance <= 0) {
-                    $asset->maintenance_date = null;
-                }
-            }
+            ($request->filled('maintenance_cycle')) ?
+                $asset->maintenance_cycle = $request->get('maintenance_cycle') : null;
+            ($request->filled('maintenance')) ?
+                $asset->maintenance_date = $request->get('maintenance') : null;
 
-            if (!$asset->maintenance_date && $maintenanceCycle > 0) {
-                $baseDate = $asset->purchase_date ?? Carbon::now();
-                $asset->maintenance_date = $baseDate->copy()->addMonths($maintenanceCycle)->toDateString();
-            }
-
-            if ($request->filled('maintenance_cycle')) {
-                $asset->maintenance_cycle = $maintenanceCycle;
-            }
 
             /**
              * this is here just legacy reasons. Api\AssetController
