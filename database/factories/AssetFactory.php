@@ -43,7 +43,7 @@ class AssetFactory extends Factory
             'status_id' => 5,
             'user_id' => 1,
             'asset_tag' => $this->faker->unixTime('now'),
-            'notes'   => 'Created by DB seeder',
+            'notes' => 'Created by DB seeder',
             'purchase_date' => $this->faker->dateTimeBetween('-1 years', 'now', date_default_timezone_get()),
             'purchase_cost' => $this->faker->randomFloat(2, '299.99', '2999.99'),
             'order_number' => $this->faker->numberBetween(1000000, 50000000),
@@ -53,6 +53,8 @@ class AssetFactory extends Factory
             'assigned_type' => null,
             'next_audit_date' => null,
             'last_checkout' => null,
+            'maintenance_date' => $this->faker->dateTimeBetween('-1 years', 'now', date_default_timezone_get()),
+            'maintenance_cycle' => $this->faker->numberBetween(1, 100),
         ];
     }
 

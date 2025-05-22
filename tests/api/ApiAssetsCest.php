@@ -4,6 +4,7 @@ use App\Models\Asset;
 use App\Models\AssetModel;
 use App\Models\Category;
 use App\Models\Company;
+use App\Models\Model;
 use App\Models\Location;
 use App\Models\Manufacturer;
 use App\Models\Setting;
@@ -11,6 +12,7 @@ use App\Models\Supplier;
 use App\Models\User;
 use Carbon\Carbon;
 use Faker\Factory;
+
 
 class ApiAssetsCest
 {
@@ -41,7 +43,8 @@ class ApiAssetsCest
             . '&rtd_location_id=' . Location::all()->random(1)->first()->id
             . '&model_id=' . AssetModel::all()->random(1)->first()->id
             . '&assigned_to=' . User::all()->random(1)->first()->id
-            . '&assigned_type=' . 'App/Models/User';
+            . '&assigned_type=' . 'App/Models/User'
+            . 'maintenance_date= 1';
 
         return $filter;
     }
@@ -85,8 +88,19 @@ class ApiAssetsCest
         $I->wantTo('Get a list of assigned assets');
 
         $filter = $this->getFilterForIndex();
-        
+
         $I->sendGET('/hardware/assign' . $filter);
+        $I->seeResponseIsJson();
+        $I->seeResponseCodeIs(200);
+    }
+    public function indexAssetsWithMaintenanceDate(ApiTester $I)
+    {
+        $I->wantTo('Get a list of assets that have a maintenance_date');
+
+        $filter = '?limit=20&sort=id&order=desc'
+            . '&maintenance_date=1';
+
+        $I->sendGET('/hardware' . $filter);
         $I->seeResponseIsJson();
         $I->seeResponseCodeIs(200);
     }
@@ -96,7 +110,7 @@ class ApiAssetsCest
         $I->wantTo('Get a list of requestable assets');
 
         $filter = $this->getFilterForIndex();
-        
+
         $I->sendGET('account/requestable/hardware' . $filter);
         $I->seeResponseIsJson();
         $I->seeResponseCodeIs(200);
@@ -111,7 +125,7 @@ class ApiAssetsCest
             'company_id' => Company::factory()->create()->id,
         ]);
 
-        $I->sendGet('/hardware/bytag/'.$asset->asset_tag);
+        $I->sendGet('/hardware/bytag/' . $asset->asset_tag);
         $I->seeResponseCodeIs(200);
         $I->seeResponseIsJson();
     }
@@ -125,7 +139,7 @@ class ApiAssetsCest
             'company_id' => Company::factory()->create()->id,
         ]);
 
-        $I->sendGet('/hardware/byserial/'.$asset->serial);
+        $I->sendGet('/hardware/byserial/' . $asset->serial);
         $I->seeResponseCodeIs(200);
         $I->seeResponseIsJson();
     }
@@ -155,6 +169,8 @@ class ApiAssetsCest
             'status_id' => $temp_asset->status_id,
             'supplier_id' => $temp_asset->supplier_id,
             'warranty_months' => $temp_asset->warranty_months,
+            'maintenance_date' => $temp_asset->maintenance_date,
+            'maintenance_cycle' => $temp_asset->maintenance_cycle,
         ];
 
         // create
@@ -181,7 +197,8 @@ class ApiAssetsCest
             'rtd_location_id' => Location::factory()->create()->id,
         ]);
         $asset->image = $temp_asset->image;
-        if(!$temp_asset->requestable) $temp_asset->requestable = '0';
+        if (!$temp_asset->requestable)
+            $temp_asset->requestable = '0';
         $asset->requestable = $temp_asset->requestable;
         $asset->save();
         $data = [
@@ -200,15 +217,16 @@ class ApiAssetsCest
             'supplier_id' => $temp_asset->supplier_id,
             'warranty_months' => $temp_asset->warranty_months,
             'requestable' => $temp_asset->requestable,
+            'maintenance_date' => $temp_asset->maintenance_date,
+            'maintenance_cycle' => $temp_asset->maintenance_cycle,
         ];
 
         $I->assertNotEquals($asset->name, $data['name']);
 
         // update
-        $I->sendPATCH('/hardware/'.$asset->id, $data);
+        $I->sendPATCH('/hardware/' . $asset->id, $data);
         $I->seeResponseIsJson();
         $I->seeResponseCodeIs(200);
-
         $response = json_decode($I->grabResponse());
         $I->assertEquals('success', $response->status);
         $I->assertEquals(trans('admin/hardware/message.update.success'), $response->messages);
@@ -222,7 +240,7 @@ class ApiAssetsCest
         $temp_asset->location_id = $response->payload->rtd_location_id;
 
         // verify
-        $I->sendGET('/hardware/'.$asset->id);
+        $I->sendGET('/hardware/' . $asset->id);
         $I->seeResponseIsJson();
         $I->seeResponseCodeIs(200);
     }
@@ -237,7 +255,7 @@ class ApiAssetsCest
         $I->assertInstanceOf(Asset::class, $asset);
 
         // delete
-        $I->sendDELETE('/hardware/'.$asset->id);
+        $I->sendDELETE('/hardware/' . $asset->id);
         $I->seeResponseIsJson();
         $I->seeResponseCodeIs(200);
 
@@ -246,7 +264,7 @@ class ApiAssetsCest
         $I->assertEquals(trans('admin/hardware/message.delete.success'), $response->messages);
 
         // verify, expect a 200
-        $I->sendGET('/hardware/'.$asset->id);
+        $I->sendGET('/hardware/' . $asset->id);
         $I->seeResponseCodeIs(200);
         $I->seeResponseIsJson();
 
@@ -278,7 +296,7 @@ class ApiAssetsCest
             'checkout_to_type' => 'user'
         ];
 
-        $I->sendPost('/hardware/'.$asset->id.'/checkout',$data);
+        $I->sendPost('/hardware/' . $asset->id . '/checkout', $data);
         $I->seeResponseIsJson();
         $I->seeResponseCodeIs(200);
         $response = json_decode($I->grabResponse());
@@ -311,7 +329,7 @@ class ApiAssetsCest
             'assigned_user' => $user->id,
         ];
 
-        $I->sendPost('/hardware/'.$asset->id.'/checkin',$data);
+        $I->sendPost('/hardware/' . $asset->id . '/checkin', $data);
         $I->seeResponseIsJson();
         $I->seeResponseCodeIs(200);
         $response = json_decode($I->grabResponse());
@@ -342,7 +360,7 @@ class ApiAssetsCest
             'assets' => $assets->pluck('id')->toArray()
         ];
 
-        $I->sendPost('/hardware/checkout',$data);
+        $I->sendPost('/hardware/checkout', $data);
         $response = json_decode($I->grabResponse());
         $I->assertEquals('success', $response->status);
         $I->assertEquals(trans('admin/hardware/message.checkout.success'), $response->messages);
@@ -374,7 +392,7 @@ class ApiAssetsCest
             'assets' => $assets->pluck('id')->toArray()
         ];
 
-        $I->sendPost('/hardware/checkin',$data);
+        $I->sendPost('/hardware/checkin', $data);
         $response = json_decode($I->grabResponse());
         $I->assertEquals('success', $response->status);
         $I->assertEquals(trans('admin/hardware/message.checkin.success'), $response->messages);
@@ -403,7 +421,7 @@ class ApiAssetsCest
             'send_accept' => $asset->id
         ];
 
-        $I->sendPost('/hardware/'.$asset->id.'?_method=PUT',$data);
+        $I->sendPost('/hardware/' . $asset->id . '?_method=PUT', $data);
         $response = json_decode($I->grabResponse());
         $I->assertEquals('success', $response->status);
         $I->assertEquals(trans('admin/hardware/message.update.success'), $response->messages);
@@ -433,7 +451,7 @@ class ApiAssetsCest
             '_method' => 'PATCH'
         ];
 
-        $I->sendPost('/hardware/'.$asset->id,$data);
+        $I->sendPost('/hardware/' . $asset->id, $data);
         $response = json_decode($I->grabResponse());
         $I->assertEquals('success', $response->status);
         $I->assertEquals(trans('admin/hardware/message.update.success'), $response->messages);
@@ -463,7 +481,7 @@ class ApiAssetsCest
             'send_accept' => $asset->id
         ];
 
-        $I->sendPost('/hardware/'.$asset->id.'?_method=PUT',$data);
+        $I->sendPost('/hardware/' . $asset->id . '?_method=PUT', $data);
         $response = json_decode($I->grabResponse());
         $I->assertEquals('success', $response->status);
         $I->assertEquals(trans('admin/hardware/message.update.success'), $response->messages);
@@ -494,7 +512,7 @@ class ApiAssetsCest
             '_method' => 'PATCH'
         ];
 
-        $I->sendPost('/hardware/'.$asset->id,$data);
+        $I->sendPost('/hardware/' . $asset->id, $data);
         $response = json_decode($I->grabResponse());
         $I->assertEquals('success', $response->status);
         $I->assertEquals(trans('admin/hardware/message.update.success'), $response->messages);
@@ -523,7 +541,7 @@ class ApiAssetsCest
             'assets' => $assets->pluck('id')->toArray()
         ];
 
-        $I->sendPost('/hardware?_method=PUT',$data);
+        $I->sendPost('/hardware?_method=PUT', $data);
         $response = json_decode($I->grabResponse());
         $I->assertEquals('success', $response->status);
         $I->assertEquals(trans('admin/hardware/message.update.success'), $response->messages);
@@ -552,7 +570,7 @@ class ApiAssetsCest
             'assets' => $assets->pluck('id')->toArray()
         ];
 
-        $I->sendPost('/hardware?_method=PUT',$data);
+        $I->sendPost('/hardware?_method=PUT', $data);
         $response = json_decode($I->grabResponse());
         $I->assertEquals('success', $response->status);
         $I->assertEquals(trans('admin/hardware/message.update.success'), $response->messages);
@@ -580,7 +598,7 @@ class ApiAssetsCest
             'assets' => $assets->pluck('id')->toArray()
         ];
 
-        $I->sendPost('/hardware?_method=PUT',$data);
+        $I->sendPost('/hardware?_method=PUT', $data);
         $response = json_decode($I->grabResponse());
         $I->assertEquals('success', $response->status);
         $I->assertEquals(trans('admin/hardware/message.update.success'), $response->messages);
@@ -608,7 +626,7 @@ class ApiAssetsCest
             'assets' => $assets->pluck('id')->toArray()
         ];
 
-        $I->sendPost('/hardware?_method=PUT',$data);
+        $I->sendPost('/hardware?_method=PUT', $data);
         $response = json_decode($I->grabResponse());
         $I->assertEquals('success', $response->status);
         $I->assertEquals(trans('admin/hardware/message.update.success'), $response->messages);
@@ -640,7 +658,7 @@ class ApiAssetsCest
             'asset_tag' => $asset->asset_tag
         ];
 
-        $I->sendPost('/hardware/checkinbytag',$data);
+        $I->sendPost('/hardware/checkinbytag', $data);
         $I->seeResponseIsJson();
         $I->seeResponseCodeIs(200);
         $response = json_decode($I->grabResponse());
