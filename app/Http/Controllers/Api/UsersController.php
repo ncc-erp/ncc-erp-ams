@@ -17,9 +17,9 @@ use App\Models\License;
 use App\Models\User;
 use Auth;
 use Illuminate\Http\Request;
-use App\Http\Requests\ImageUploadRequest;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
+use GuzzleHttp\Client;
 
 class UsersController extends Controller
 {
@@ -734,6 +734,236 @@ class UsersController extends Controller
             "token_type" => "Bear",
             "access_token" => $token,
         ]);
+    }
+    public function mezonAuthUrl(Request $request)
+    {
+        $clientId = env('MEZON_CLIENT_ID');
+        $redirectUri = env('MEZON_REDIRECT_URI');
+        $mezonDomain = env('MEZON_DOMAIN');
+        $state = $this->generateBase64State();
+        
+        $url = "{$mezonDomain}/oauth2/auth?client_id={$clientId}&redirect_uri={$redirectUri}&response_type=code&scope=openid offline&state={$state}";
+
+        return response()->json([
+            'url' => $url,
+        ]);
+
+    }
+
+    public function mezonLogin(Request $request)
+    {
+        
+        $request->validate([
+            'code' => 'required|string',
+            'state' => 'required|string',
+        ]);
+    
+        // Retrieve the 'code' and 'state' from the request payload
+        $code = $request->input('code');
+        $state = $request->input('state');
+        $mezonDomain = env('MEZON_DOMAIN');
+    
+        $tokenUrl = "{$mezonDomain}/oauth2/token";
+        $mezonAuth = [
+            'code' => $code,
+            'state' => $state,
+        ];
+        try {
+            $accessTokenInfo = $this->getMezonAccessToken($tokenUrl, $mezonAuth);
+            $accessTokenValue = $accessTokenInfo['access_token'];
+            $scope = $accessTokenInfo['scope'];
+            $tokenType = $accessTokenInfo['token_type'];
+
+            $mezonUserInfo = $this->getMezonUserProfile($accessTokenValue);
+            $mezonUserEmail = $mezonUserInfo['sub'];
+            $mezonUserAud = $mezonUserInfo['aud'][0];
+
+            
+            if(Helper::checkValidEmail( $mezonUserEmail )) { 
+                [$emailNamePart, $domain] = explode('@', $mezonUserEmail);
+                $firstName = $emailNamePart;
+                $lastName = '';
+                if (strpos($emailNamePart, '.') !== false) {
+                    [$lastName, $firstName] = explode('.', $emailNamePart);
+                }
+
+                $userData = [
+                    'email' => $mezonUserEmail,
+                    'username' => $emailNamePart,
+                    'social_id' => $mezonUserAud,
+                    'access_token_social' => $accessTokenValue,
+                    'first_name' => $firstName, 
+                    'last_name' => $lastName,
+                ];
+                
+                $user = User::where('username', $emailNamePart)->first();
+                if (!$user) {
+                    $userData['permissions'] = '{"superuser":"1","admin":"0","import":"0","reports.view":"0","assets.view":"0","assets.create":"0","assets.edit":"0","assets.delete":"0","assets.checkin":"0","assets.checkout":"0","assets.audit":"0","assets.view.requestable":"0","accessories.view":"0","accessories.create":"0","accessories.edit":"0","accessories.delete":"0","accessories.checkout":"0","accessories.checkin":"0","consumables.view":"0","consumables.create":"0","consumables.edit":"0","consumables.delete":"0","consumables.checkout":"0","licenses.view":"0","licenses.create":"0","licenses.edit":"0","licenses.delete":"0","licenses.checkout":"0","licenses.keys":"0","licenses.files":"0","components.view":"0","components.create":"0","components.edit":"0","components.delete":"0","components.checkout":"0","components.checkin":"0","kits.view":"0","kits.create":"0","kits.edit":"0","kits.delete":"0","kits.checkout":"0","users.view":"0","users.create":"0","users.edit":"0","users.delete":"0","models.view":"0","models.create":"0","models.edit":"0","models.delete":"0","categories.view":"0","categories.create":"0","categories.edit":"0","categories.delete":"0","departments.view":"0","departments.create":"0","departments.edit":"0","departments.delete":"0","statuslabels.view":"0","statuslabels.create":"0","statuslabels.edit":"0","statuslabels.delete":"0","customfields.view":"0","customfields.create":"0","customfields.edit":"0","customfields.delete":"0","suppliers.view":"0","suppliers.create":"0","suppliers.edit":"0","suppliers.delete":"0","manufacturers.view":"0","manufacturers.create":"0","manufacturers.edit":"0","manufacturers.delete":"0","depreciations.view":"0","depreciations.create":"0","depreciations.edit":"0","depreciations.delete":"0","locations.view":"0","locations.create":"0","locations.edit":"0","locations.delete":"0","companies.view":"0","companies.create":"0","companies.edit":"0","companies.delete":"0","self.two_factor":"0","self.api":"0","self.edit_location":"0","self.checkout_assets":"0"}';
+                }
+                $userCreate = User::query()->updateOrcreate([
+                    "username" => $emailNamePart
+                ], $userData);
+    
+                $permissions = $userCreate->permissions ? json_decode($userCreate->permissions, true) : [];
+                $scopes = [];
+                foreach ($permissions as $key => $value) {
+                    if ($value == "1") {
+                        $scopes[] = $key;
+                    }
+                }
+    
+                $token = $userCreate->createToken('mezon-login', $scopes)->accessToken;
+                return response()->json([
+                    "token_type" => $tokenType,
+                    "access_token" => $token,
+                ]);
+            }
+            else {
+                return response()->json([
+                    "message" => "Unauthorized",
+                ], 401);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+            ], 401);
+        }
+    }
+
+    private function getMezonAccessToken(string $tokenUrl, array $mezonAuth)
+    {
+        $clientId = env('MEZON_CLIENT_ID');
+        $clientSecret = env('MEZON_CLIENT_SECRET');
+        $redirectUri = env('MEZON_REDIRECT_URI');
+        $client = new Client();
+
+        $bodyData = [
+            'code' => $mezonAuth['code'],
+            'state' => $mezonAuth['state'],
+            'grant_type' => 'authorization_code',
+            'redirect_uri' => $redirectUri,
+            'scope' => $mezonAuth['scope'] ?? '',
+            'client_id' => $clientId,
+            'client_secret' => $clientSecret,
+        ];
+        $res = $client->post($tokenUrl,[
+            'form_params' => $bodyData,
+        ]);
+
+        return json_decode($res->getBody()->getContents(),true);
+    }
+
+    private function getMezonUserProfile(string $accessToken)
+    {
+        $client = new Client();
+        $mezonDomain = env('MEZON_DOMAIN');
+        $userProfileUrl =  "{$mezonDomain}/userinfo";
+        $res = $client->get($userProfileUrl,[
+            'headers' => [
+                'Authorization' => 'Bearer ' . $accessToken,
+                'Accept' => 'application/json',
+            ],
+        ]);
+
+        return json_decode($res->getBody()->getContents(), true);
+    }
+
+    private function generateBase64State(): string
+    {
+        return base64_encode(random_bytes(32));
+    }
+
+    public function mezonLoginByHash(Request $request)
+    {
+        $request->validate([
+            'dataCheck' => 'required|string',
+            'hashKey' => 'required|string',
+            'userEmail' => 'required|string|email',
+            'userName' => 'required|string',
+        ]);
+
+        $dataCheck = $request->input('dataCheck');
+        $hashKey = $request->input('hashKey');
+        $userEmail = $request->input('userEmail');
+        $userName = $request->input('userName');
+
+        if (!Helper::checkValidEmail($userEmail)) {
+            return response()->json(
+                Helper::formatStandardApiResponse('error', null, 'Invalid email address'),
+                400
+            );
+        }
+
+        $appToken = env('MEZON_APP_TOKEN');
+        if (!$appToken) {
+            return response()->json(
+                Helper::formatStandardApiResponse('error', null, 'Server configuration error: App token not set'),
+                500
+            );
+        }
+
+        try
+        {
+            $secretKey = hash_hmac('sha256', "WebAppData", $appToken, true);
+            $computedHash = bin2hex(hash_hmac('sha256', $dataCheck, $secretKey, true));
+
+            if ($computedHash !== $hashKey) {
+                return response()->json(
+                    Helper::formatStandardApiResponse('error', null, 'Authentication failed - Invalid hash key'),
+                    400
+                );
+            }
+
+            $user = User::where('username', $userName)->first();
+            if ($user && $user->activated !== true) {
+                return response()->json(
+                    Helper::formatStandardApiResponse('error', null, 'The user is disabled'),
+                    400
+                );
+            }
+            if (!$user) {
+                $firstName = '';
+                $lastName = '';
+                if (strpos($userName, '.') !== false) {
+                    [$lastName, $firstName] = explode('.', $userName);
+                } else {
+                    $firstName = $userName;
+                }
+
+                $user = User::updateOrCreate(
+                    ['username' => $userName],
+                    [
+                        'email' => $userEmail,
+                        'username' => $userName,
+                        'first_name' => $firstName,
+                        'last_name' => $lastName,
+                        'password' => Helper::generateEncyrptedPassword(),
+                        'activated' => 1,
+                        'permissions' => '{"superuser":"1","admin":"0","import":"0","reports.view":"0","assets.view":"0","assets.create":"0","assets.edit":"0","assets.delete":"0","assets.checkin":"0","assets.checkout":"0","assets.audit":"0","assets.view.requestable":"0","accessories.view":"0","accessories.create":"0","accessories.edit":"0","accessories.delete":"0","accessories.checkout":"0","accessories.checkin":"0","consumables.view":"0","consumables.create":"0","consumables.edit":"0","consumables.delete":"0","consumables.checkout":"0","licenses.view":"0","licenses.create":"0","licenses.edit":"0","licenses.delete":"0","licenses.checkout":"0","licenses.keys":"0","licenses.files":"0","components.view":"0","components.create":"0","components.edit":"0","components.delete":"0","components.checkout":"0","components.checkin":"0","kits.view":"0","kits.create":"0","kits.edit":"0","kits.delete":"0","kits.checkout":"0","users.view":"0","users.create":"0","users.edit":"0","users.delete":"0","models.view":"0","models.create":"0","models.edit":"0","models.delete":"0","categories.view":"0","categories.create":"0","categories.edit":"0","categories.delete":"0","departments.view":"0","departments.create":"0","departments.edit":"0","departments.delete":"0","statuslabels.view":"0","statuslabels.create":"0","statuslabels.edit":"0","statuslabels.delete":"0","customfields.view":"0","customfields.create":"0","customfields.edit":"0","customfields.delete":"0","suppliers.view":"0","suppliers.create":"0","suppliers.edit":"0","suppliers.delete":"0","manufacturers.view":"0","manufacturers.create":"0","manufacturers.edit":"0","manufacturers.delete":"0","depreciations.view":"0","depreciations.create":"0","depreciations.edit":"0","depreciations.delete":"0","locations.view":"0","locations.create":"0","locations.edit":"0","locations.delete":"0","companies.view":"0","companies.create":"0","companies.edit":"0","companies.delete":"0","self.two_factor":"0","self.api":"0","self.edit_location":"0","self.checkout_assets":"0"}',
+                    ]
+                );
+
+            }
+
+            $permissions = $user->permissions ? json_decode($user->permissions, true) : [];
+            $scopes = [];
+            foreach ($permissions as $key => $value) {
+                if ($value === "1" || $value === 1) {
+                    $scopes[] = $key;
+                }
+            }
+
+            $token = $user->createToken('mezon-hash-login', $scopes)->accessToken;
+
+            return response()->json([
+                "token_type" => "Bearer",
+                "access_token" => $token,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+            ], 401);
+        }
     }
 
 }

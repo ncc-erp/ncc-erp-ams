@@ -27,16 +27,33 @@ Route::group(['prefix' => 'v1', 'middleware' => ['throttle:'.config('app.api_thr
     
 );
 
-        Route::post('auth/login',
-        [
+    Route::post('auth/login',
+    [
             Api\UsersController::class,
             'login'
-        ]
+    ]
+);
+    Route::post('auth/mezon-auth-url',
+    [
+        Api\UsersController::class,
+        'mezonAuthUrl'
+    ]
+);
+
+    Route::post('auth/mezon-login',
+    [
+        Api\UsersController::class,
+        'mezonLogin'
+    ]
+);
+
+    Route::post('auth/mezon-login-by-hash',
+    [
+        Api\UsersController::class,
+        'mezonLoginByHash'
+    ]
 );
 
 
 
 }); // end API routes
-
-
-

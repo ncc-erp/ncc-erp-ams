@@ -1,0 +1,27 @@
+req_url : http://172.31.24.105:8008/dx-merchant-manager/v2/api-docs?group=7-%E8%BF%90%E8%90%A5
+module_path : merchant_manager/management/
+class_module_name : merchantManagerManagement
+module_desc_name : 中控后台
+module_name : merchant_manager
+mark : merchant_manager_management
+sub_module_desc_name : 运营模块
+base_url_path : 
+tag_map : {
+     会员活动域名管理: memberDomain,
+     充值优惠配置: activityConfigDeposit,
+     公共规则配置: activityConfigCommon,
+     好友邀请-邀请数据: activityInviteTask,
+     好友邀请活动配置 sign: activityInviteConfig,
+     活动列表: activityConfig,
+     活动数据查询: activityStatisticsData,
+     活动模板: activityConfigTemplate,
+     系统消息配置: merchantSysMsg,
+     系统维护白名单: systemMaintenanceWhite,
+     系统维护配置: systemMaintenance,
+     运营模块--代理申请图配置: bwConfigProxyApply,
+     运营模块--优惠页面设置: bwActivityConfigTab,
+     运营模块--公告配置: bwConfigAnnouncement,
+     运营模块--活动通知配置: bwConfigNotice,
+     运营模块--首页banner配置: bwConfigBanner,
+     运营模块--首页场馆图配置/APP闪屏页: bwConfigStartPage
+}
