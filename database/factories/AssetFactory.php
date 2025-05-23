@@ -40,7 +40,7 @@ class AssetFactory extends Factory
         $maintenanceDate = $this->faker->dateTimeBetween($purchaseDate, 'now', date_default_timezone_get());
 
         return [
-            'name' => $this->faker->unique()->word,
+            'name' => $this->faker->word,
             'rtd_location_id' => Location::all()->random()->id,
             'serial' => $this->faker->uuid,
             'status_id' => 5,
