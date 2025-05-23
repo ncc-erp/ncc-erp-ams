@@ -132,7 +132,7 @@ class ApiAssetsCest
 
     public function getAssetBySerial(ApiTester $I)
     {
-        $I->wantTo('Get an asset by asset_tag');
+        $I->wantTo('Get an asset by serial');
 
         $asset = $asset = Asset::factory()->laptopMbp()->make([
             'asset_tag' => $this->faker->name(),
@@ -188,13 +188,28 @@ class ApiAssetsCest
         $asset = Asset::factory()->laptopMbp()->create([
             'company_id' => Company::factory()->create()->id,
             'rtd_location_id' => Location::factory()->create()->id,
+            'model_id' => AssetModel::factory()->create([
+                'manufacturer_id' => Manufacturer::factory()->create()->id,
+                'category_id' => Category::factory()->create([
+                    'category_type' => 'asset'
+                ])->id,
+            ])->id,
         ]);
+
         $I->assertInstanceOf(Asset::class, $asset);
 
         $temp_asset = Asset::factory()->laptopAir()->make([
             'company_id' => Company::factory()->create()->id,
-            'name' => $this->faker->name(),
+            'name' => $this->faker->unique->name(),
             'rtd_location_id' => Location::factory()->create()->id,
+            'model_id' => AssetModel::factory()->create([
+                'manufacturer_id' => Manufacturer::factory()->create()->id,
+                'category_id' => Category::factory()->create([
+                    'category_type' => 'asset'
+                ])->id,
+            ])->id,
+            'maintenance_date' => Carbon::now()->addDays(10),
+            'purchase_date' => Carbon::now()->addDays(3),
         ]);
         $asset->image = $temp_asset->image;
         if (!$temp_asset->requestable)
@@ -222,7 +237,6 @@ class ApiAssetsCest
         ];
 
         $I->assertNotEquals($asset->name, $data['name']);
-
         // update
         $I->sendPATCH('/hardware/' . $asset->id, $data);
         $I->seeResponseIsJson();
