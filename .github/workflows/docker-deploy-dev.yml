@@ -3,7 +3,7 @@ name: Deploy NCC-ERP-AMS-BE to server using Docker
 on:
   push:
     branches:
-      - fix/fix-cicd
+      - develop
 
 jobs:
   # tests:
