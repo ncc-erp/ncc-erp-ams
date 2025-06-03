@@ -3,7 +3,7 @@ name: Deploy NCC-ERP-AMS-BE to server using Docker
 on:
   push:
     branches:
-      - develop
+      - fix/fix-cicd
 
 jobs:
   # tests:
@@ -106,7 +106,7 @@ jobs:
   #       });
 
   build:
-    runs-on: self-hosted
+    runs-on: ams-dev
     # needs:
     #   - tests
 
@@ -124,7 +124,7 @@ jobs:
         run: docker build -t ncc-erp-ams-be:latest -f Dockerfile.php8.0 .
 
   deploy:
-    runs-on: self-hosted
+    runs-on: ams-dev
     needs:
       - build
 
