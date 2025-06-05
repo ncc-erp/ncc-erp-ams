@@ -98,6 +98,7 @@ class UsersController extends Controller
         if ($request->filled('password')) {
             $user->password = bcrypt($request->input('password'));
         }
+        $user->mezon_id = $request->input('mezon_id');
         $user->first_name = $request->input('first_name');
         $user->last_name = $request->input('last_name');
         $user->locale = $request->input('locale');

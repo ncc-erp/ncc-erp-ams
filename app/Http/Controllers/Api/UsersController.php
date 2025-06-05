@@ -778,9 +778,31 @@ class UsersController extends Controller
             $mezonUserEmail = $mezonUserInfo['sub'];
             $mezonUserAud = $mezonUserInfo['aud'][0];
 
-            
+            $user = User::where('mezon_id', $mezonUserAud)->first();
+            if ($user) {// process mezon id flow
+                $permissions = $user->permissions ? json_decode($user->permissions, true) : [];
+                $scopes = [];
+                foreach ($permissions as $key => $value) {
+                    if ($value == "1") {
+                        $scopes[] = $key;
+                    }
+                }
+    
+                $token = $user->createToken('mezon-login', $scopes)->accessToken;
+                return response()->json([
+                    "token_type" => $tokenType,
+                    "access_token" => $token,
+                ]);
+                // end flow mezon id
+            }
+            // incase check api
+            [$emailNamePart, $domain] = explode('@', $mezonUserEmail);
+            if ($domain != 'ncc.asia') {
+                return response()->json([
+                    'message' => 'Not ncc.asia email or not found mezon id',
+                ], 401);
+            }
             if(Helper::checkValidEmail( $mezonUserEmail )) { 
-                [$emailNamePart, $domain] = explode('@', $mezonUserEmail);
                 $firstName = $emailNamePart;
                 $lastName = '';
                 if (strpos($emailNamePart, '.') !== false) {
