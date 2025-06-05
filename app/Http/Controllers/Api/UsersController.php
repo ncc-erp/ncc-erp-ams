@@ -40,6 +40,7 @@ class UsersController extends Controller
             'users.address',
             'users.avatar',
             'users.city',
+            'users.mezon_id',
             'users.company_id',
             'users.country',
             'users.created_at',
