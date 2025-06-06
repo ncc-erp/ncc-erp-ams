@@ -31,6 +31,8 @@ class ApiSyncUserCest
         Mockery::close();
     }
 
+
+    // Test sync list user success
     public function testSyncListUserSuccess(ApiTester $I)
     {
         $existingUser = User::create([
@@ -106,6 +108,7 @@ class ApiSyncUserCest
         $I->assertEquals($newLocation->id, $userWithNewLocation->location_id);
     }
 
+    // Test sync list user with invalid email domain
     public function testSyncListUserWithInvalidEmailDomain(ApiTester $I)
     {
         $expectedResponse = $this->setupResponseWithInvalidEmail();
@@ -135,6 +138,8 @@ class ApiSyncUserCest
         $I->assertNotNull($validUser);
     }
 
+
+    // Test sync list user api error
     public function testSyncListUserApiError(ApiTester $I)
     {
         $mockClient = Mockery::mock(Client::class);
@@ -151,6 +156,7 @@ class ApiSyncUserCest
         $I->assertStringContainsString('API connection failed', $responseData['messages']);
     }
 
+    // Test sync list user invalid response
     public function testSyncListUserInvalidResponse(ApiTester $I)
     {
         $invalidResponse = ['error' => 'Invalid response'];
@@ -170,6 +176,8 @@ class ApiSyncUserCest
         $I->assertStringContainsString('Invalid response from HRM API', $responseData['messages']);
     }
 
+
+    // Test sync list user missing required fields
     public function testSyncListUserMissingRequiredFields(ApiTester $I)
     {
         $expectedResponse = $this->setupResponseWithMissingFields();
@@ -193,6 +201,7 @@ class ApiSyncUserCest
         $I->assertEquals(1, $syncStats['skipped']);
     }
 
+    // Create mock response
     protected function createMockResponse($body, $statusCode, $headers = [])
     {
         $response = Mockery::mock(ResponseInterface::class);
@@ -202,6 +211,7 @@ class ApiSyncUserCest
         return $response;
     }
 
+    // Setup success response
     protected function setupSuccessResponse()
     {
         return [
@@ -241,6 +251,8 @@ class ApiSyncUserCest
         ];
     }
 
+
+    // Setup response with invalid email
     protected function setupResponseWithInvalidEmail()
     {
         return [
@@ -263,6 +275,7 @@ class ApiSyncUserCest
         ];
     }
 
+    // Setup response with missing fields
     protected function setupResponseWithMissingFields()
     {
         return [

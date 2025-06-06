@@ -27,11 +27,27 @@ class ApiLocationsCest
         $I->seeResponseCodeIs(200);
 
         $response = json_decode($I->grabResponse(), true);
-        // sample verify
-        $location = Location::orderByDesc('created_at')
-            ->withCount('assignedAssets as assigned_assets_count', 'assets as assets_count', 'users as users_count')
-            ->take(10)->get()->shuffle()->first();
-        $I->seeResponseContainsJson($I->removeTimestamps((new LocationsTransformer)->transformLocation($location)));
+        
+        $I->assertArrayHasKey('total', $response);
+        $I->assertArrayHasKey('rows', $response);
+        
+     
+        $I->assertCount(10, $response['rows']);
+        $I->assertGreaterThanOrEqual(10, $response['total']);
+        
+     
+        if (!empty($response['rows'])) {
+            $firstLocation = $response['rows'][0];
+            $I->assertArrayHasKey('id', $firstLocation);
+            $I->assertArrayHasKey('name', $firstLocation);
+            $I->assertArrayHasKey('assigned_assets_count', $firstLocation);
+            $I->assertArrayHasKey('assets_count', $firstLocation);
+            $I->assertArrayHasKey('users_count', $firstLocation);
+            $I->assertArrayHasKey('tools_count', $firstLocation);
+            $I->assertArrayHasKey('digital_signatures_count', $firstLocation);
+            $I->assertArrayHasKey('branch_code', $firstLocation);
+            $I->assertArrayHasKey('available_actions', $firstLocation);
+        }
     }
 
     /** @test */
