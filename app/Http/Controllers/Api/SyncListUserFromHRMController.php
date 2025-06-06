@@ -12,11 +12,11 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 
 class SyncListUserFromHRMController extends Controller
 {
     private const DEFAULT_USER_PERMISSIONS = '{"superuser":"0","admin":"0","self.two_factor":"1","self.checkout_assets":"1"}';
-    private const LOCATION_NAME_PREFIX = 'NCC ';
     private const EMAIL_PARTS_COUNT = 2;
 
     protected Client $client;
@@ -51,7 +51,9 @@ class SyncListUserFromHRMController extends Controller
         $response = $this->client->get(env('HRM_API'), [
             'headers' => [
                 'X-Secret-Key' => env('HRM_SECRET_KEY')
-            ]
+            ],
+            'verify' => false, 
+            'timeout' => 30
         ]);
 
         $responseData = json_decode($response->getBody(), true);
@@ -173,7 +175,7 @@ class SyncListUserFromHRMController extends Controller
         }
     }
 
-    //  Parse full name into first and last name
+    //  Get full name 
     private function parseFullName(string $fullName): array
     {
         $nameParts = explode(' ', $fullName);
@@ -189,14 +191,15 @@ class SyncListUserFromHRMController extends Controller
     //  Get location ID or create new location if not exists
     private function getOrCreateLocationId(Collection &$locations, string $branchCode): int
     {
-        // Find existing location
-        $existingLocation = $locations->firstWhere('branch_code', $branchCode);
-        
-        if ($existingLocation) {
-            return $existingLocation->id;
-        }
 
-        // Create new location
+        $findLocation = Location::where('branch_code', $branchCode)->first();
+
+        
+        if ($findLocation) {
+            return $findLocation->id;
+        }
+        
+        // Create new location when not exists
         $newLocation = $this->createNewLocation($branchCode);
         $locations->push($newLocation);
         
@@ -206,15 +209,22 @@ class SyncListUserFromHRMController extends Controller
     //  Create new location
     private function createNewLocation(string $branchCode): Location
     {
-        $location = new Location();
-        $location->name = self::LOCATION_NAME_PREFIX . $branchCode;
-        $location->branch_code = $branchCode;
-        $location->save();
+        // $id = DB::table('locations')->insertGetId([
+        //     'name' => $branchCode,
+        //     'branch_code' => $branchCode,
+        //     'created_at' => now(),
+        //     'updated_at' => now(),
+        // ]);
 
+        $location = new Location();
+        // $location->id = $id;
+        $location->name = $branchCode;
+        $location->branch_code = $branchCode;
+        $location->exists = true;
+        
         return $location;
     }
 
-    //  Return success response
     private function successResponse(array $syncStats): JsonResponse
     {
         return response()->json(
@@ -222,7 +232,6 @@ class SyncListUserFromHRMController extends Controller
         );
     }
 
-    //  Return error response
     private function errorResponse(string $message): JsonResponse
     {
         return response()->json(
