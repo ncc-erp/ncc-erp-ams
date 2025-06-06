@@ -4,54 +4,229 @@ namespace App\Http\Controllers\Api;
 
 use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Http;
+use App\Models\Location;
 use App\Models\User;
-use Illuminate\Http\Request;
+use Exception;
 use GuzzleHttp\Client;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 
 class SyncListUserFromHRMController extends Controller
 {
-    protected $client;
+    private const DEFAULT_USER_PERMISSIONS = '{"superuser":"0","admin":"0","self.two_factor":"1","self.checkout_assets":"1"}';
+    private const LOCATION_NAME_PREFIX = 'NCC ';
+    private const EMAIL_PARTS_COUNT = 2;
+
+    protected Client $client;
 
     public function __construct(Client $client)
     {
         $this->client = $client;
     }
-    /**
-     * Display a listing of the resource.
-     *
-     * @author [A. Gianotto] [<snipe@snipe.net>]
-     * @since [v4.0]
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function syncListUser(Request $request)
-    {
-        $response = $this->client->get(env('HRM_API'));
-        $response = json_decode($response->getBody());
 
-        if ($response == null || !is_array($response->result))
-            return response()->json(Helper::formatStandardApiResponse('error'));
-        foreach ($response->result as $value) {
-            if (!$response) continue;
-            $userName = explode("@",  $value->email);
-            $user = User::where('username', $userName[0])->orWhere('username', $userName[0].".ncc")->first();
-            if (!$user) {
-                $user_data = [
-                    'username' => $userName[0],
-                    'first_name' => $value->firstName,
-                    'last_name' => $value->lastName,
-		            'email' => $value->email,
-                    'permissions' => '{"superuser":"1","admin":"0","import":"0","reports.view":"0","assets.view":"0","assets.create":"0","assets.edit":"0","assets.delete":"0","assets.checkin":"0","assets.checkout":"0","assets.audit":"0","assets.view.requestable":"0","accessories.view":"0","accessories.create":"0","accessories.edit":"0","accessories.delete":"0","accessories.checkout":"0","accessories.checkin":"0","consumables.view":"0","consumables.create":"0","consumables.edit":"0","consumables.delete":"0","consumables.checkout":"0","licenses.view":"0","licenses.create":"0","licenses.edit":"0","licenses.delete":"0","licenses.checkout":"0","licenses.keys":"0","licenses.files":"0","components.view":"0","components.create":"0","components.edit":"0","components.delete":"0","components.checkout":"0","components.checkin":"0","kits.view":"0","kits.create":"0","kits.edit":"0","kits.delete":"0","kits.checkout":"0","users.view":"0","users.create":"0","users.edit":"0","users.delete":"0","models.view":"0","models.create":"0","models.edit":"0","models.delete":"0","categories.view":"0","categories.create":"0","categories.edit":"0","categories.delete":"0","departments.view":"0","departments.create":"0","departments.edit":"0","departments.delete":"0","statuslabels.view":"0","statuslabels.create":"0","statuslabels.edit":"0","statuslabels.delete":"0","customfields.view":"0","customfields.create":"0","customfields.edit":"0","customfields.delete":"0","suppliers.view":"0","suppliers.create":"0","suppliers.edit":"0","suppliers.delete":"0","manufacturers.view":"0","manufacturers.create":"0","manufacturers.edit":"0","manufacturers.delete":"0","depreciations.view":"0","depreciations.create":"0","depreciations.edit":"0","depreciations.delete":"0","locations.view":"0","locations.create":"0","locations.edit":"0","locations.delete":"0","companies.view":"0","companies.create":"0","companies.edit":"0","companies.delete":"0","self.two_factor":"0","self.api":"0","self.edit_location":"0","self.checkout_assets":"0"}'// todo
-                ];
-                User::insert($user_data);
-            } else {
-                $user->username = $userName[0];
-                $user->first_name = $value->firstName;
-                $user->last_name = $value->lastName;
-                $user->email = $value->email;
-                $user->save();
+    //  Sync users from HRM 
+    public function syncListUser(Request $request): JsonResponse
+    {
+        try {
+            $hrmUsers = $this->fetchUsersFromHRM();
+            $locations = $this->getLocationsCollection();
+            $syncStats = $this->initializeSyncStats();
+
+            foreach ($hrmUsers as $hrmUser) {
+                $this->processUser($hrmUser, $locations, $syncStats);
             }
+
+            return $this->successResponse($syncStats);
+
+        } catch (Exception $e) {
+            return $this->errorResponse($e->getMessage());
         }
+    }
+
+    //  Fetch users from HRM 
+    private function fetchUsersFromHRM(): array
+    {
+        $response = $this->client->get(env('HRM_API'), [
+            'headers' => [
+                'X-Secret-Key' => env('HRM_SECRET_KEY')
+            ]
+        ]);
+
+        $responseData = json_decode($response->getBody(), true);
+
+        if (!$this->isValidHrmResponse($responseData)) {
+            throw new Exception('Invalid response from HRM API');
+        }
+
+        return $responseData['result'];
+    }
+
+    //  Validate HRM API response
+    private function isValidHrmResponse(?array $responseData): bool
+    {
+        return $responseData && 
+               isset($responseData['result']) && 
+               is_array($responseData['result']);
+    }
+
+    //  Get locations collection
+    private function getLocationsCollection(): Collection
+    {
+        return Location::select(['id', 'branch_code'])->get();
+    }
+
+    //  Initialize sync statistics
+    private function initializeSyncStats(): array
+    {
+        return [
+            'processed' => 0,
+            'created' => 0,
+            'updated' => 0,
+            'skipped' => 0
+        ];
+    }
+
+    //  Process a single user from HRM
+    private function processUser(array $hrmUser, Collection &$locations, array &$syncStats): void
+    {
+        $syncStats['processed']++;
+
+        if (!$this->isValidHrmUser($hrmUser) || !$this->isValidEmail($hrmUser['email'])) {
+            $syncStats['skipped']++;
+            return;
+        }
+
+        $username = $this->extractUsername($hrmUser['email']);
+        $user = $this->findOrCreateUser($username, $syncStats);
+        
+        $this->updateUserData($user, $hrmUser, $locations);
+        $user->save();
+    }
+
+    //  Validate HRM user data
+    private function isValidHrmUser(array $hrmUser): bool
+    {
+        return isset($hrmUser['email']) && isset($hrmUser['fullName']);
+    }
+
+    //  Validate email format and domain
+    private function isValidEmail(string $email): bool
+    {
+        if (!Str::contains($email, '@')) {
+            return false;
+        }
+
+        $emailParts = explode('@', $email);
+        
+        return count($emailParts) === self::EMAIL_PARTS_COUNT && 
+               $emailParts[1] === env('MAIL_DOMAIN');
+    }
+
+    //  Extract username from email
+    private function extractUsername(string $email): string
+    {
+        return explode('@', $email)[0];
+    }
+
+    //  Find existing user or create new one
+    private function findOrCreateUser(string $username, array &$syncStats): User
+    {
+        $user = User::where('username', $username)->first();
+
+        if (!$user) {
+            $user = $this->createNewUser($username);
+            $syncStats['created']++;
+        } else {
+            $syncStats['updated']++;
+        }
+
+        return $user;
+    }
+
+    //  Create new user with default settings
+    private function createNewUser(string $username): User
+    {
+        $user = new User();
+        $user->username = $username;
+        $user->activated = true;
+        $user->permissions = self::DEFAULT_USER_PERMISSIONS;
+
+        return $user;
+    }
+
+    //  Update user data from HRM
+    private function updateUserData(User $user, array $hrmUser, Collection &$locations): void
+    {
+        $fullName = $this->parseFullName($hrmUser['fullName']);
+
+        $user->first_name = $fullName['first_name'];
+        $user->last_name = $fullName['last_name'];
+        $user->email = $hrmUser['email'];
+        $user->job_position_code = $hrmUser['jobPositionCode'] ?? null;
+        $user->user_type = $hrmUser['userTypeName'] ?? null;
+        $user->mezon_id = $hrmUser['mezonId'] ?? null;
+
+        if (isset($hrmUser['branchCode'])) {
+            $user->location_id = $this->getOrCreateLocationId($locations, $hrmUser['branchCode']);
+        }
+    }
+
+    //  Parse full name into first and last name
+    private function parseFullName(string $fullName): array
+    {
+        $nameParts = explode(' ', $fullName);
+        $lastName = array_pop($nameParts);
+        $firstName = implode(' ', $nameParts);
+
+        return [
+            'first_name' => $firstName,
+            'last_name' => $lastName,
+        ];
+    }
+
+    //  Get location ID or create new location if not exists
+    private function getOrCreateLocationId(Collection &$locations, string $branchCode): int
+    {
+        // Find existing location
+        $existingLocation = $locations->firstWhere('branch_code', $branchCode);
+        
+        if ($existingLocation) {
+            return $existingLocation->id;
+        }
+
+        // Create new location
+        $newLocation = $this->createNewLocation($branchCode);
+        $locations->push($newLocation);
+        
+        return $newLocation->id;
+    }
+
+    //  Create new location
+    private function createNewLocation(string $branchCode): Location
+    {
+        $location = new Location();
+        $location->name = self::LOCATION_NAME_PREFIX . $branchCode;
+        $location->branch_code = $branchCode;
+        $location->save();
+
+        return $location;
+    }
+
+    //  Return success response
+    private function successResponse(array $syncStats): JsonResponse
+    {
+        return response()->json(
+            Helper::formatStandardApiResponse('success', $syncStats, 'User sync completed successfully')
+        );
+    }
+
+    //  Return error response
+    private function errorResponse(string $message): JsonResponse
+    {
+        return response()->json(
+            Helper::formatStandardApiResponse('error', null, 'User sync failed: ' . $message)
+        );
     }
 }
