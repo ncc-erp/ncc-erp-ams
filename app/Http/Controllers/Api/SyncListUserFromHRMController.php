@@ -209,18 +209,10 @@ class SyncListUserFromHRMController extends Controller
     //  Create new location
     private function createNewLocation(string $branchCode): Location
     {
-        // $id = DB::table('locations')->insertGetId([
-        //     'name' => $branchCode,
-        //     'branch_code' => $branchCode,
-        //     'created_at' => now(),
-        //     'updated_at' => now(),
-        // ]);
-
         $location = new Location();
-        // $location->id = $id;
         $location->name = $branchCode;
         $location->branch_code = $branchCode;
-        $location->exists = true;
+        $location->save();
         
         return $location;
     }
