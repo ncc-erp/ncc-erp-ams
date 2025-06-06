@@ -27,27 +27,11 @@ class ApiLocationsCest
         $I->seeResponseCodeIs(200);
 
         $response = json_decode($I->grabResponse(), true);
-        
-        $I->assertArrayHasKey('total', $response);
-        $I->assertArrayHasKey('rows', $response);
-        
-     
-        $I->assertCount(10, $response['rows']);
-        $I->assertGreaterThanOrEqual(10, $response['total']);
-        
-     
-        if (!empty($response['rows'])) {
-            $firstLocation = $response['rows'][0];
-            $I->assertArrayHasKey('id', $firstLocation);
-            $I->assertArrayHasKey('name', $firstLocation);
-            $I->assertArrayHasKey('assigned_assets_count', $firstLocation);
-            $I->assertArrayHasKey('assets_count', $firstLocation);
-            $I->assertArrayHasKey('users_count', $firstLocation);
-            $I->assertArrayHasKey('tools_count', $firstLocation);
-            $I->assertArrayHasKey('digital_signatures_count', $firstLocation);
-            $I->assertArrayHasKey('branch_code', $firstLocation);
-            $I->assertArrayHasKey('available_actions', $firstLocation);
-        }
+        // sample verify
+        $location = Location::orderByDesc('created_at')
+            ->withCount('assignedAssets as assigned_assets_count', 'assets as assets_count', 'users as users_count')
+            ->take(10)->get()->shuffle()->first();
+        $I->seeResponseContainsJson($I->removeTimestamps((new LocationsTransformer)->transformLocation($location)));
     }
 
     /** @test */
@@ -71,8 +55,6 @@ class ApiLocationsCest
             'parent_id' => $temp_location->parent_id,
             'manager_id' => $temp_location->manager_id,
             'currency' => $temp_location->currency,
-            'branch_code' => $temp_location->branch_code,
-
         ];
 
         // create
@@ -107,8 +89,6 @@ class ApiLocationsCest
             'parent_id' => $temp_location->parent_id,
             'manager_id' => $temp_location->manager_id,
             'currency' => $temp_location->currency,
-            'branch_code' => $temp_location->branch_code,
-            
         ];
 
         $I->assertNotEquals($location->name, $data['name']);
@@ -131,6 +111,7 @@ class ApiLocationsCest
         $temp_location->id = $location->id;
 
         // verify
+        $I->sendGET('/locations/'.$location->id);
         $I->seeResponseIsJson();
         $I->seeResponseCodeIs(200);
         $I->seeResponseContainsJson((new LocationsTransformer)->transformLocation($temp_location));

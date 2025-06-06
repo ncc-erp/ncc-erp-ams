@@ -142,10 +142,9 @@ class ApiClientAssetsCest
         $purchase_date = $temp_asset->purchase_date;
         $maintenance_date = $temp_asset->maintenance_date;
         
-        if ($maintenance_date && $purchase_date) {
-            if ($maintenance_date->lt($purchase_date)) {
-                $maintenance_date = $purchase_date->copy();
-            }
+      
+        if ($maintenance_date && $purchase_date && $maintenance_date < $purchase_date) {
+            $maintenance_date = $purchase_date;
         }
 
         $data = [
