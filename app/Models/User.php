@@ -63,7 +63,10 @@ class User extends SnipeModel implements AuthenticatableContract, AuthorizableCo
         'access_token_social',
         'platform',
         'permissions',
-        'manager_location'
+        'manager_location',
+        'job_position_code',
+        'user_type',
+        'mezon_id'
     ];
 
     protected $casts = [
