@@ -139,6 +139,14 @@ class ApiClientAssetsCest
             $temp_asset->requestable = '0';
         $asset->requestable = $temp_asset->requestable;
         $asset->save();
+        $purchase_date = $temp_asset->purchase_date;
+        $maintenance_date = $temp_asset->maintenance_date;
+        
+      
+        if ($maintenance_date && $purchase_date && $maintenance_date < $purchase_date) {
+            $maintenance_date = $purchase_date;
+        }
+
         $data = [
             'asset_tag' => $temp_asset->asset_tag,
             'assigned_to' => $temp_asset->assigned_to,
@@ -148,7 +156,8 @@ class ApiClientAssetsCest
             'notes' => $temp_asset->notes,
             'order_number' => $temp_asset->order_number,
             'purchase_cost' => $temp_asset->purchase_cost,
-            'purchase_date' => $temp_asset->purchase_date->format('Y-m-d'),
+            'purchase_date' => $purchase_date->format('Y-m-d'),
+            'maintenance_date' => $maintenance_date ? $maintenance_date->format('Y-m-d') : null,
             'rtd_location_id' => $temp_asset->rtd_location_id,
             'serial' => $temp_asset->serial,
             'status_id' => $temp_asset->status_id,

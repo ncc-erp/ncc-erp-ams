@@ -25,6 +25,7 @@ class UsersTransformer
                 'id' => (int) $user->id,
                 'avatar' => e($user->present()->gravatar),
                 'name' => e($user->first_name).' '.e($user->last_name),
+                'mezon_id' => ($user->mezon_id) ? e($user->mezon_id) : null,
                 'first_name' => e($user->first_name),
                 'last_name' => e($user->last_name),
                 'username' => e($user->username),
@@ -71,6 +72,8 @@ class UsersTransformer
                 'updated_at' => Helper::getFormattedDateObject($user->updated_at, 'datetime'),
                 'last_login' => Helper::getFormattedDateObject($user->last_login, 'datetime'),
                 'deleted_at' => ($user->deleted_at) ? Helper::getFormattedDateObject($user->deleted_at, 'datetime') : null,
+                'user_type' => ($user->user_type) ? e($user->user_type) : null,
+                'job_position_code' => ($user->job_position_code) ?  e($user->job_position_code) : null,
             ];
 
         $permissions_array['available_actions'] = [
