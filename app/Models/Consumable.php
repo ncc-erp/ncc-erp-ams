@@ -387,4 +387,8 @@ class Consumable extends SnipeModel
     {
         return $query->leftJoin('companies', 'consumables.company_id', '=', 'companies.id')->orderBy('companies.name', $order);
     }
+    public function scopeHasMaintenanceDate($query)
+    {
+        return $query->whereNotNull('consumables.maintenance_date');
+    }
 }
