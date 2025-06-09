@@ -160,6 +160,9 @@ class ConsumablesController extends Controller
         if ($request->filled('date_from', 'date_to')) {
             $consumables->whereBetween('purchase_date', [$request->input('date_from'), $request->input('date_to')]);
         }
+        if ($request->filled('maintenance_date') && $request->input('maintenance_date') == 1) {
+            $consumables->hasMaintenanceDate();
+        }
 
         return $consumables;
     }
