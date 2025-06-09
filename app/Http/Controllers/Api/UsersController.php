@@ -790,7 +790,7 @@ class UsersController extends Controller
             $mezonUserEmail = $mezonUserInfo['sub'];
             $mezonUserAud = $mezonUserInfo['aud'][0];
 
-            $user = User::where('mezon_id', $mezonUserAud)->first();
+            $user = User::where('mezon_id', $mezonUserAud['user_id'])->first();
             if ($user) {// process mezon id flow
                 $permissions = $user->permissions ? json_decode($user->permissions, true) : [];
                 $scopes = [];
