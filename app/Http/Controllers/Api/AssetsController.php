@@ -1071,7 +1071,6 @@ class AssetsController extends Controller
 
         $asset = new Asset();
         $asset->model()->associate(AssetModel::find((int) $request->get('model_id')));
-
         $asset->name = $request->get('name');
         $asset->serial = $request->get('serial');
         $asset->company_id = Company::getIdForCurrentUser($request->get('company_id'));
@@ -1095,8 +1094,11 @@ class AssetsController extends Controller
         $asset->assigned_status = $request->get('assigned_status', 0);
         $asset->maintenance_cycle = $request->get('maintenance_cycle', 0);
         $asset->maintenance_date = $request->get('maintenance', null);
-
-
+        $asset->customer                = $request->get('customer', null);
+        $asset->project                 = $request->get('project', null);
+        $asset->customer_code           = $request->get('customer_code', null);
+        $asset->project_code            = $request->get('project_code', null);
+        $asset->isCustomerRenting       = filter_var($request->get('isCustomerRenting', false), FILTER_VALIDATE_BOOLEAN);
         /**
          * this is here just legacy reasons. Api\AssetController
          * used image_source  once to allow encoded image uploads.
