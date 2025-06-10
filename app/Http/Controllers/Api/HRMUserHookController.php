@@ -166,7 +166,7 @@ class HRMUserHookController extends Controller
             return null;
         }
         
-        $location = \App\Models\Location::where('branch_code', $branchCode)->first();
+        $location = Location::where('branch_code', $branchCode)->first();
         return $location ? $location->id : null;
     }
 
