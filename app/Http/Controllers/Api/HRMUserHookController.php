@@ -41,18 +41,6 @@ class HRMUserHookController extends Controller
             return $this->successResponse($user->toArray(), 'User created successfully in IMS', Response::HTTP_CREATED);
 
         } catch (Exception $e) {
-            return $this->errorResponse('Failed to create user in IMS', $e, $e->getCode() ?: Response::HTTP_INTERNAL_SERVER_ERROR);
-
-            if (!$user) {
-                return $this->errorResponse("User not found", new Exception('User not found', Response::HTTP_BAD_REQUEST));
-            }
-
-            $mappedData = $this->mappingUser($data);
-            $user->update($mappedData);
-
-            return $this->successResponse($user->toArray(), 'User updated successfully in IMS');
-
-        } catch (Exception $e) {
             return $this->errorResponse('Failed to update user in IMS', $e, $e->getCode() ?: Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
