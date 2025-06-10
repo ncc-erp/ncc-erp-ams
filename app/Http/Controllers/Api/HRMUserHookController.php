@@ -45,6 +45,29 @@ class HRMUserHookController extends Controller
         }
     }
 
+      //  Update User By HRM
+      public function updateUserByHRM(HRMUserRequest $request): JsonResponse
+      {
+          try {
+              $data = $request->validated();
+              $this->authorize('view', User::class);
+  
+              $user = $this->findUserByEmail($data['emailAddress']);
+  
+              if (!$user) {
+                  return $this->errorResponse("User not found", new Exception('User not found', Response::HTTP_BAD_REQUEST));
+              }
+  
+              $mappedData = $this->mappingUser($data);
+              $user->update($mappedData);
+  
+              return $this->successResponse($user->toArray(), 'User updated successfully in IMS');
+  
+          } catch (Exception $e) {
+              return $this->errorResponse('Failed to update user in IMS', $e, $e->getCode() ?: Response::HTTP_INTERNAL_SERVER_ERROR);
+          }
+      }
+
     //  Confirm User Quit
     public function confirmUserQuit(HRMUserStatusChangeRequest $request): JsonResponse
     {
