@@ -10,6 +10,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
+use App\Http\Requests\HRMUserHookRequest;
+
+
 class HRMUserHookController extends Controller
 {
     private const USER_CREATED                   = 'created';
@@ -21,100 +24,85 @@ class HRMUserHookController extends Controller
 
 
     //  Create User By HRM
-    public function createUserByHRM(Request $request): JsonResponse
+    public function createUserByHRM(HRMUserHookRequest $request): JsonResponse
     {
-        try {
-            $user = $this->findUserByEmail($request['emailAddress']);
+        $user = $this->findUserByEmail($request['emailAddress']);
 
-            if ($user) {
-                return $this->errorResponse("User already exists", new Exception('User already exists', Response::HTTP_BAD_REQUEST));
-            }
-
-            $mappedData = $this->mappingUser($request->all());
-            $user = User::create($mappedData);
-            
-            return $this->successResponse($user->toArray(), 'User created successfully in IMS', Response::HTTP_CREATED);
-
-        } catch (Exception $e) {
-            return $this->errorResponse('Failed to update user in IMS', $e, $e->getCode() ?: Response::HTTP_INTERNAL_SERVER_ERROR);
+        if ($user) {
+            return $this->errorResponse("User already exists", new Exception('User already exists', Response::HTTP_BAD_REQUEST));
         }
+
+        $mappedData = $this->mappingUser($request->all());
+        $user = User::create($mappedData);
+        
+        return $this->successResponse($user->toArray(), 'User created successfully', Response::HTTP_CREATED);
     }
 
       //  Update User By HRM
-      public function updateUserByHRM(Request $request): JsonResponse
+      public function updateUserByHRM(HRMUserHookRequest $request): JsonResponse
       {
-          try {
-  
-              $user = $this->findUserByEmail($request['emailAddress']);
-  
-              if (!$user) {
-                  return $this->errorResponse("User not found", new Exception('User not found', Response::HTTP_BAD_REQUEST));
-              }
-  
-              $mappedData = $this->mappingUser($request->all());
-              $user->update($mappedData);
-  
-              return $this->successResponse($user->toArray(), 'User updated successfully in IMS');
-  
-          } catch (Exception $e) {
-              return $this->errorResponse('Failed to update user in IMS', $e, $e->getCode() ?: Response::HTTP_INTERNAL_SERVER_ERROR);
-          }
+            $user = $this->findUserByEmail($request['emailAddress']);
+    
+            if (!$user) {
+                return $this->errorResponse("User not found", new Exception('User not found', Response::HTTP_BAD_REQUEST));
+            }
+
+            $mappedData = $this->mappingUser($request->all());
+            $user->update($mappedData);
+
+            return $this->successResponse($user->toArray(), 'User updated successfully');
       }
 
     //  Confirm User Quit
-    public function confirmUserQuit(Request $request): JsonResponse
+    public function confirmUserQuit(HRMUserHookRequest $request): JsonResponse
     {
         return $this->confirmUserStatus($request, self::USER_QUIT_CONFIRMED, 'quit');
     }
 
     //  Confirm User Pause
-    public function confirmUserPause(Request $request): JsonResponse
+    public function confirmUserPause(HRMUserHookRequest $request): JsonResponse
     {
         return $this->confirmUserStatus($request, self::USER_PAUSE_CONFIRMED, 'pause');
     }
 
     //  Confirm User Maternity Leave
-    public function confirmUserMaternityLeave(Request $request): JsonResponse
+    public function confirmUserMaternityLeave(HRMUserHookRequest $request): JsonResponse
     {
         return $this->confirmUserStatus($request, self::USER_MATERNITY_LEAVE_CONFIRMED, 'maternity leave');
     }
 
     //  Confirm User Back to Work
-    public function confirmUserBackToWork(Request $request): JsonResponse
+    public function confirmUserBackToWork(HRMUserHookRequest $request): JsonResponse
     {
         return $this->confirmUserStatus($request, self::USER_BACK_TO_WORK_CONFIRMED, 'back to work');
     }
 
     //  Confirm User Status
-    private function confirmUserStatus(Request $request, string $status, string $actionType): JsonResponse
+    private function confirmUserStatus(HRMUserHookRequest $request, string $status, string $actionType): JsonResponse
     {
-        try {
-            $user = $this->findUserByEmail($request['emailAddress']);
+        $user = $this->findUserByEmail($request['emailAddress']);
 
-            if (!$user) {
-                return $this->errorResponse("Không tìm thấy user", new Exception('User not found', Response::HTTP_BAD_REQUEST));
-            }
-
-            $activatedStatus = $status === self::USER_BACK_TO_WORK_CONFIRMED ? 1 : 0;
-        
-            $updatedNotes = $this->updateUserStatusInNotes($user, $status, $request['dateAt']);
-            
-            $user->update([
-                'activated' => $activatedStatus,
-                'notes' => $updatedNotes,
-            ]);
-
-            return $this->successResponse($user->toArray(), "User {$actionType} status confirmed successfully in IMS");
-
-        } catch (Exception $e) {
-            return $this->errorResponse("Failed to confirm user {$actionType} status in IMS", $e);
+        if (!$user) {
+            return $this->errorResponse("User not found", new Exception('User not found', Response::HTTP_BAD_REQUEST));
         }
+
+
+        $activatedStatus = ($status === self::USER_BACK_TO_WORK_CONFIRMED || $status === self::USER_MATERNITY_LEAVE_CONFIRMED) ? 1 : 0;
+    
+        $updatedNotes = $this->updateUserStatusInNotes($user, $status, $request['dateAt']);
+        
+        $user->update([
+            'activated' => $activatedStatus,
+            'notes' => $updatedNotes,
+        ]);
+
+        return $this->successResponse($user->toArray(), "User {$actionType} status confirmed successfully in IMS");
     }
 
     //  Check Connect
     public function checkConnect(): JsonResponse
     {
-        return $this->successResponse([], 'IMS connected successfully');
+        return $this->successResponse([], 'Connected successfully');
     }
 
     //  Service:  Update User Status In Notes
@@ -194,6 +182,7 @@ class HRMUserHookController extends Controller
             'job_position_code' => $data['positionCode'] ?? null,
             'user_type' => $data['type'] ?? null,
             'location_id' => $this->findLocationIdByBranchCode($data['branchCode'] ?? null),
+            "mezon_id" => $data['mezonId'] ?? null,
         ];
     }
 
