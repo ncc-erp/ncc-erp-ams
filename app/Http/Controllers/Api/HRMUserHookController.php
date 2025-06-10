@@ -3,9 +3,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\HRMUserRequest;
-use App\Http\Requests\HRMUserStatusChangeRequest;
 use App\Models\User;
+use App\Models\Location;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -22,21 +21,17 @@ class HRMUserHookController extends Controller
 
 
     //  Create User By HRM
-    public function createUserByHRM(HRMUserRequest $request): JsonResponse
+    public function createUserByHRM(Request $request): JsonResponse
     {
         try {
-            $data = $request->validated();
-            $this->authorize('view', User::class);
-
-            $user = $this->findUserByEmail($data['emailAddress']);
+            $user = $this->findUserByEmail($request['emailAddress']);
 
             if ($user) {
                 return $this->errorResponse("User already exists", new Exception('User already exists', Response::HTTP_BAD_REQUEST));
             }
 
-            $mappedData = $this->mappingUser($data);
+            $mappedData = $this->mappingUser($request->all());
             $user = User::create($mappedData);
-            $checkUser = User::find($user->id);
             
             return $this->successResponse($user->toArray(), 'User created successfully in IMS', Response::HTTP_CREATED);
 
@@ -46,19 +41,17 @@ class HRMUserHookController extends Controller
     }
 
       //  Update User By HRM
-      public function updateUserByHRM(HRMUserRequest $request): JsonResponse
+      public function updateUserByHRM(Request $request): JsonResponse
       {
           try {
-              $data = $request->validated();
-              $this->authorize('view', User::class);
   
-              $user = $this->findUserByEmail($data['emailAddress']);
+              $user = $this->findUserByEmail($request['emailAddress']);
   
               if (!$user) {
                   return $this->errorResponse("User not found", new Exception('User not found', Response::HTTP_BAD_REQUEST));
               }
   
-              $mappedData = $this->mappingUser($data);
+              $mappedData = $this->mappingUser($request->all());
               $user->update($mappedData);
   
               return $this->successResponse($user->toArray(), 'User updated successfully in IMS');
@@ -69,36 +62,34 @@ class HRMUserHookController extends Controller
       }
 
     //  Confirm User Quit
-    public function confirmUserQuit(HRMUserStatusChangeRequest $request): JsonResponse
+    public function confirmUserQuit(Request $request): JsonResponse
     {
         return $this->confirmUserStatus($request, self::USER_QUIT_CONFIRMED, 'quit');
     }
 
     //  Confirm User Pause
-    public function confirmUserPause(HRMUserStatusChangeRequest $request): JsonResponse
+    public function confirmUserPause(Request $request): JsonResponse
     {
         return $this->confirmUserStatus($request, self::USER_PAUSE_CONFIRMED, 'pause');
     }
 
     //  Confirm User Maternity Leave
-    public function confirmUserMaternityLeave(HRMUserStatusChangeRequest $request): JsonResponse
+    public function confirmUserMaternityLeave(Request $request): JsonResponse
     {
         return $this->confirmUserStatus($request, self::USER_MATERNITY_LEAVE_CONFIRMED, 'maternity leave');
     }
 
     //  Confirm User Back to Work
-    public function confirmUserBackToWork(HRMUserStatusChangeRequest $request): JsonResponse
+    public function confirmUserBackToWork(Request $request): JsonResponse
     {
         return $this->confirmUserStatus($request, self::USER_BACK_TO_WORK_CONFIRMED, 'back to work');
     }
 
     //  Confirm User Status
-    private function confirmUserStatus(HRMUserStatusChangeRequest $request, string $status, string $actionType): JsonResponse
+    private function confirmUserStatus(Request $request, string $status, string $actionType): JsonResponse
     {
         try {
-            $data = $request->validated();
-
-            $user = $this->findUserByEmail($data['emailAddress']);
+            $user = $this->findUserByEmail($request['emailAddress']);
 
             if (!$user) {
                 return $this->errorResponse("Không tìm thấy user", new Exception('User not found', Response::HTTP_BAD_REQUEST));
@@ -106,7 +97,7 @@ class HRMUserHookController extends Controller
 
             $activatedStatus = $status === self::USER_BACK_TO_WORK_CONFIRMED ? 1 : 0;
         
-            $updatedNotes = $this->updateUserStatusInNotes($user, $status, $data['dateAt']);
+            $updatedNotes = $this->updateUserStatusInNotes($user, $status, $request['dateAt']);
             
             $user->update([
                 'activated' => $activatedStatus,
