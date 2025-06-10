@@ -1634,4 +1634,70 @@ Route::group(['prefix' => 'v1', 'middleware' => ['api', 'throttle:' . config('ap
     );
     //End Route Client Asset
 
+    // HRM User Hook API routes
+    Route::group(['prefix' => 'services/app'], function () {
+        
+        Route::group(['prefix' => 'Hrmv2'], function () {
+            Route::post(
+                'CreateUserByHRM',
+                [
+                    Api\HRMUserHookController::class,
+                    'createUserByHRM'
+                ]
+            )->name('api.hrm.createUserByHRM');
+
+            Route::post(
+                'UpdateUserByHRM',
+                [
+                    Api\HRMUserHookController::class,
+                    'updateUserByHRM'
+                ]
+            )->name('api.hrm.updateUserByHRM');
+
+            Route::post(
+                'ConfirmUserQuit',
+                [
+                    Api\HRMUserHookController::class,
+                    'confirmUserQuit'
+                ]
+            )->name('api.hrm.confirmUserQuit');
+
+            Route::post(
+                'ConfirmUserPause',
+                [
+                    Api\HRMUserHookController::class,
+                    'confirmUserPause'
+                ]
+            )->name('api.hrm.confirmUserPause');
+
+            Route::post(
+                'ConfirmUserMaternityLeave',
+                [
+                    Api\HRMUserHookController::class,
+                    'confirmUserMaternityLeave'
+                ]
+            )->name('api.hrm.confirmUserMaternityLeave');
+
+            Route::post(
+                'ConfirmUserBackToWork',
+                [
+                    Api\HRMUserHookController::class,
+                    'confirmUserBackToWork'
+                ]
+            )->name('api.hrm.confirmUserBackToWork');
+        }); // end Hrmv2 routes
+
+        // Public routes
+        Route::group(['prefix' => 'Public'], function () {
+            Route::get(
+                'CheckConnect',
+                [
+                    Api\IMSController::class,
+                    'checkConnect'
+                ]
+            )->name('api.ims.checkConnect');
+        }); 
+
+    }); 
+
 }); // end API routes
