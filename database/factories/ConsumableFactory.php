@@ -29,14 +29,18 @@ class ConsumableFactory extends Factory
      */
     public function definition()
     {
+        $purchaseDate = $this->faker->dateTimeBetween('-1 years', 'now', date_default_timezone_get());
+        $maintenanceDate = $this->faker->dateTimeBetween($purchaseDate, 'now', date_default_timezone_get());
         return [
             'user_id' => 1,
             'item_no' => $this->faker->numberBetween(1000000, 50000000),
             'order_number' => $this->faker->numberBetween(1000000, 50000000),
-            'purchase_date' => $this->faker->dateTimeBetween('-1 years', 'now', date_default_timezone_get()),
+            'purchase_date' => $purchaseDate,
             'purchase_cost' => $this->faker->randomFloat(2, 1, 50),
             'qty' => $this->faker->numberBetween(5, 10),
             'min_amt' => $this->faker->numberBetween($min = 1, $max = 2),
+            'maintenance_date' => $maintenanceDate,
+            'maintenance_cycle' => $this->faker->numberBetween(1, 100),
         ];
     }
 

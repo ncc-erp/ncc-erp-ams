@@ -82,7 +82,7 @@ class ApiConsumablesCest
         $this->sort($I, 'location', 'asc');
     }
 
-    
+
     protected function filter($I, $filterName, $value)
     {
         $I->sendGET('/consumables?limit=10&offset=0', [
@@ -140,6 +140,8 @@ class ApiConsumablesCest
             'purchase_date' => $temp_consumable->purchase_date,
             'qty' => $temp_consumable->qty,
             'model_number' => $temp_consumable->model_number,
+            'maintenance_date' => $temp_consumable->maintenance_date,
+            'maintenance_cycle' => $temp_consumable->maintenance_cycle,
         ];
 
         // create
@@ -195,12 +197,14 @@ class ApiConsumablesCest
             'manufacturer_id' => $temp_consumable->manufacturer_id,
             'supplier_id' => $temp_consumable->supplier_id,
             'qty' => $temp_consumable->qty,
+            'maintenance_date' => $temp_consumable->maintenance_date,
+            'maintenance_cycle' => $temp_consumable->maintenance_cycle,
         ];
 
         $I->assertNotEquals($consumable->name, $data['name']);
 
         // update
-        $I->sendPATCH('/consumables/'.$consumable->id, $data);
+        $I->sendPATCH('/consumables/' . $consumable->id, $data);
         $I->seeResponseIsJson();
         $I->seeResponseCodeIs(200);
 
@@ -212,11 +216,16 @@ class ApiConsumablesCest
         $I->assertEquals($temp_consumable->company_id, $response->payload->company_id); // company_id updated
         $I->assertEquals($temp_consumable->name, $response->payload->name); // consumable name updated
         $I->assertEquals($temp_consumable->location_id, $response->payload->location_id); // consumable location_id updated
+        $I->assertEquals($temp_consumable->maintenance_cycle, $response->payload->maintenance_cycle); // maintenance_cycle updated
+        $I->assertEquals(
+            Carbon::parse($temp_consumable->maintenance_date)->format('Y-m-d'),
+            Carbon::parse($response->payload->maintenance_date)->format('Y-m-d')
+        );
         $temp_consumable->created_at = $response->payload->created_at;
         $temp_consumable->updated_at = $response->payload->updated_at;
         $temp_consumable->id = $consumable->id;
         // verify
-        $I->sendGET('/consumables/'.$consumable->id);
+        $I->sendGET('/consumables/' . $consumable->id);
         $I->seeResponseIsJson();
         $I->seeResponseCodeIs(200);
         $I->seeResponseContainsJson((new ConsumablesTransformer)->transformConsumable($temp_consumable));
@@ -234,7 +243,7 @@ class ApiConsumablesCest
         $I->assertInstanceOf(Consumable::class, $consumable);
 
         // delete
-        $I->sendDELETE('/consumables/'.$consumable->id);
+        $I->sendDELETE('/consumables/' . $consumable->id);
         $I->seeResponseIsJson();
         $I->seeResponseCodeIs(200);
 
@@ -247,14 +256,14 @@ class ApiConsumablesCest
     public function selectlistConsumables(ApiTester $I)
     {
         $I->wantTo('get a list of consumables');
-        
+
         $I->sendGET('/consumables/selectlist', [
             'search' => 'h',
         ]);
 
         $I->seeResponseIsJson();
         $I->seeResponseCodeIs(200);
-        $consumables = Consumable::where('consumables.name', 'LIKE', '%'.'h'.'%');
+        $consumables = Consumable::where('consumables.name', 'LIKE', '%' . 'h' . '%');
         $consumables = $consumables->orderBy('name', 'ASC')->paginate(50);
         $I->seeResponseContainsJson($I->removeTimestamps(((new SelectlistTransformer)->transformSelectlist($consumables))));
     }
@@ -265,7 +274,6 @@ class ApiConsumablesCest
         $consumable = Consumable::factory()->ink()->create();
         $id_error = $consumable->id + 1;
         $user = User::factory()->create();
-
         //error not exist
         $I->sendGET("consumables/{$id_error}/checkout");
         $response = json_decode($I->grabResponse());
@@ -277,7 +285,7 @@ class ApiConsumablesCest
             'assigned_to' => $user->id,
             'name' => $consumable->name,
             'note' => $this->faker->text(),
-            'category_id' => Category::select('name')->where('id', '=', $consumable->category_id)->first(),
+            'category_id' => $consumable->category_id
         ]);
         $I->seeResponseCodeIs(200);
         $I->seeResponseIsJson();
@@ -287,10 +295,10 @@ class ApiConsumablesCest
 
         //verify
         $consumable_assigned = DB::table('consumables_users')
-                    ->where([
-                        'user_id' => $user->id,
-                        'consumable_id' => $consumable->id
-                    ])->first();
+            ->where([
+                'user_id' => $user->id,
+                'consumable_id' => $consumable->id
+            ])->first();
         $I->assertNotNull($consumable_assigned);
     }
 

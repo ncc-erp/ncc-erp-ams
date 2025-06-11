@@ -232,8 +232,12 @@ class ApiAssetsCest
             'supplier_id' => $temp_asset->supplier_id,
             'warranty_months' => $temp_asset->warranty_months,
             'requestable' => $temp_asset->requestable,
+            'customer' => $temp_asset->customer,
+            'project' => $temp_asset->project,
+            'isCustomerRenting' => $temp_asset->isCustomerRenting,
             'maintenance_date' => $temp_asset->maintenance_date,
             'maintenance_cycle' => $temp_asset->maintenance_cycle,
+
         ];
 
         $I->assertNotEquals($asset->name, $data['name']);
