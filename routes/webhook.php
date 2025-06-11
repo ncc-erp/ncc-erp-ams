@@ -52,17 +52,13 @@ Route::group(['prefix' => 'v1/services/app', 'middleware' => ['throttle:' . conf
                 'confirmUserBackToWork'
             ]
         )->name('api.hrm.confirmUserBackToWork');
-    }); // end Hrmv2 routes
 
-    // Public routes
-    Route::group(['prefix' => 'Public'], function () {
         Route::get(
             'CheckConnect',
             [
                 Api\Webhooks\HRMUserHookController::class,
                 'checkConnect'
             ]
-        )->name('api.ims.checkConnect');
-    }); 
-
+        )->name('api.hrm.checkConnect');
+    }); // end Hrmv2 routes
 });
