@@ -25,6 +25,7 @@ jobs:
           MYSQL_ALLOW_EMPTY_PASSWORD: false
           MYSQL_ROOT_PASSWORD: 12345678
           MYSQL_DATABASE: ams_testing
+          HRM_ALLOWED_IPS: "127.0.0.1,192.168.1.100"
         ports:
           - 3306/tcp
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
