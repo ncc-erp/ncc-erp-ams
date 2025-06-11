@@ -49,7 +49,6 @@ class ApiHRMUserHookCest
     public function _before(ApiTester $I)
     {
         $I->haveHttpHeader('Accept', 'application/json');
-        // Fake IP để test IP restriction - sử dụng IP được phép trong config
         $I->haveHttpHeader('X-Forwarded-For', '127.0.0.1');
         $this->faker = Factory::create();
     }
