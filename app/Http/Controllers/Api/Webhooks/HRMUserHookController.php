@@ -1,5 +1,5 @@
 <?php
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Api\Webhooks;
 
 use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
@@ -96,7 +96,7 @@ class HRMUserHookController extends Controller
             'notes' => $updatedNotes,
         ]);
 
-        return $this->successResponse($user->toArray(), "User {$actionType} status confirmed successfully in IMS");
+        return $this->successResponse($user->toArray(), "User {$actionType} status confirmed successfully");
     }
 
     //  Check Connect

@@ -48,15 +48,15 @@ class ApiHRMUserHookCest
 
     public function _before(ApiTester $I)
     {
-        $this->user = \App\Models\User::find(1);
         $I->haveHttpHeader('Accept', 'application/json');
-        $I->amBearerAuthenticated($I->getToken($this->user));
+        // Fake IP để test IP restriction - sử dụng IP được phép trong config
+        $I->haveHttpHeader('X-Forwarded-For', '127.0.0.1');
         $this->faker = Factory::create();
     }
 
     public function _after(ApiTester $I)
     {
-        $I->deleteHeader('Authorization');
+        $I->deleteHeader('X-Forwarded-For');
     }
 
 
@@ -264,6 +264,42 @@ class ApiHRMUserHookCest
         $I->sendPOST('services/app/Hrmv2/CreateUserByHRM', $invalidPayload);
         
         $I->seeResponseIsJson();
+    }
+
+    // Test IP restriction - allowed IP
+    public function testCreateUserWithAllowedIP(ApiTester $I)
+    {
+        $I->wantTo('Test API access with allowed IP');
+        
+        $this->cleanupTestUser($I);
+        
+        // Set allowed IP
+        $I->haveHttpHeader('X-Forwarded-For', '127.0.0.1');
+        
+        $I->sendPOST('services/app/Hrmv2/CreateUserByHRM', $this->createUserPayload);
+        
+        $I->seeResponseCodeIs(HttpCode::CREATED);
+        $I->seeResponseIsJson();
+        $I->seeResponseContainsJson([
+            'messages' => 'User created successfully'
+        ]);
+    }
+
+    // Test IP restriction - denied IP
+    public function testCreateUserWithDeniedIP(ApiTester $I)
+    {
+        $I->wantTo('Test API access with denied IP');
+        
+        // Set denied IP
+        $I->haveHttpHeader('X-Forwarded-For', '192.168.99.99');
+        
+        $I->sendPOST('services/app/Hrmv2/CreateUserByHRM', $this->createUserPayload);
+        
+        $I->seeResponseCodeIs(HttpCode::FORBIDDEN);
+        $I->seeResponseIsJson();
+        $I->seeResponseContainsJson([
+            'messages' => 'Access denied. Your IP address is not authorized.'
+        ]);
     }
 
 
