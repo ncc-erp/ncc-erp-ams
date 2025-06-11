@@ -80,7 +80,6 @@ class RouteServiceProvider extends ServiceProvider
 
         // Webhook routes without authentication
         Route::group([
-            'middleware' => 'ip.restriction:hrm',
             'namespace' => $this->namespace,
             'prefix' => 'api',
         ], function ($router) {

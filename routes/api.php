@@ -1634,6 +1634,4 @@ Route::group(['prefix' => 'v1', 'middleware' => ['api', 'throttle:' . config('ap
     );
     //End Route Client Asset
 
- 
-
 }); // end API routes

@@ -4,7 +4,7 @@ use App\Http\Controllers\Api;
 
 Route::group(['prefix' => 'v1/services/app', 'middleware' => ['throttle:' . config('app.api_throttle_per_minute') . ',1']], function () {
     
-    Route::group(['prefix' => 'Hrmv2'], function () {
+    Route::group(['prefix' => 'Hrmv2', 'middleware' => 'ip.restriction:hrm'], function () {
         Route::post(
             'CreateUserByHRM',
             [
