@@ -23,6 +23,7 @@ class LocationFactory extends Factory
             'currency' => $this->faker->currencyCode(),
             'zip' => $this->faker->postcode(),
             'image' => '1.jpg',
+            'branch_code' => $this->faker->randomElement(['CA', 'HN', 'DN', 'QN', 'HCM']),
 
         ];
     }

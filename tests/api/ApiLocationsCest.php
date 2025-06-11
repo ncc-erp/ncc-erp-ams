@@ -41,6 +41,7 @@ class ApiLocationsCest
 
         $temp_location = Location::factory()->make([
             'name' => 'Test Location Tag',
+            'branch_code' => 'DN',
         ]);
 
         // setup
@@ -55,6 +56,7 @@ class ApiLocationsCest
             'parent_id' => $temp_location->parent_id,
             'manager_id' => $temp_location->manager_id,
             'currency' => $temp_location->currency,
+            'branch_code' => 'DN', 
         ];
 
         // create
@@ -71,11 +73,13 @@ class ApiLocationsCest
         // create
         $location = Location::factory()->create([
             'name' => 'Original Location Name',
+            'branch_code' => 'DN',
         ]);
         $I->assertInstanceOf(Location::class, $location);
 
         $temp_location = Location::factory()->make([
             'name' => 'updated location name',
+            'branch_code' => 'DN',
         ]);
 
         $data = [
@@ -89,6 +93,7 @@ class ApiLocationsCest
             'parent_id' => $temp_location->parent_id,
             'manager_id' => $temp_location->manager_id,
             'currency' => $temp_location->currency,
+            'branch_code' => 'DN',
         ];
 
         $I->assertNotEquals($location->name, $data['name']);
@@ -125,6 +130,7 @@ class ApiLocationsCest
         // create
         $location = Location::factory()->create([
             'name' => 'Soon to be deleted',
+            'branch_code' => 'DN',
         ]);
         $I->assertInstanceOf(Location::class, $location);
 

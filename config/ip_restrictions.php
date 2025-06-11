@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'hrm' => [
-        '127.0.0.1', // localhost - test
-    ],
+    'hrm' => array_merge(
+        array_filter(explode(',', env('HRM_ALLOWED_IPS', '')))
+    ),
 ]; 
