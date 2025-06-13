@@ -18,12 +18,12 @@ class SendMaintenanceNotifications extends Command
 
         $assets = Asset::whereDate('maintenance_date', $today)
             ->whereNotNull('webhook_id')
-            ->with('webhook')
+            ->with('webhook', 'model.category')
             ->get();
 
         foreach ($assets as $asset) {
             if ($asset->webhook && $asset->webhook->url) {
-                $messageText = "Asset [{$asset->name}] is due for maintenance today.";
+                $messageText = "Asset {$asset->name} - {$asset->model->category->name} is due for maintenance today.";
                 $payload = [
                     'type' => 'hook',
                     'message' => [
