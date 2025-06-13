@@ -104,6 +104,7 @@ class Asset extends Depreciable
         'checkin_at' => 'datetime:Y-m-d H:i:s',
         'maintenance_date' => 'datetime:Y-m-d',
         'maintenance_cycle' => 'integer',
+        'webhook_id' => 'integer',
     ];
 
     protected $rules = [
@@ -126,6 +127,7 @@ class Asset extends Depreciable
         'last_audit_date' => 'date|nullable',
         'maintenance_date' => 'date|nullable|after_or_equal:purchase_date',
         'maintenance_cycle' => 'integer|nullable|min:0',
+        'webhook_id' => 'exists:webhooks,id|nullable',
     ];
 
     /**
@@ -157,6 +159,7 @@ class Asset extends Depreciable
         'is_external',
         'maintenance_date',
         'maintenance_cycle',
+        'webhook_id',
     ];
 
     use Searchable;
@@ -195,6 +198,7 @@ class Asset extends Depreciable
         'model' => ['name', 'model_number'],
         'model.category' => ['name'],
         'model.manufacturer' => ['name'],
+        'webhook' => ['name'],  
     ];
 
 
@@ -264,6 +268,10 @@ class Asset extends Depreciable
     public function finfast_request_asset()
     {
         return $this->hasOne(FinfastRequestAsset::class);
+    }
+    public function webhook()
+    {
+        return $this->belongsTo(\App\Models\Webhook::class, 'webhook_id');
     }
 
     /**

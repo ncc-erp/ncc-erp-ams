@@ -135,6 +135,7 @@ class AssetsController extends Controller
                 'model.manufacturer',
                 'model.fieldset',
                 'supplier',
+                'webhook',
             );
         $assets = $this->filters($assets, $request);
 
@@ -1099,6 +1100,8 @@ class AssetsController extends Controller
         $asset->customer_code           = $request->get('customer_code', null);
         $asset->project_code            = $request->get('project_code', null);
         $asset->isCustomerRenting       = filter_var($request->get('isCustomerRenting', false), FILTER_VALIDATE_BOOLEAN);
+        $asset->webhook_id = $request->get('webhook_id', null);
+
         /**
          * this is here just legacy reasons. Api\AssetController
          * used image_source  once to allow encoded image uploads.
@@ -1186,7 +1189,8 @@ class AssetsController extends Controller
                 $asset->maintenance_cycle = $request->get('maintenance_cycle') : null;
             ($request->filled('maintenance')) ?
                 $asset->maintenance_date = $request->get('maintenance') : null;
-
+            ($request->filled('webhook_id')) ?
+                $asset->webhook_id = $request->get('webhook_id') : null;
 
             /**
              * this is here just legacy reasons. Api\AssetController
