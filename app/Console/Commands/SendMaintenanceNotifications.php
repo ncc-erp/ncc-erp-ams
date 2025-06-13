@@ -6,6 +6,7 @@ use Illuminate\Console\Command;
 use App\Models\Asset;
 use Illuminate\Support\Facades\Http;
 use Carbon\Carbon;
+use App\Models\WebhookLog;
 
 class SendMaintenanceNotifications extends Command
 {
@@ -22,7 +23,10 @@ class SendMaintenanceNotifications extends Command
             ->get();
 
         foreach ($assets as $asset) {
-            if ($asset->webhook && $asset->webhook->url) {
+            if (
+                $asset->webhook && $asset->webhook->url && is_array($asset->webhook->type) &&
+                in_array('ASSET_MAINTENANCE', $asset->webhook->type)
+            ) {
                 $messageText = "Asset {$asset->name} - {$asset->model->category->name} is due for maintenance today.";
                 $payload = [
                     'type' => 'hook',
@@ -37,9 +41,18 @@ class SendMaintenanceNotifications extends Command
                         ],
                     ],
                 ];
-                Http::withHeaders([
+                $response = Http::withHeaders([
                     'Content-Type' => 'application/json',
                 ])->post($asset->webhook->url, $payload);
+
+                WebhookLog::create([
+                    'webhook_id' => $asset->webhook->id,
+                    'url'        => $asset->webhook->url,
+                    'payload'    => $payload,
+                    'status_code'=> $response->status(),
+                    'response'   => $response->body(),
+                    'asset_id'   => $asset->id,
+                ]);
 
                 $this->info("Notification sent for asset: {$asset->name}");
             }

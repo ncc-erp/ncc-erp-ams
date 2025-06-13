@@ -13,14 +13,19 @@ class Webhook extends Model
     protected $fillable = [
         'name',
         'url',
+        'type',
     ];
     protected $rules = [
         'name' => 'required|string|max:255|min:1|unique:webhooks,name',
         'url' => 'required|string|max:512|min:1',
+        'type' => 'required|array',
     ];
     protected $searchableAttributes = [
         'name',
         'url',
+    ];
+    protected $casts = [
+        'type' => 'array',
     ];
     public function hasAccess($section)
     {

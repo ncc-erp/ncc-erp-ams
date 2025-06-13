@@ -28,6 +28,7 @@ class WebhookTransformer
                 'url' => e($webhook->url),
                 'created_at' => Helper::getFormattedDateObject($webhook->created_at, 'datetime'),
                 'updated_at' => Helper::getFormattedDateObject($webhook->updated_at, 'datetime'),
+                'type' => $webhook->type,
             ];
 
             $permissions_array['available_actions'] = [

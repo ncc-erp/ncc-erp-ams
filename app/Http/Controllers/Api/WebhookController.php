@@ -15,14 +15,15 @@ class WebhookController extends Controller
     {
         $this->authorize('view', Webhook::class);
         $webhooks = Webhook::select(
-            ['id', 'name', 'url', 'created_at', 'updated_at']
+            ['id', 'name', 'url', 'created_at', 'updated_at', 'type']
         );
         $allowed_columns = [
             'id',
             'name',
             'url',
             'created_at',
-            'updated_at'
+            'updated_at',
+            'type',
         ];
         if ($request->input('deleted') == 'true') {
             $webhooks->onlyTrashed();
@@ -58,10 +59,6 @@ class WebhookController extends Controller
     {
         $this->authorize('create', Webhook::class);
         $webhook = new Webhook;
-        // $validated = $request->validate([
-        //     'name' => 'required|string|max:255|min:1|unique:webhooks,name',
-        //     'url' => 'required|string|max:512|min:1',
-        // ]);
         $webhook->fill($request->all());
         if ($webhook->save()) {
             return response()->json(Helper::formatStandardApiResponse('success', $webhook, trans('admin/webhook/message.create.success')));
