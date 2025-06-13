@@ -46,6 +46,9 @@ class ApiWebhookCest
         $data = [
             'name' => 'Test Webhook',
             'url' => 'https://example.com/webhook',
+            'type' => [
+                'event',
+            ],
         ];
 
         $I->sendPOST('/webhooks', $data);
@@ -66,11 +69,17 @@ class ApiWebhookCest
         $webhook = Webhook::factory()-> create([
             'name' => 'Original Webhook',
             'url' => 'https://original.com/webhook',
+            'type' => [
+                'event',
+            ],
         ]);
 
         $data = [
             'name' => 'Updated Webhook',
             'url' => 'https://updated.com/webhook',
+            'type' => [
+                'notification',
+            ],
         ];
 
         $I->sendPATCH('/webhooks/' . $webhook->id, $data);
@@ -90,6 +99,10 @@ class ApiWebhookCest
 
         $webhook = Webhook::factory()->create([
             'name' => 'To be deleted',
+            'url' => 'https://delete.com/webhook',
+            'type' => [
+                'event',
+            ],
         ]);
 
         $I->sendDELETE('/webhooks/' . $webhook->id);

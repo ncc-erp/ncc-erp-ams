@@ -21,6 +21,7 @@ class WebhookFactory extends Factory
         return [
             'name' => $this->faker->unique()->word(),
             'url' => $this->faker->url(),
+            'type' => $this->faker->randomElement(['event', 'notification', 'alert']),
         ];
     }
 }
