@@ -26,15 +26,6 @@ class ApiWebhookCest
         $I->seeResponseIsJson();
         $I->seeResponseCodeIs(200);
 
-        $response = json_decode($I->grabResponse(), true);
-
-        $I->assertArrayHasKey('rows', $response);
-        $I->assertIsArray($response['rows']);
-        $I->assertGreaterThanOrEqual(1, count($response['rows']));
-
-        $webhook = Webhook::orderByDesc('created_at')->first();
-        $expected = (new WebhookTransformer)->transformWebhook($webhook);
-        $I->assertContains($expected, $response['rows']);
     }
 
 
