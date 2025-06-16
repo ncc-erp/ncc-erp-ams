@@ -64,7 +64,6 @@ jobs:
           echo "DB_USERNAME=root" >> .env
           echo "DB_PASSWORD=12345678" >> .env
           echo "DB_PORT=${{ job.services.mysql.ports['3306'] }}" >> .env
-
           echo "MAIL_DRIVER=${{ secrets.MAIL_DRIVER }}" >> .env
           echo "MAIL_HOST=${{ secrets.MAIL_HOST }}" >> .env
           echo "MAIL_PORT=${{ secrets.MAIL_PORT }}" >> .env
@@ -76,8 +75,10 @@ jobs:
           echo "MAIL_AUTO_EMBED_METHOD=${{ secrets.MAIL_AUTO_EMBED_METHOD }}" >> .env
           echo "MAIL_FROM_NAME='NCC-IT'" >> .env
           echo "MAIL_REPLYTO_NAME='NCC-IT'" >> .env
-
           echo "MAIL_DOMAIN='example.org'" >> .env
+          echo "KOMU_API_URL=https://komu.com/api/v1" >> .env
+          echo "KOMU_SECRET_KEY=12345678" >> .env
+          echo "ENABLE_TESTING=true" >> .env
 
           #Generate key for application
           php artisan key:generate

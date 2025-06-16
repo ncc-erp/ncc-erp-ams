@@ -1,10 +1,11 @@
 <?php
-
 namespace App\Jobs;
 
+use App\Helpers\KomuMessages;
 use App\Mail\ConfirmMailTool;
+use App\Services\KomuService;
+use App\Services\MailService;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -13,9 +14,10 @@ use Illuminate\Support\Facades\Mail;
 
 class SendConfirmMailTool implements ShouldQueue
 {
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
     protected $data;
     protected $it_ncc_email;
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     /**
      * Create a new job instance.
@@ -24,7 +26,7 @@ class SendConfirmMailTool implements ShouldQueue
      */
     public function __construct($data, $it_ncc_email)
     {
-        $this->data = $data;
+        $this->data         = $data;
         $this->it_ncc_email = $it_ncc_email;
     }
 
@@ -35,6 +37,24 @@ class SendConfirmMailTool implements ShouldQueue
      */
     public function handle()
     {
-        Mail::to($this->it_ncc_email)->send(new ConfirmMailTool($this->data));
+        try {
+            $user_name = explode('@', $this->it_ncc_email)[0];
+            $message   = KomuMessages::confirmToolCheckout($this->data);
+
+            // Send Komu message
+            KomuService::sendMessage($user_name, $message);
+            
+            // Send mail with logging
+            MailService::sendMail(
+                new ConfirmMailTool($this->data), 
+                $this->it_ncc_email, 
+                [],
+                'confirm_tool',
+                'Confirm Tool Request'
+            );
+            
+        } catch (\Exception $e) {
+            \Log::error('SendConfirmMailTool: ' . $e->getMessage());
+        }
     }
 }

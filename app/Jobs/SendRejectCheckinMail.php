@@ -1,15 +1,17 @@
 <?php
-
 namespace App\Jobs;
 
+use App\Helpers\KomuMessages;
 use App\Mail\RejectCheckinDigitalSignature;
+use App\Services\KomuService;
+use App\Services\MailService;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Mail;
+use App\Mail\RejectCheckinMail;
 
 class SendRejectCheckinMail implements ShouldQueue
 {
@@ -17,7 +19,7 @@ class SendRejectCheckinMail implements ShouldQueue
 
     protected $data;
     protected $it_ncc_email;
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
     /**
      * Create a new job instance.
      *
@@ -25,7 +27,7 @@ class SendRejectCheckinMail implements ShouldQueue
      */
     public function __construct($data, $it_ncc_email)
     {
-        $this->data = $data;
+        $this->data         = $data;
         $this->it_ncc_email = $it_ncc_email;
     }
 
@@ -36,6 +38,24 @@ class SendRejectCheckinMail implements ShouldQueue
      */
     public function handle()
     {
-        Mail::to($this->it_ncc_email)->send(new RejectCheckinDigitalSignature($this->data));
+        try {
+            $user_name = explode('@', $this->it_ncc_email)[0];
+            $message   = KomuMessages::rejectCheckinDigitalSignature($this->data);
+
+            // Send Komu message
+            KomuService::sendMessage($user_name, $message);
+            
+            // Send mail with logging
+            MailService::sendMail(
+                new RejectCheckinDigitalSignature($this->data), 
+                $this->it_ncc_email, 
+                [],
+                'reject_checkin',
+                'Reject Checkin Digital Signature'
+            );
+            
+        } catch (\Exception $e) {
+            \Log::error('SendRejectCheckinMail: ' . $e->getMessage());
+        }
     }
 }

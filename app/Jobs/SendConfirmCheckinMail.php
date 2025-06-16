@@ -10,6 +10,9 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Mail;
+use App\Services\KomuService;
+use App\Helpers\KomuMessages;
+use App\Services\MailService;
 
 class SendConfirmCheckinMail implements ShouldQueue
 {
@@ -35,6 +38,23 @@ class SendConfirmCheckinMail implements ShouldQueue
      */
     public function handle()
     {
-        Mail::to($this->it_ncc_email)->send(new ConfirmCheckinDigitalSignature($this->data));
+        try {
+            $user_name = explode('@', $this->it_ncc_email)[0];
+            $message   = KomuMessages::confirmCheckinDigitalSignature($this->data);
+
+            // Send Komu message
+            KomuService::sendMessage($user_name, $message);
+            
+            // Send mail with logging
+            MailService::sendMail(
+                new ConfirmCheckinDigitalSignature($this->data), 
+                $this->it_ncc_email, 
+                [],
+                'confirm_checkin',
+                'Confirm Checkin Digital Signature'
+            );
+        } catch (\Exception $e) {
+            \Log::error('SendConfirmCheckinMail: ' . $e->getMessage());
+        }
     }
 }

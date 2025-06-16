@@ -197,7 +197,6 @@ class Asset extends Depreciable
         'model.manufacturer' => ['name'],
     ];
 
-
     /**
      * This handles the custom field validation for assets
      *
@@ -364,6 +363,7 @@ class Asset extends Depreciable
             } else {
                 $checkedInBy = Auth::user();
             }
+
             event(new CheckoutableCheckedIn($this, $target, $checkedInBy, $note, $checkin_at));
 
             return true;
@@ -432,6 +432,8 @@ class Asset extends Depreciable
             } else {
                 $checkedOutBy = Auth::user();
             }
+
+            // duplicate send mail only to enable it to run unit test
             event(new CheckoutableCheckedOut($this, $target, $checkedOutBy, $note));
 
             return true;
