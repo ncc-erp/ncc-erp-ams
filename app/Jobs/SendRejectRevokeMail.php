@@ -34,6 +34,7 @@ class SendRejectRevokeMail implements ShouldQueue
      */
     public function handle()
     {
+        // todo: send mail to it_ncc_email
         Mail::to($this->it_ncc_email)->send(new RejectRevokeMail($this->data));
     }
 }
