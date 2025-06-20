@@ -433,7 +433,6 @@ class Asset extends Depreciable
                 $checkedOutBy = Auth::user();
             }
 
-            // duplicate send mail only to enable it to run unit test
             event(new CheckoutableCheckedOut($this, $target, $checkedOutBy, $note));
 
             return true;
