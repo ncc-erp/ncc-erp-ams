@@ -12,7 +12,9 @@ use App\Models\Asset;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Requests\ImageUploadRequest;
-
+use App\Models\Webhook;
+use Illuminate\Support\Facades\Http;
+use App\Models\WebhookLog;
 class ClientAssetsController extends Controller
 {
     private $clientAssetService;
@@ -98,11 +100,42 @@ class ClientAssetsController extends Controller
         $this->authorize('update', Asset::class);
 
         try {
+            $assets = Asset::find($id);
             $asset = $this->clientAssetService->update($request->all(), $id);
 
             if (!$asset) {
                 throw new AssetException(__('general.server_error'), "error", 500);
             }
+            if ($request->assigned_status === config('enum.assigned_status.ACCEPT')) {
+                if ($assets->withdraw_from) {
+                    $checkinWebhooks = Webhook::whereJsonContains('type', 'CONFIRM_CHECKIN')
+                        ->get();
+                    foreach ($checkinWebhooks as $checkinWebhook) {
+                        $this->sendNotification($assets, $checkinWebhook, true, true);
+                    }
+                } else {
+                    $checkoutWebhooks = Webhook::whereJsonContains('type', 'CONFIRM_CHECKOUT')
+                        ->get();
+                    foreach ($checkoutWebhooks as $checkoutWebhook) {
+                        $this->sendNotification($assets, $checkoutWebhook, false, true);
+                    }
+                }
+            } elseif ($request->assigned_status === config('enum.assigned_status.REJECT')) {
+                if ($assets->withdraw_from) {
+                    $checkinWebhooks = Webhook::whereJsonContains('type', 'REJECT_CHECKIN')
+                        ->get();
+                    foreach ($checkinWebhooks as $checkinWebhook) {
+                        $this->sendNotification($assets, $checkinWebhook, true, false, true);
+                    }
+                } else {
+                    $checkoutWebhooks = Webhook::whereJsonContains('type', 'REJECT_CHECKOUT')
+                        ->get();
+                    foreach ($checkoutWebhooks as $checkoutWebhook) {
+                        $this->sendNotification($assets, $checkoutWebhook, false, false, true);
+                    }
+                }
+            }
+
 
             return response()->json(Helper::formatStandardApiResponse(
                 'success',
@@ -203,12 +236,17 @@ class ClientAssetsController extends Controller
         $this->authorize('checkin', Asset::class);
 
         try {
+            $assets = Asset::find($asset_id);
             $asset = $this->clientAssetService->checkin($request->all(), $asset_id);
 
             if (!$asset) {
                 throw new AssetException(__('general.server_error'), "error", 500);
             }
-
+            $checkinWebhooks = Webhook::whereJsonContains('type', 'CHECKIN_CLIENT_ASSET')
+                ->get();
+            foreach ($checkinWebhooks as $checkinWebhook) {
+                $this->sendNotification($assets, $checkinWebhook, true);
+            }
             return response()->json(Helper::formatStandardApiResponse(
                 'success',
                 $asset['payload'],
@@ -224,10 +262,16 @@ class ClientAssetsController extends Controller
         $this->authorize('checkout', Asset::class);
 
         try {
+            $assets = Asset::find($asset_id);
             $asset = $this->clientAssetService->checkout($request->all(), $asset_id);
 
             if (!$asset) {
                 throw new AssetException(__('general.server_error'), "error", 500);
+            }
+            $checkoutWebhooks = Webhook::whereJsonContains('type', 'CHECKOUT_CLIENT_ASSET')
+                ->get();
+            foreach ($checkoutWebhooks as $checkoutWebhook) {
+                $this->sendNotification($assets, $checkoutWebhook);
             }
 
             return response()->json(Helper::formatStandardApiResponse(
@@ -238,5 +282,53 @@ class ClientAssetsController extends Controller
         } catch (\Throwable $th) {
             throw $th;
         }
+    }
+    private function sendNotification($item, $webhook, $isCheckin = false, $isConfirmed = false, $isRejected = false)
+    {
+
+
+        $messageText = "[Client Asset] {$item->name} is requested to check out.";
+        if ($isCheckin) {
+            $messageText = "[Client Asset] {$item->name} is requested to check in.";
+        }
+        if ($isConfirmed && $isCheckin) {
+            $messageText = "[Client Asset] {$item->name} is confirmed to check in.";
+        }
+        if ($isConfirmed && !$isCheckin) {
+            $messageText = "[Client Asset] {$item->name} is confirmed to check out.";
+        }
+        if($isRejected && $isCheckin) {
+            $messageText = "[Client Asset] {$item->name} is rejected to check in.";
+        }
+        if($isRejected && !$isCheckin) {
+            $messageText = "[Client Asset] {$item->name} is rejected to check out.";
+        }
+
+        $payload = [
+            'type' => 'hook',
+            'message' => [
+                't' => $messageText,
+                'mk' => [
+                    [
+                        'type' => 'pre',
+                        's' => 0,
+                        'e' => strlen($messageText),
+                    ]
+                ],
+            ],
+        ];
+
+        $response = Http::withHeaders([
+            'Content-Type' => 'application/json',
+        ])->post($webhook->url, $payload);
+
+        WebhookLog::create([
+            'webhook_id' => $webhook->id,
+            'url' => $webhook->url,
+            'payload' => $payload,
+            'status_code' => $response->status(),
+            'response' => $response->body(),
+            'asset_id' => $item->id,
+        ]);
     }
 }
