@@ -121,6 +121,8 @@ class ApiClientAssetsCest
                     'category_type' => 'asset'
                 ])->id,
             ])->id,
+            'maintenance_date' => Carbon::now()->addDays(10),
+            'purchase_date' => Carbon::now()->addDays(3),
         ]);
 
         $temp_asset = Asset::factory()->laptopAir()->make([
@@ -133,6 +135,8 @@ class ApiClientAssetsCest
                     'category_type' => 'asset'
                 ])->id,
             ])->id,
+            'maintenance_date' => Carbon::now()->addDays(10),
+            'purchase_date' => Carbon::now()->addDays(3),
         ]);
         $asset->image = $temp_asset->image;
         if (!$temp_asset->requestable)
@@ -141,11 +145,6 @@ class ApiClientAssetsCest
         $asset->save();
         $purchase_date = $temp_asset->purchase_date;
         $maintenance_date = $temp_asset->maintenance_date;
-        
-      
-        if ($maintenance_date && $purchase_date && $maintenance_date < $purchase_date) {
-            $maintenance_date = $purchase_date;
-        }
 
         $data = [
             'asset_tag' => $temp_asset->asset_tag,

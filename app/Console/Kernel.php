@@ -25,6 +25,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('backup:clean')->daily();
         $schedule->command('snipeit:upcoming-audits')->daily();
         $schedule->command('maintenance:notify')->daily();
+        $schedule->command('hrm:sync-list-users')->hourly();
     }
 
     /**
