@@ -18,6 +18,7 @@ class SettingsSeeder extends Seeder
         $settings->auto_increment_assets = 1;
         $settings->logo = 'snipe-logo.png';
         $settings->alert_email = 'service@snipe-it.io';
+        $settings->admin_cc_email = 'ncc@it.com.vn';
         $settings->header_color = null;
         $settings->barcode_type = 'QRCODE';
         $settings->default_currency = 'USD';

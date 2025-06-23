@@ -9,4 +9,9 @@ abstract class Recipient
     use Notifiable;
 
     protected $email;
+
+    public function getKey()
+    {
+        return $this->email;
+    }
 }

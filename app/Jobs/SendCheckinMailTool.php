@@ -1,11 +1,12 @@
 <?php
-
 namespace App\Jobs;
 
+use App\Helpers\KomuMessages;
 use App\Mail\CheckinMailTool;
 use App\Models\Setting;
+use App\Services\KomuService;
+use App\Services\MailService;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -26,7 +27,7 @@ class SendCheckinMailTool implements ShouldQueue
      */
     public function __construct($data, $user_email)
     {
-        $this->data = $data;
+        $this->data       = $data;
         $this->user_email = $user_email;
     }
 
@@ -37,6 +38,25 @@ class SendCheckinMailTool implements ShouldQueue
      */
     public function handle()
     {
-        Mail::to($this->user_email)->cc(Setting::first()->admin_cc_email)->send(new CheckinMailTool($this->data));
+        try {
+            $user_name = explode('@', $this->user_email)[0];
+            $message   = KomuMessages::toolCheckin($this->data);
+
+            // Send Komu message
+            KomuService::sendMessage($user_name, $message);
+            
+            // Send mail with logging
+            $ccEmails = [Setting::first()->admin_cc_email];
+            MailService::sendMail(
+                new CheckinMailTool($this->data), 
+                $this->user_email, 
+                $ccEmails,
+                'checkin_tool',
+                'Tool Checkin Notification'
+            );
+            
+        } catch (\Exception $e) {
+            \Log::error('SendCheckinMailTool: ' . $e->getMessage());
+        }
     }
 }
