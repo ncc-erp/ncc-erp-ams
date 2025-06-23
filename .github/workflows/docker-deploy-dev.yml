@@ -146,3 +146,6 @@ jobs:
       - name: Run Docker Compose
         run: |
           docker compose -f /home/nccsoft/ams-dev-docker/docker-compose.dev.yml up -d
+
+      - name: Run Laravel migrations
+        run: docker compose -f /home/nccsoft/ams-dev-docker/docker-compose.dev.yml exec -T ams-be php artisan migrate --force
