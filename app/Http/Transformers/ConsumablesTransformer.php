@@ -46,6 +46,10 @@ class ConsumablesTransformer
             'updated_at' => Helper::getFormattedDateObject($consumable->updated_at, 'datetime'),
             'maintenance_date' => Helper::getFormattedDateObject($consumable->maintenance_date, 'date'),
             'maintenance_cycle' => ($consumable->maintenance_cycle > 0) ? e($consumable->maintenance_cycle . ' ' . trans('admin/consumables/general.months')) : null,
+            'webhook' => ($consumable->webhook) ? [
+                'id' => (int) $consumable->webhook->id,
+                'name' => e($consumable->webhook->name),
+            ] : null,
         ];
 
         $permissions_array['user_can_checkout'] = false;

@@ -31,7 +31,7 @@ class Consumable extends SnipeModel
         'supplier_id' => 'integer',
         'maintenance_date' => 'datetime:Y-m-d',
         'maintenance_cycle' => 'integer',
-
+        'webhook_id' => 'integer',
     ];
 
     /**
@@ -47,6 +47,7 @@ class Consumable extends SnipeModel
         'warranty_months' => 'numeric|nullable|digits_between:0,240',
         'maintenance_date' => 'date|nullable|after_or_equal:purchase_date',
         'maintenance_cycle' => 'integer|nullable|min:0',
+        'webhook_id' => 'exists:webhooks,id|nullable',
     ];
 
     /**
@@ -83,6 +84,7 @@ class Consumable extends SnipeModel
         'warranty_months',
         'maintenance_date',
         'maintenance_cycle',
+        'webhook_id',
     ];
 
     use Searchable;
@@ -104,6 +106,7 @@ class Consumable extends SnipeModel
         'company' => ['name'],
         'location' => ['name'],
         'manufacturer' => ['name'],
+        'webhook' => ['name'],
     ];
 
     /**
@@ -127,6 +130,10 @@ class Consumable extends SnipeModel
         $this->attributes['requestable'] = filter_var($value, FILTER_VALIDATE_BOOLEAN);
     }
 
+    public function webhook()
+    {
+        return $this->belongsTo(\App\Models\Webhook::class, 'webhook_id');
+    }
     /**
      * Establishes the consumable -> admin user relationship
      *

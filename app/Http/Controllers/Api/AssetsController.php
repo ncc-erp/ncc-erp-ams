@@ -45,6 +45,9 @@ use App\Http\Requests\AssetCheckinRequest;
 use App\Jobs\SendRejectAllocateMail;
 use App\Jobs\SendRejectRevokeMail;
 use App\Models\Category;
+use App\Models\Webhook;
+use Illuminate\Support\Facades\Http;
+use App\Models\WebhookLog;
 
 /**
  * This class controls all actions related to assets for
@@ -135,6 +138,7 @@ class AssetsController extends Controller
                 'model.manufacturer',
                 'model.fieldset',
                 'supplier',
+                'webhook',
             );
         $assets = $this->filters($assets, $request);
 
@@ -1099,6 +1103,8 @@ class AssetsController extends Controller
         $asset->customer_code           = $request->get('customer_code', null);
         $asset->project_code            = $request->get('project_code', null);
         $asset->isCustomerRenting       = filter_var($request->get('isCustomerRenting', false), FILTER_VALIDATE_BOOLEAN);
+        $asset->webhook_id = $request->get('webhook_id', null);
+
         /**
          * this is here just legacy reasons. Api\AssetController
          * used image_source  once to allow encoded image uploads.
@@ -1186,7 +1192,8 @@ class AssetsController extends Controller
                 $asset->maintenance_cycle = $request->get('maintenance_cycle') : null;
             ($request->filled('maintenance')) ?
                 $asset->maintenance_date = $request->get('maintenance') : null;
-
+            ($request->filled('webhook_id')) ?
+                $asset->webhook_id = $request->get('webhook_id') : null;
 
             /**
              * this is here just legacy reasons. Api\AssetController
@@ -1243,11 +1250,25 @@ class AssetsController extends Controller
                         $asset->assigned_to = null;
                         $asset->assignedTo()->disassociate($this);
                         $asset->accepted = null;
+
+                        $checkinWebhooks = Webhook::whereJsonContains('type', 'CONFIRM_CHECKIN')
+                            ->get();
+                        foreach ($checkinWebhooks as $checkinWebhook) {
+                            $this->sendNotification($asset, $checkinWebhook, true, true);
+                        }
+
                         SendConfirmRevokeMail::dispatch($data, $it_ncc_email);
                     } else {
                         $asset->increment('checkout_counter', 1);
                         $data['is_confirm'] = 'đã xác nhận cấp phát';
                         $asset->status_id = config('enum.status_id.ASSIGN');
+
+                        $checkoutWebhooks = Webhook::whereJsonContains('type', 'CONFIRM_CHECKOUT')
+                            ->get();
+                        foreach ($checkoutWebhooks as $checkoutWebhook) {
+                            $this->sendNotification($asset, $checkoutWebhook, false, true);
+                        }
+
                         SendConfirmMail::dispatch($data, $it_ncc_email);
                     }
                 } elseif ($asset->assigned_status === config('enum.assigned_status.REJECT')) {
@@ -1257,6 +1278,13 @@ class AssetsController extends Controller
                         $asset->status_id = config('enum.status_id.ASSIGN');
                         $asset->assigned_status = config('enum.assigned_status.ACCEPT');
                         $data['reason'] = 'Lý do: ' . $request->get('reason');
+
+                        $checkinWebhooks = Webhook::whereJsonContains('type', 'REJECT_CHECKIN')
+                            ->get();
+                        foreach ($checkinWebhooks as $checkinWebhook) {
+                            $this->sendNotification($asset, $checkinWebhook, true, false, true);
+                        }
+
                         SendRejectRevokeMail::dispatch($data, $it_ncc_email);
                     } else {
                         $data['is_confirm'] = 'đã từ chối nhận';
@@ -1269,6 +1297,13 @@ class AssetsController extends Controller
                         $asset->assigned_to = null;
                         $asset->assignedTo()->disassociate($this);
                         $asset->accepted = null;
+
+                        $checkoutWebhooks = Webhook::whereJsonContains('type', 'REJECT_CHECKOUT')
+                            ->get();
+                        foreach ($checkoutWebhooks as $checkoutWebhook) {
+                            $this->sendNotification($asset, $checkoutWebhook, false, false, true);
+                        }
+
                         SendRejectAllocateMail::dispatch($data, $it_ncc_email);
                     }
                 }
@@ -1704,6 +1739,11 @@ class AssetsController extends Controller
             $this->saveAssetHistory($asset_id, config('enum.asset_history.CHECK_IN_TYPE'));
             $data = $this->setDataUser($user->id, $asset_name, $countAssets);
 
+            $checkinWebhooks = Webhook::whereJsonContains('type', 'CHECKIN_ASSET')
+                ->get();
+            foreach ($checkinWebhooks as $checkinWebhook) {
+                $this->sendNotification($asset, $checkinWebhook, true);
+            }
 
             SendCheckinMail::dispatch($data, $data['user_email']);
             return response()->json(Helper::formatStandardApiResponse('success', ['asset' => e($asset->asset_tag)], trans('admin/hardware/message.checkin.success')));
@@ -1802,12 +1842,63 @@ class AssetsController extends Controller
                 'time' => $current_time->format('d-m-Y'),
                 'link' => config('client.my_assets.link'),
             ];
+            $checkoutWebhooks = Webhook::whereJsonContains('type', 'CHECKOUT_ASSET')
+                ->get();
+            foreach ($checkoutWebhooks as $checkoutWebhook) {
+                $this->sendNotification($asset, $checkoutWebhook);
+            }
 
             SendCheckoutMail::dispatch($data, $user_email);
             return response()->json(Helper::formatStandardApiResponse('success', ['asset' => e($asset->asset_tag)], trans('admin/hardware/message.checkout.success')));
         }
 
         return response()->json(Helper::formatStandardApiResponse('error', ['asset' => e($asset->asset_tag)], trans('admin/hardware/message.checkout.error')));
+    }
+    private function sendNotification($item, $webhook, $isCheckin = false, $isConfirm = false, $isReject= false)
+    {
+
+        $messageText = "[{$item->model->category->category_type}] {$item->name} - {$item->model->category->name} is requested to check out.";
+        if ($isCheckin && !$isConfirm) {
+            $messageText = "[{$item->model->category->category_type}] {$item->name} - {$item->model->category->name} is requested to check in.";
+        }
+        if ($isCheckin && $isConfirm) {
+            $messageText = "[{$item->model->category->category_type}] {$item->name} - {$item->model->category->name} is confirmed check in.";
+        }
+        if ($isConfirm && !$isCheckin) {
+            $messageText = "[{$item->model->category->category_type}] {$item->name} - {$item->model->category->name} is confirmed check out.";
+        }
+        if ($isReject && !$isCheckin) {
+            $messageText = "[{$item->model->category->category_type}] {$item->name} - {$item->model->category->name} is rejected check out.";
+        }
+        if ($isReject && $isCheckin) {
+            $messageText = "[{$item->model->category->category_type}] {$item->name} - {$item->model->category->name} is rejected check in.";
+        }
+        $payload = [
+            'type' => 'hook',
+            'message' => [
+                't' => $messageText,
+                'mk' => [
+                    [
+                        'type' => 'pre',
+                        's' => 0,
+                        'e' => strlen($messageText),
+                    ]
+                ],
+            ],
+        ];
+
+        $response = Http::withHeaders([
+            'Content-Type' => 'application/json',
+        ])->post($webhook->url, $payload);
+
+        WebhookLog::create([
+            'webhook_id' => $webhook->id,
+            'url' => $webhook->url,
+            'payload' => $payload,
+            'status_code' => $response->status(),
+            'response' => $response->body(),
+            'asset_id' => $item->id,
+        ]);
     }
 
     /**

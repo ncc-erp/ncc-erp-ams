@@ -1648,5 +1648,23 @@ Route::group(['prefix' => 'v1', 'middleware' => ['api', 'throttle:' . config('ap
         ],
     );
     //End Route Client Asset
+    
+    //Route Webhooks
+    Route::resource(
+        'webhooks',
+        Api\WebhookController::class,
+        [
+            'names' =>
+                [
+                    'index' => 'api.webhooks.index',
+                    'show' => 'api.webhooks.show',
+                    'update' => 'api.webhooks.update',
+                    'store' => 'api.webhooks.store',
+                    'destroy' => 'api.webhooks.destroy',
+                ],
+            'except' => ['create', 'edit'],
+            'parameters' => ['webhook' => 'webhook_id'],
+        ]
+    );
 
 }); // end API routes

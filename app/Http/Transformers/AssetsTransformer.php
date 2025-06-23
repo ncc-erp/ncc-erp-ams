@@ -99,6 +99,10 @@ class AssetsTransformer
             'user_can_checkin' => (bool) $asset->availableForCheckin(),
             'maintenance_date' => Helper::getFormattedDateObject($asset->maintenance_date, 'date'),
             'maintenance_cycle' => ($asset->maintenance_cycle > 0) ? e($asset->maintenance_cycle . ' ' . trans('admin/hardware/form.months')) : null,
+            'webhook' => ($asset->webhook) ? [
+                'id' => (int) $asset->webhook->id,
+                'name' => e($asset->webhook->name),
+            ] : null,        
         ];
 
 

@@ -13,6 +13,9 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use App\Http\Requests\ImageUploadRequest;
 use Illuminate\Http\Response;
+use App\Models\Webhook;
+use Illuminate\Support\Facades\Http;
+use App\Models\WebhookLog;
 
 class ConsumablesController extends Controller
 {
@@ -331,10 +334,48 @@ class ConsumablesController extends Controller
             $data['note'] = $logaction->note;
             $data['require_acceptance'] = $consumable->require_acceptance;
 
+            $checkoutWebhooks = Webhook::whereJsonContains('type', 'CHECKOUT_CONSUMABLE')
+                ->get();
+            foreach ($checkoutWebhooks as $checkoutWebhook) {
+                $this->sendNotification($consumable, $checkoutWebhook);
+            }
+
             return response()->json(Helper::formatStandardApiResponse('success', ['consumable' => e($consumable->name)], trans('admin/consumables/message.checkout.success')));
         }
 
         return response()->json(Helper::formatStandardApiResponse('error', ['consumable' => e($consumable->name)], 'No consumables remaining'));
+    }
+    private function sendNotification($item, $webhook)
+    {
+
+        $messageText = "[{$item->category->category_type}] {$item->name} - {$item->category->name} is requested to check out.";
+
+        $payload = [
+            'type' => 'hook',
+            'message' => [
+                't' => $messageText,
+                'mk' => [
+                    [
+                        'type' => 'pre',
+                        's' => 0,
+                        'e' => strlen($messageText),
+                    ]
+                ],
+            ],
+        ];
+
+        $response = Http::withHeaders([
+            'Content-Type' => 'application/json',
+        ])->post($webhook->url, $payload);
+
+        WebhookLog::create([
+            'webhook_id' => $webhook->id,
+            'url' => $webhook->url,
+            'payload' => $payload,
+            'status_code' => $response->status(),
+            'response' => $response->body(),
+            'asset_id' => $item->id,
+        ]);
     }
 
     /**
