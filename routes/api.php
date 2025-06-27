@@ -134,8 +134,15 @@ Route::group(['prefix' => 'v1', 'middleware' => ['api', 'throttle:' . config('ap
                 'selectlist'
             ]
         )->name('api.categories.selectlist');
-    });
 
+        Route::get(
+            'total-detail',
+            [
+                Api\CategoriesController::class,
+                'getTotalDetail'
+            ]
+        )->name('api.categories.total-detail');
+    });
     Route::resource(
         'categories',
         Api\CategoriesController::class,
@@ -598,6 +605,14 @@ Route::group(['prefix' => 'v1', 'middleware' => ['api', 'throttle:' . config('ap
                 'multiUpdate'
             ]
         );
+
+        Route::get(
+            'assigned-total-detail',
+            [
+                Api\AssetsController::class,
+                'getAssignedTotalDetail'
+            ]
+        )->name('api.assets.assignedTotalDetail');
     });
 
 
@@ -885,6 +900,14 @@ Route::group(['prefix' => 'v1', 'middleware' => ['api', 'throttle:' . config('ap
                 'assets'
             ]
         )->name('api.models.assets');
+
+        Route::get(
+            'total-detail',
+            [
+                Api\AssetModelsController::class,
+                'getTotalDetail'
+            ]
+        )->name('api.models.total-detail');
     });
 
     Route::resource(

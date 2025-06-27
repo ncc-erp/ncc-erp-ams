@@ -2112,4 +2112,94 @@ class AssetsController extends Controller
 
         return $data;
     }
+
+    
+    public function getAssignedTotalDetail(Request $request)
+    {
+        $this->authorize('view', Asset::class);
+
+        $user_id = Auth::id();
+        $query = \App\Models\Asset::query()
+            ->selectRaw('assigned_status, COUNT(id) as total');
+
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where('name', 'like', '%'.$search.'%');
+        }
+
+        if ($request->filled('user_id')) {
+            $user_id = $request->input('user_id');
+            $query->where('user_id', $user_id);
+        }
+
+        if ($request->filled('status_id')) {
+            $query->where('assets.status_id', '=', $request->input('status_id'));
+        }
+
+        if ($request->filled('assigned_status')) {
+            $query->InAssignedStatus($request->input('assigned_status'));
+        }
+
+        if ($request->filled('model_id')) {
+            $query->InModelList([$request->input('model_id')]);
+        }
+
+        if ($request->filled('category_id')) {
+            $query->InCategory($request->input('category_id'));
+        }
+
+        if ($request->filled('location_id')) {
+            $query->where('assets.location_id', '=', $request->input('location_id'));
+        }
+
+        if ($request->filled('rtd_location_id')) {
+            $query->where('assets.rtd_location_id', '=', $request->input('rtd_location_id'));
+        }
+
+        if ($request->filled('supplier_id')) {
+            $query->where('assets.supplier_id', '=', $request->input('supplier_id'));
+        }
+
+        if (($request->filled('assigned_to')) && ($request->filled('assigned_type'))) {
+            $query->where('assets.assigned_to', '=', $request->input('assigned_to'))
+                ->where('assets.assigned_type', '=', $request->input('assigned_type'));
+        }
+
+        $query->where('assets.assigned_to', '=', $user_id);
+
+        $result = $query->groupBy('assigned_status')->get();
+
+        $result = $result->map(function($item) {
+            $statusName = '';
+            switch($item->assigned_status) {
+                case 0:
+                    $statusName = 'Chưa checkout';
+                    break;
+                case 1:
+                    $statusName = 'Chờ xác nhận';
+                    break;
+                case 2:
+                    $statusName = 'Chờ xác nhận cấp phát';
+                    break;
+                case 3:
+                    $statusName = 'Chờ xác nhận thu hồi';
+                    break;
+                case 4:
+                    $statusName = 'Đã xác nhận';
+                    break;
+                case 5:
+                    $statusName = 'Đã từ chối';
+                    break;
+                default:
+                    $statusName = 'Unknown';
+            }
+            
+            return [
+                'name' => $statusName,
+                'total' => $item->total
+            ];
+        });
+
+        return response()->json(Helper::formatStandardApiResponse('success', $result, null));
+    }
 }

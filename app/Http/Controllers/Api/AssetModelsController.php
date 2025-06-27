@@ -285,4 +285,23 @@ class AssetModelsController extends Controller
 
         return (new SelectlistTransformer)->transformSelectlist($assetmodels);
     }
+
+    public function getTotalDetail(Request $request)
+    {
+        $this->authorize('view', AssetModel::class);
+
+        $query = \App\Models\AssetModel::query()
+            ->selectRaw('categories.name as name, COUNT(models.id) as total')
+            ->join('categories', 'models.category_id', '=', 'categories.id');
+
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where('models.name', 'like', '%'.$search.'%');
+        }
+
+        $result = $query->groupBy('categories.name')
+            ->get();
+
+        return response()->json(Helper::formatStandardApiResponse('success', $result, null));
+    }
 }

@@ -198,4 +198,27 @@ class CategoriesController extends Controller
 
         return (new SelectlistTransformer)->transformSelectlist($categories);
     }
+
+    public function getTotalDetail(Request $request)
+    {
+        $this->authorize('view', Category::class);
+
+        $query = \App\Models\Category::query()
+            ->selectRaw('category_type, COUNT(id) as total');
+
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where('name', 'like', '%'.$search.'%');
+        }
+
+        $result = $query->groupBy('category_type')->get();
+        $result = $result->map(function($item) {
+            return [
+                'name' => ucfirst($item->category_type),
+                'total' => $item->total
+            ];
+        });
+
+        return response()->json(Helper::formatStandardApiResponse('success', $result, null));
+    }
 }
