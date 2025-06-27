@@ -4,7 +4,7 @@ use App\Models\User;
 use App\Models\Asset;
 use App\Models\KomuMessageLog;
 
-class ApiWebhookCest
+class ApiKomuLogsCest
 {
     protected $user;
 
