@@ -1667,4 +1667,19 @@ Route::group(['prefix' => 'v1', 'middleware' => ['api', 'throttle:' . config('ap
         ]
     );
 
+    //Route Komu Logs
+    Route::resource(
+        'komu-logs',
+        Api\KomuLogsController::class,
+        [
+            'names' =>
+                [
+                    'index' => 'api.komu_logs.index',
+                    'destroy' => 'api.komu_logs.destroy',
+                ],
+            'except' => ['create', 'edit'],
+            // 'parameters' => ['komu' => 'webhook_id'],
+        ]
+    );
+
 }); // end API routes
