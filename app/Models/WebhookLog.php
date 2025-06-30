@@ -12,22 +12,19 @@ class WebhookLog extends Model
     protected $fillable = [
         'webhook_id',
         'url',
-        'payload',
+        'message',
         'status_code',
         'response',
-        'asset_id',
-    ];
-
-    protected $casts = [
-        'payload' => 'array',
+        'asset',
+        'type',
     ];
 
     public function webhook()
     {
         return $this->belongsTo(Webhook::class);
     }
-    public function asset()
+    public function isDeletable()
     {
-        return $this->belongsTo(Asset::class);
+        return true;
     }
 }

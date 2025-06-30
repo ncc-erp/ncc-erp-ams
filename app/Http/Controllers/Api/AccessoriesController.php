@@ -383,13 +383,17 @@ class AccessoriesController extends Controller
             'Content-Type' => 'application/json',
         ])->post($webhook->url, $payload);
 
+        $success = $response->successful();
+        $status_message = $success ? 'Webhook sent successfully' : 'Webhook failed to send';
+
         WebhookLog::create([
             'webhook_id' => $webhook->id,
             'url' => $webhook->url,
-            'payload' => $payload,
+            'message' => $messageText,
             'status_code' => $response->status(),
-            'response' => $response->body(),
-            'asset_id' => $item->id,
+            'response' => $status_message,
+            'asset' => $item->name,
+            'type' => $isCheckin ? 'CHECKIN_ACCESSORY' : 'CHECKOUT_ACCESSORY',
         ]);
     }
 

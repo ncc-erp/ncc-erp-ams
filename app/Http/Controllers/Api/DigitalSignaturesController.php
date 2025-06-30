@@ -71,13 +71,13 @@ class DigitalSignaturesController extends Controller
                 $checkinWebhooks = Webhook::whereJsonContains('type', 'CONFIRM_CHECKIN')
                     ->get();
                 foreach ($checkinWebhooks as $checkinWebhook) {
-                    $this->sendNotification($digital_signature, $checkinWebhook, true, true);
+                    $this->sendNotification("CONFIRM_CHECKIN",$digital_signature, $checkinWebhook, true, true);
                 }
             } else {
                 $checkoutWebhooks = Webhook::whereJsonContains('type', 'CONFIRM_CHECKOUT')
                     ->get();
                 foreach ($checkoutWebhooks as $checkoutWebhook) {
-                    $this->sendNotification($digital_signature, $checkoutWebhook, false, true);
+                    $this->sendNotification("CONFIRM_CHECKOUT",$digital_signature, $checkoutWebhook, false, true);
                 }
             }
         } else {
@@ -85,13 +85,13 @@ class DigitalSignaturesController extends Controller
                 $checkinWebhooks = Webhook::whereJsonContains('type', 'REJECT_CHECKIN')
                     ->get();
                 foreach ($checkinWebhooks as $checkinWebhook) {
-                    $this->sendNotification($digital_signature, $checkinWebhook, true, false, true);
+                    $this->sendNotification("REJECT_CHECKIN",$digital_signature, $checkinWebhook, true, false, true);
                 }
             } else {
                 $checkoutWebhooks = Webhook::whereJsonContains('type', 'REJECT_CHECKOUT')
                     ->get();
                 foreach ($checkoutWebhooks as $checkoutWebhook) {
-                    $this->sendNotification($digital_signature, $checkoutWebhook, false, false, true);
+                    $this->sendNotification("REJECT_CHECKOUT",$digital_signature, $checkoutWebhook, false, false, true);
                 }
             }
         }
@@ -129,7 +129,7 @@ class DigitalSignaturesController extends Controller
             $checkoutWebhooks = Webhook::whereJsonContains('type', 'CHECKOUT_TAX_TOKEN')
                 ->get();
             foreach ($checkoutWebhooks as $checkoutWebhook) {
-                $this->sendNotification($digital_signature, $checkoutWebhook);
+                $this->sendNotification("CHECKOUT_TAX_TOKEN",$digital_signature, $checkoutWebhook);
             }
             return response()->json(
                 Helper::formatStandardApiResponse(
@@ -143,7 +143,7 @@ class DigitalSignaturesController extends Controller
             throw $e;
         }
     }
-    private function sendNotification($item, $webhook, $isCheckin = false, $isConfirmed = false, $isRejected = false)
+    private function sendNotification($type, $item, $webhook, $isCheckin = false, $isConfirmed = false, $isRejected = false)
     {
 
         $messageText = "[{$item->category->category_type}] {$item->name} - {$item->category->name} is requested to check out.";
@@ -180,13 +180,17 @@ class DigitalSignaturesController extends Controller
             'Content-Type' => 'application/json',
         ])->post($webhook->url, $payload);
 
+        $success = $response->successful();
+        $status_message = $success ? 'Webhook sent successfully' : 'Webhook failed to send';
+
         WebhookLog::create([
             'webhook_id' => $webhook->id,
             'url' => $webhook->url,
-            'payload' => $payload,
+            'message' => $messageText,
             'status_code' => $response->status(),
-            'response' => $response->body(),
-            'asset_id' => $item->id,
+            'response' => $status_message,
+            'asset' => $item->name,
+            'type' => $type,
         ]);
     }
 
@@ -221,7 +225,7 @@ class DigitalSignaturesController extends Controller
             $checkinWebhooks = Webhook::whereJsonContains('type', 'CHECKIN_TAX_TOKEN')
                 ->get();
             foreach ($checkinWebhooks as $checkinWebhook) {
-                $this->sendNotification($digital_signature, $checkinWebhook, true);
+                $this->sendNotification("CHECKIN_TAX_TOKEN",$digital_signature, $checkinWebhook, true);
             }
 
             return response()->json(
