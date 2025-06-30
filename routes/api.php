@@ -1677,9 +1677,19 @@ Route::group(['prefix' => 'v1', 'middleware' => ['api', 'throttle:' . config('ap
                     'index' => 'api.komu_logs.index',
                     'destroy' => 'api.komu_logs.destroy',
                 ],
-            'except' => ['create', 'edit'],
-            // 'parameters' => ['komu' => 'webhook_id'],
+            'except' => ['create', 'edit', 'show'],
         ]
     );
+
+    Route::group(['prefix' => 'komu-logs'], function () {
+
+        Route::get(
+            'total-detail',
+            [
+                Api\KomuLogsController::class,
+                'getTotalDetail'
+            ]
+        )->name('api.komu_logs.totalDetail');
+    });
 
 }); // end API routes

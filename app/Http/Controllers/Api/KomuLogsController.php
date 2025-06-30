@@ -68,6 +68,54 @@ class KomuLogsController extends Controller
         return (new KomuLogsTransformer)->transformKomuLogs($komu_logs, $total);
     }
 
+    public function getTotalDetail(Request $request)
+    {
+        $this->authorize('view', KomuMessageLog::class);
+
+        $query = KomuMessageLog::query();
+
+        if ($request->input('deleted') == 'true') {
+            $query->onlyTrashed();
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('send_to', 'like', "%{$search}%")
+                    ->orWhere('message', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('date_from') && $request->filled('date_to')) {
+            $date_from = $request->input('date_from') . ' 00:00:00';
+            $date_to = $request->input('date_to') . ' 23:59:59';
+            $query->whereBetween('created_at', [$date_from, $date_to]);
+        }
+
+        if ($request->filled('status')) {
+            $status = $request->input('status');
+            if (is_array($status)) {
+                $query->whereIn('status', $status);
+            } else {
+                $query->where('status', $status);
+            }
+        }
+
+        $total = $query->count();
+
+
+        $data = [
+            'status' => 'success',
+            'payload' => [
+                [
+                    'name' => "Komu Message Logs",
+                    'total' => $total,
+                ]
+            ],
+            'message' => null,
+        ];
+        return response()->json(Helper::formatStandardApiResponse($data['status'], $data['payload'], $data['message']));
+    }
 
     public function destroy($id)
     {
