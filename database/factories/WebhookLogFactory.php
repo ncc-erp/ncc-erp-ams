@@ -19,7 +19,7 @@ class WebhookLogFactory extends Factory
     public function definition()
     {
         return [
-            'webhook_id' => Webhook::query()->inRandomOrder()->value('id'),
+            'webhook_id' => 1,
             'url' => $this->faker->url(),
             'message' => $this->faker->sentence(),
             'status_code' => $this->faker->numberBetween(200, 500),
