@@ -63,7 +63,8 @@
     },
     "husky": {
         "hooks": {
-            "commit-msg": "commitlint -E HUSKY_GIT_PARAMS && php codecept.phar run api,unit"
+            "pre-commit": "php codecept.phar run api,unit",
+            "commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
         }
     }
 }
