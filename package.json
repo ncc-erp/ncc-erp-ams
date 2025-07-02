@@ -13,6 +13,8 @@
         "node": ">=0.12"
     },
     "devDependencies": {
+        "@commitlint/cli": "^19.8.1",
+        "@commitlint/config-conventional": "^19.8.1",
         "@fortawesome/fontawesome-free": "^5.15.4",
         "axios": "^0.20.0",
         "babel-preset-latest": "^6.24.1",
@@ -61,7 +63,7 @@
     },
     "husky": {
         "hooks": {
-            "pre-commit": "php codecept.phar run api,unit"
+            "commit-msg": "commitlint -E HUSKY_GIT_PARAMS && php codecept.phar run api,unit"
         }
     }
 }
