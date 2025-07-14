@@ -208,12 +208,11 @@ class Supplier extends SnipeModel
 
     public function scopeTextSearch($query, $searchTerm)
     {
-        return $query->where(function ($q) use ($searchTerm) {
-            $q->where('name', 'LIKE', '%'.$searchTerm.'%')
-              ->orWhere('address', 'LIKE', '%'.$searchTerm.'%')
-              ->orWhere('email', 'LIKE', '%'.$searchTerm.'%')
-              ->orWhere('phone', 'LIKE', '%'.$searchTerm.'%')
-              ->orWhere('contact', 'LIKE', '%'.$searchTerm.'%');
+        $fields = ['name', 'address', 'email', 'phone', 'contact'];
+        return $query->where(function ($q) use ($fields, $searchTerm) {
+            foreach ($fields as $field) {
+                $q->orWhere($field, 'LIKE', '%' . $searchTerm . '%');
+            }
         });
     }
 }

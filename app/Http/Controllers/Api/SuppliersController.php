@@ -54,18 +54,11 @@ class SuppliersController extends Controller
             'digital_signatures as digital_signatures_count'
         );
 
-
         if ($request->filled('filter')) {
             $filters = json_decode($request->input('filter'), true);
-            if (is_array($filters)) {
-                foreach ($filters as $field => $value) {
-                    if (in_array($field, ['name', 'address', 'email', 'phone', 'contact']) && !empty($value)) {
-                        $suppliers->where($field, 'LIKE', '%' . $value . '%');
-                    }
-                }
-            }
+            $suppliers = $this->applyFilters($suppliers, $filters);
         }
-        
+
         if ($request->filled('search')) {
             $suppliers = $suppliers->TextSearch($request->input('search'));
         }
@@ -201,13 +194,7 @@ class SuppliersController extends Controller
 
         if ($request->filled('filter')) {
             $filters = json_decode($request->input('filter'), true);
-            if (is_array($filters)) {
-                foreach ($filters as $field => $value) {
-                    if (in_array($field, ['name', 'address', 'email', 'phone', 'contact']) && !empty($value)) {
-                        $suppliers->where($field, 'LIKE', '%' . $value . '%');
-                    }
-                }
-            }
+            $suppliers = $this->applyFilters($suppliers, $filters);
         }
 
         if ($request->filled('search')) {
@@ -225,5 +212,17 @@ class SuppliersController extends Controller
         }
 
         return (new SelectlistTransformer)->transformSelectlist($suppliers);
+    }
+
+    private const FILTERABLE_FIELDS = ['name', 'address', 'email', 'phone', 'contact'];
+
+    private function applyFilters($query, $filters)
+    {
+        foreach ((array)$filters as $field => $value) {
+            if (in_array($field, self::FILTERABLE_FIELDS) && !empty($value)) {
+                $query->where($field, 'LIKE', '%' . $value . '%');
+            }
+        }
+        return $query;
     }
 }
