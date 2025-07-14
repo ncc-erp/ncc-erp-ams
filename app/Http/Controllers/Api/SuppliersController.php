@@ -55,6 +55,17 @@ class SuppliersController extends Controller
         );
 
 
+        if ($request->filled('filter')) {
+            $filters = json_decode($request->input('filter'), true);
+            if (is_array($filters)) {
+                foreach ($filters as $field => $value) {
+                    if (in_array($field, ['name', 'address', 'email', 'phone', 'contact']) && !empty($value)) {
+                        $suppliers->where($field, 'LIKE', '%' . $value . '%');
+                    }
+                }
+            }
+        }
+        
         if ($request->filled('search')) {
             $suppliers = $suppliers->TextSearch($request->input('search'));
         }
@@ -188,8 +199,19 @@ class SuppliersController extends Controller
             'image',
         ]);
 
+        if ($request->filled('filter')) {
+            $filters = json_decode($request->input('filter'), true);
+            if (is_array($filters)) {
+                foreach ($filters as $field => $value) {
+                    if (in_array($field, ['name', 'address', 'email', 'phone', 'contact']) && !empty($value)) {
+                        $suppliers->where($field, 'LIKE', '%' . $value . '%');
+                    }
+                }
+            }
+        }
+
         if ($request->filled('search')) {
-            $suppliers = $suppliers->where('suppliers.name', 'LIKE', '%' . $request->get('search') . '%');
+            $suppliers = $suppliers->TextSearch($request->input('search'));
         }
 
         $suppliers = $suppliers->orderBy('name', 'ASC')->paginate(50);
