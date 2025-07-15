@@ -166,11 +166,6 @@ class ConsumablesController extends Controller
         if ($request->filled('maintenance_date') && $request->input('maintenance_date') == 1) {
             $consumables->hasMaintenanceDate();
         }
-        // advanced filters
-        if ($request->filled('filter') && is_array(json_decode($request->input('filter'), true))) {
-            $filters = json_decode($request->input('filter'), true);
-            $consumables = Consumable::applyFilters($consumables, $filters);
-        }
 
         return $consumables;
     }
@@ -268,8 +263,10 @@ class ConsumablesController extends Controller
             'consumableAssignments' => function ($query) {
                 $query->orderBy($query->getModel()->getTable() . '.created_at', 'DESC');
             },
-            'consumableAssignments.admin' => function ($query) {},
-            'consumableAssignments.user' => function ($query) {},
+            'consumableAssignments.admin' => function ($query) {
+            },
+            'consumableAssignments.user' => function ($query) {
+            },
         ])->find($consumableId);
 
         if (!Company::isCurrentUserHasAccess($consumable)) {
@@ -392,11 +389,6 @@ class ConsumablesController extends Controller
             'consumables.id',
             'consumables.name',
         ]);
-
-        if ($request->filled('filter')) {
-            $filters = json_decode($request->input('filter'), true);
-            $consumables = Consumable::applyFilters($consumables, $filters);
-        }
 
         if ($request->filled('search')) {
             $consumables = $consumables->where('consumables.name', 'LIKE', '%' . $request->get('search') . '%');
