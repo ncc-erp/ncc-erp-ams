@@ -67,6 +67,11 @@ class LocationsController extends Controller
             $locations->whereIn('id', $manager_locations);
         }
 
+        if ($request->filled('filter')) {
+            $filters = json_decode($request->input('filter'), true);
+            $locations = Location::applyFilters($locations, $filters);
+        }
+
         if ($request->filled('search')) {
             $locations = $locations->TextSearch($request->input('search'));
         }
