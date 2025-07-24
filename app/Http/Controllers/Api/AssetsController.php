@@ -1192,6 +1192,8 @@ class AssetsController extends Controller
                 $asset->maintenance_cycle = $request->get('maintenance_cycle') : null;
             ($request->filled('maintenance')) ?
                 $asset->maintenance_date = $request->get('maintenance') : null;
+            ($request->filled('isCustomerRenting')) ?
+                $asset->isCustomerRenting = filter_var($request->get('isCustomerRenting'), FILTER_VALIDATE_BOOLEAN) : false;
             ($request->filled('webhook_id')) ?
                 $asset->webhook_id = $request->get('webhook_id') : null;
 
@@ -2201,5 +2203,46 @@ class AssetsController extends Controller
         });
 
         return response()->json(Helper::formatStandardApiResponse('success', $result, null));
+    }
+
+    public function getCustomerRentingAssets(Request $request)
+    {
+        $this->authorize('index', Asset::class);
+
+        $assets = Company::scopeCompanyables(Asset::select('assets.*'), 'company_id', 'assets')
+            ->where('isCustomerRenting', true)
+            ->with(
+                'location',
+                'assetstatus',
+                'company',
+                'defaultLoc',
+                'assignedTo',
+                'model.category',
+                'model.manufacturer',
+                'model.fieldset',
+                'supplier',
+                'webhook',
+            );
+        $assets = $this->filters($assets, $request);
+
+        $request->filled('order_number') ? $assets = $assets->where('assets.order_number', '=', e($request->get('order_number'))) : '';
+
+        $offset = (($assets) && ($request->get('offset') > $assets->count())) ? $assets->count() : $request->get('offset', 0);
+        ((config('app.max_results') >= $request->input('limit')) && ($request->filled('limit'))) ? $limit = $request->input('limit') : $limit = config('app.max_results');
+        $order = $request->input('order') === 'asc' ? 'asc' : 'desc';
+
+        $sort_override = str_replace('custom_fields.', '', $request->input('sort'));
+        $sort = $sort_override ?: 'assets.id';
+
+        $total = $assets->count();
+        $assets = $assets->orderBy($sort, $order)
+            ->offset($offset)
+            ->limit($limit)
+            ->get();
+
+        $transformer = new \App\Http\Transformers\AssetsTransformer();
+        $result = $transformer->transformAssets($assets, $total);
+
+        return response()->json(\App\Helpers\Helper::formatStandardApiResponse('success', $result, null));
     }
 }
