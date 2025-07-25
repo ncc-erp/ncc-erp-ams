@@ -2205,11 +2205,48 @@ class AssetsController extends Controller
         return response()->json(Helper::formatStandardApiResponse('success', $result, null));
     }
 
-    public function getCustomerRentingAssets(Request $request)
+    public function getCustomerRentingAssets(Request $request, $audit = null)
     {
-        $this->authorize('index', Asset::class);
+        // Get application settings
+        $settings = Setting::getSettings();
 
-        $assets = Company::scopeCompanyables(Asset::select('assets.*'), 'company_id', 'assets')
+        // List of allowed columns for sorting/filtering
+        $allowedColumns = [
+            'id',
+            'name',
+            'asset_tag',
+            'serial',
+            'model_number',
+            'last_checkout',
+            'notes',
+            'expected_checkin',
+            'order_number',
+            'image',
+            'assigned_to',
+            'created_at',
+            'updated_at',
+            'purchase_date',
+            'purchase_cost',
+            'last_audit_date',
+            'next_audit_date',
+            'assigned_status',
+            'requestable',
+            'warranty_months',
+            'checkout_counter',
+            'checkin_counter',
+            'requests_counter',
+            'maintenance_date',
+            'maintenance_cycle',
+        ];
+
+        // Add custom fields to allowed columns
+        $customFields = CustomField::all();
+        foreach ($customFields as $field) {
+            $allowedColumns[] = $field->db_column_name();
+        }
+
+        // Query assets that are being rented by customers
+        $assetQuery = Company::scopeCompanyables(Asset::select('assets.*'), 'company_id', 'assets')
             ->where('isCustomerRenting', true)
             ->with(
                 'location',
@@ -2223,24 +2260,96 @@ class AssetsController extends Controller
                 'supplier',
                 'webhook',
             );
-        $assets = $this->filters($assets, $request);
+        $assetQuery = $this->filters($assetQuery, $request);
 
-        $request->filled('order_number') ? $assets = $assets->where('assets.order_number', '=', e($request->get('order_number'))) : '';
+        // Filter by order number if provided
+        if ($request->filled('order_number')) {
+            $assetQuery = $assetQuery->where('assets.order_number', '=', e($request->get('order_number')));
+        }
 
-        $offset = (($assets) && ($request->get('offset') > $assets->count())) ? $assets->count() : $request->get('offset', 0);
-        ((config('app.max_results') >= $request->input('limit')) && ($request->filled('limit'))) ? $limit = $request->input('limit') : $limit = config('app.max_results');
-        $order = $request->input('order') === 'asc' ? 'asc' : 'desc';
+        // Calculate offset for pagination
+        $totalAssets = $assetQuery->count();
+        $offset = ($request->get('offset', 0) > $totalAssets) ? $totalAssets : $request->get('offset', 0);
 
-        $sort_override = str_replace('custom_fields.', '', $request->input('sort'));
-        $sort = $sort_override ?: 'assets.id';
+        // Determine limit for pagination
+        $limit = config('app.max_results');
+        if ($request->filled('limit') && config('app.max_results') >= $request->input('limit')) {
+            $limit = $request->input('limit');
+        }
 
-        $total = $assets->count();
-        $assets = $assets->orderBy($sort, $order)
-            ->offset($offset)
-            ->limit($limit)
-            ->get();
+        // Determine sort order
+        $sortOrder = $request->input('order') === 'asc' ? 'asc' : 'desc';
 
+        // Apply audit filters if needed
+        if (Gate::allows('audit', Asset::class)) {
+            switch ($audit) {
+                case 'due':
+                    $assetQuery->DueOrOverdueForAudit($settings);
+                    break;
+                case 'overdue':
+                    $assetQuery->overdueForAudit($settings);
+                    break;
+            }
+        }
+
+        // Determine which column to sort by
+        $sortField = str_replace('custom_fields.', '', $request->input('sort'));
+        $columnToSort = in_array($sortField, $allowedColumns) ? $sortField : 'assets.created_at';
+
+        // Apply sorting logic
+        switch ($sortField) {
+            case 'model':
+                $assetQuery->OrderModels($sortOrder);
+                break;
+            case 'model_number':
+                $assetQuery->OrderModelNumber($sortOrder);
+                break;
+            case 'category':
+                $assetQuery->OrderCategory($sortOrder);
+                break;
+            case 'manufacturer':
+                $assetQuery->OrderManufacturer($sortOrder);
+                break;
+            case 'company':
+                $assetQuery->OrderCompany($sortOrder);
+                break;
+            case 'location':
+                $assetQuery->OrderLocation($sortOrder);
+                // fallthrough
+            case 'rtd_location':
+                $assetQuery->OrderRtdLocation($sortOrder);
+                break;
+            case 'status_label':
+                $assetQuery->OrderStatus($sortOrder);
+                break;
+            case 'supplier':
+                $assetQuery->OrderSupplier($sortOrder);
+                break;
+            case 'assigned_to':
+                $assetQuery->OrderAssigned($sortOrder);
+                break;
+            default:
+                $assetQuery->orderBy($columnToSort, $sortOrder);
+                break;
+        }
+
+        // Get total after filters and sorting
+        $totalAssets = $assetQuery->count();
+
+        // Fetch paginated results
+        $assets = $assetQuery->skip($offset)->take($limit)->get();
+
+        // Optionally load components relationship if requested
+        if ($request->input('components')) {
+            $assets->loadMissing([
+                'components' => function ($query) {
+                    $query->orderBy('created_at', 'desc');
+                }
+            ]);
+        }
+
+        // Transform and return the asset data
         $transformer = new \App\Http\Transformers\AssetsTransformer();
-        return $transformer->transformAssets($assets, $total);
+        return $transformer->transformAssets($assets, $totalAssets);
     }
 }
