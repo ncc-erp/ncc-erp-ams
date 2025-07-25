@@ -2241,8 +2241,6 @@ class AssetsController extends Controller
             ->get();
 
         $transformer = new \App\Http\Transformers\AssetsTransformer();
-        $result = $transformer->transformAssets($assets, $total);
-
-        return response()->json(\App\Helpers\Helper::formatStandardApiResponse('success', $result, null));
+        return $transformer->transformAssets($assets, $total);
     }
 }
