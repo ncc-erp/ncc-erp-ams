@@ -2247,7 +2247,7 @@ class AssetsController extends Controller
 
         // Query assets that are being rented by customers
         $assetQuery = Company::scopeCompanyables(Asset::select('assets.*'), 'company_id', 'assets')
-            ->where('isCustomerRenting', true)
+            ->where('assets.isCustomerRenting', true)
             ->with(
                 'location',
                 'assetstatus',
