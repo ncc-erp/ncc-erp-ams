@@ -621,6 +621,14 @@ Route::group(['prefix' => 'v1', 'middleware' => ['api', 'throttle:' . config('ap
                 'getCustomerRentingAssets'
             ]
         )->name('api.assets.customerRenting');
+
+        Route::get(
+            'customer-renting-total-detail',
+            [
+                Api\AssetsController::class,
+                'getCustomerRentingAssetsTotalDetail'
+            ]
+        )->name('api.assets.customerRentingTotalDetail');
     });
 
 

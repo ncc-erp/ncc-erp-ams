@@ -1192,8 +1192,7 @@ class AssetsController extends Controller
                 $asset->maintenance_cycle = $request->get('maintenance_cycle') : null;
             ($request->filled('maintenance')) ?
                 $asset->maintenance_date = $request->get('maintenance') : null;
-            ($request->filled('isCustomerRenting')) ?
-                $asset->isCustomerRenting = filter_var($request->get('isCustomerRenting'), FILTER_VALIDATE_BOOLEAN) : false;
+            $asset->isCustomerRenting = filter_var($request->get('isCustomerRenting'), FILTER_VALIDATE_BOOLEAN);
             ($request->filled('webhook_id')) ?
                 $asset->webhook_id = $request->get('webhook_id') : null;
 
@@ -2351,5 +2350,38 @@ class AssetsController extends Controller
         // Transform and return the asset data
         $transformer = new \App\Http\Transformers\AssetsTransformer();
         return $transformer->transformAssets($assets, $totalAssets);
+    }
+
+    public function getCustomerRentingAssetsTotalDetail(Request $request)
+    {
+        $this->authorize('index', Asset::class);
+
+        // Query assets that are being rented by customers
+        $assets = Company::scopeCompanyables(Asset::select('assets.*'), 'company_id', 'assets')
+            ->where('assets.isCustomerRenting', true);
+
+        // Apply filters from request
+        $assets = $this->filters($assets, $request);
+
+        // Filter by order number if provided
+        if ($request->filled('order_number')) {
+            $assets = $assets->where('assets.order_number', '=', e($request->get('order_number')));
+        }
+
+        // Get total assets by category
+        $total_asset_by_model = $assets->selectRaw('c.name as category_name, count(*) as total')
+            ->join('models as m', 'assets.model_id', '=', 'm.id')
+            ->join('categories as c', 'm.category_id', '=', 'c.id')
+            ->groupBy('category_name')
+            ->pluck('total', 'category_name');
+
+        $total_detail = $total_asset_by_model->map(function ($value, $key) {
+            return [
+                'name' => $key,
+                'total' => $value
+            ];
+        })->values()->toArray();
+
+        return response()->json(Helper::formatStandardApiResponse('success', $total_detail, null));
     }
 }
