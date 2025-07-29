@@ -371,6 +371,12 @@ class AssetsController extends Controller
             $assets->hasMaintenanceDate();
         }
         $assets = $assets->where('assets.is_external', '=', false);
+        if ($request->filled('startRentalDate_gte') && $request->filled('startRentalDate_lte')) {
+            $assets->whereBetween('assets.startRentalDate', [
+                $request->input('startRentalDate_gte'),
+                $request->input('startRentalDate_lte')
+            ]);
+        }
 
         return $assets;
     }
@@ -1104,6 +1110,7 @@ class AssetsController extends Controller
         $asset->project_code            = $request->get('project_code', null);
         $asset->isCustomerRenting       = filter_var($request->get('isCustomerRenting', false), FILTER_VALIDATE_BOOLEAN);
         $asset->webhook_id = $request->get('webhook_id', null);
+        $asset->startRentalDate = $request->get('startRentalDate', null);
 
         /**
          * this is here just legacy reasons. Api\AssetController
@@ -1195,7 +1202,9 @@ class AssetsController extends Controller
             $asset->isCustomerRenting = filter_var($request->get('isCustomerRenting'), FILTER_VALIDATE_BOOLEAN);
             ($request->filled('webhook_id')) ?
                 $asset->webhook_id = $request->get('webhook_id') : null;
-
+            ($request->filled('startRentalDate')) ? 
+                $asset->startRentalDate = $request->get('startRentalDate') : null;
+            
             /**
              * this is here just legacy reasons. Api\AssetController
              * used image_source  once to allow encoded image uploads.
@@ -2236,6 +2245,7 @@ class AssetsController extends Controller
             'requests_counter',
             'maintenance_date',
             'maintenance_cycle',
+            'startRentalDate',
         ];
 
         // Add custom fields to allowed columns

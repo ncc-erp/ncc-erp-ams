@@ -83,7 +83,8 @@ class Asset extends Depreciable
         'expected_checkin',
         'last_audit_date',
         'next_audit_date',
-        'maintenance_date'
+        'maintenance_date',
+        'startRentalDate',
     ];
 
 
@@ -160,6 +161,7 @@ class Asset extends Depreciable
         'maintenance_date',
         'maintenance_cycle',
         'webhook_id',
+        'startRentalDate',
     ];
 
     use Searchable;
