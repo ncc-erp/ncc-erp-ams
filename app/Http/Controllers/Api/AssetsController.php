@@ -1192,6 +1192,7 @@ class AssetsController extends Controller
                 $asset->maintenance_cycle = $request->get('maintenance_cycle') : null;
             ($request->filled('maintenance')) ?
                 $asset->maintenance_date = $request->get('maintenance') : null;
+            $asset->isCustomerRenting = filter_var($request->get('isCustomerRenting'), FILTER_VALIDATE_BOOLEAN);
             ($request->filled('webhook_id')) ?
                 $asset->webhook_id = $request->get('webhook_id') : null;
 
@@ -2201,5 +2202,186 @@ class AssetsController extends Controller
         });
 
         return response()->json(Helper::formatStandardApiResponse('success', $result, null));
+    }
+
+    public function getCustomerRentingAssets(Request $request, $audit = null)
+    {
+        // Get application settings
+        $settings = Setting::getSettings();
+
+        // List of allowed columns for sorting/filtering
+        $allowedColumns = [
+            'id',
+            'name',
+            'asset_tag',
+            'serial',
+            'model_number',
+            'last_checkout',
+            'notes',
+            'expected_checkin',
+            'order_number',
+            'image',
+            'assigned_to',
+            'created_at',
+            'updated_at',
+            'purchase_date',
+            'purchase_cost',
+            'last_audit_date',
+            'next_audit_date',
+            'assigned_status',
+            'requestable',
+            'warranty_months',
+            'checkout_counter',
+            'checkin_counter',
+            'requests_counter',
+            'maintenance_date',
+            'maintenance_cycle',
+        ];
+
+        // Add custom fields to allowed columns
+        $customFields = CustomField::all();
+        foreach ($customFields as $field) {
+            $allowedColumns[] = $field->db_column_name();
+        }
+
+        // Query assets that are being rented by customers
+        $assetQuery = Company::scopeCompanyables(Asset::select('assets.*'), 'company_id', 'assets')
+            ->where('assets.isCustomerRenting', true)
+            ->with(
+                'location',
+                'assetstatus',
+                'company',
+                'defaultLoc',
+                'assignedTo',
+                'model.category',
+                'model.manufacturer',
+                'model.fieldset',
+                'supplier',
+                'webhook',
+            );
+        $assetQuery = $this->filters($assetQuery, $request);
+
+        // Filter by order number if provided
+        if ($request->filled('order_number')) {
+            $assetQuery = $assetQuery->where('assets.order_number', '=', e($request->get('order_number')));
+        }
+
+        // Calculate offset for pagination
+        $totalAssets = $assetQuery->count();
+        $offset = ($request->get('offset', 0) > $totalAssets) ? $totalAssets : $request->get('offset', 0);
+
+        // Determine limit for pagination
+        $limit = config('app.max_results');
+        if ($request->filled('limit') && config('app.max_results') >= $request->input('limit')) {
+            $limit = $request->input('limit');
+        }
+
+        // Determine sort order
+        $sortOrder = $request->input('order') === 'asc' ? 'asc' : 'desc';
+
+        // Apply audit filters if needed
+        if (Gate::allows('audit', Asset::class)) {
+            switch ($audit) {
+                case 'due':
+                    $assetQuery->DueOrOverdueForAudit($settings);
+                    break;
+                case 'overdue':
+                    $assetQuery->overdueForAudit($settings);
+                    break;
+            }
+        }
+
+        // Determine which column to sort by
+        $sortField = str_replace('custom_fields.', '', $request->input('sort'));
+        $columnToSort = in_array($sortField, $allowedColumns) ? $sortField : 'assets.created_at';
+
+        // Apply sorting logic
+        switch ($sortField) {
+            case 'model':
+                $assetQuery->OrderModels($sortOrder);
+                break;
+            case 'model_number':
+                $assetQuery->OrderModelNumber($sortOrder);
+                break;
+            case 'category':
+                $assetQuery->OrderCategory($sortOrder);
+                break;
+            case 'manufacturer':
+                $assetQuery->OrderManufacturer($sortOrder);
+                break;
+            case 'company':
+                $assetQuery->OrderCompany($sortOrder);
+                break;
+            case 'location':
+                $assetQuery->OrderLocation($sortOrder);
+                // fallthrough
+            case 'rtd_location':
+                $assetQuery->OrderRtdLocation($sortOrder);
+                break;
+            case 'status_label':
+                $assetQuery->OrderStatus($sortOrder);
+                break;
+            case 'supplier':
+                $assetQuery->OrderSupplier($sortOrder);
+                break;
+            case 'assigned_to':
+                $assetQuery->OrderAssigned($sortOrder);
+                break;
+            default:
+                $assetQuery->orderBy($columnToSort, $sortOrder);
+                break;
+        }
+
+        // Get total after filters and sorting
+        $totalAssets = $assetQuery->count();
+
+        // Fetch paginated results
+        $assets = $assetQuery->skip($offset)->take($limit)->get();
+
+        // Optionally load components relationship if requested
+        if ($request->input('components')) {
+            $assets->loadMissing([
+                'components' => function ($query) {
+                    $query->orderBy('created_at', 'desc');
+                }
+            ]);
+        }
+
+        // Transform and return the asset data
+        $transformer = new \App\Http\Transformers\AssetsTransformer();
+        return $transformer->transformAssets($assets, $totalAssets);
+    }
+
+    public function getCustomerRentingAssetsTotalDetail(Request $request)
+    {
+        $this->authorize('index', Asset::class);
+
+        // Query assets that are being rented by customers
+        $assets = Company::scopeCompanyables(Asset::select('assets.*'), 'company_id', 'assets')
+            ->where('assets.isCustomerRenting', true);
+
+        // Apply filters from request
+        $assets = $this->filters($assets, $request);
+
+        // Filter by order number if provided
+        if ($request->filled('order_number')) {
+            $assets = $assets->where('assets.order_number', '=', e($request->get('order_number')));
+        }
+
+        // Get total assets by category
+        $total_asset_by_model = $assets->selectRaw('c.name as category_name, count(*) as total')
+            ->join('models as m', 'assets.model_id', '=', 'm.id')
+            ->join('categories as c', 'm.category_id', '=', 'c.id')
+            ->groupBy('category_name')
+            ->pluck('total', 'category_name');
+
+        $total_detail = $total_asset_by_model->map(function ($value, $key) {
+            return [
+                'name' => $key,
+                'total' => $value
+            ];
+        })->values()->toArray();
+
+        return response()->json(Helper::formatStandardApiResponse('success', $total_detail, null));
     }
 }

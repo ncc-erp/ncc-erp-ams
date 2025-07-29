@@ -613,6 +613,22 @@ Route::group(['prefix' => 'v1', 'middleware' => ['api', 'throttle:' . config('ap
                 'getAssignedTotalDetail'
             ]
         )->name('api.assets.assignedTotalDetail');
+
+        Route::get(
+            'customer-renting',
+            [
+                Api\AssetsController::class,
+                'getCustomerRentingAssets'
+            ]
+        )->name('api.assets.customerRenting');
+
+        Route::get(
+            'customer-renting-total-detail',
+            [
+                Api\AssetsController::class,
+                'getCustomerRentingAssetsTotalDetail'
+            ]
+        )->name('api.assets.customerRentingTotalDetail');
     });
 
 
