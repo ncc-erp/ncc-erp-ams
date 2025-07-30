@@ -102,7 +102,8 @@ class AssetsTransformer
             'webhook' => ($asset->webhook) ? [
                 'id' => (int) $asset->webhook->id,
                 'name' => e($asset->webhook->name),
-            ] : null,        
+            ] : null,
+            'startRentalDate' => Helper::getFormattedDateObject($asset->startRentalDate, 'date'),        
         ];
 
 
