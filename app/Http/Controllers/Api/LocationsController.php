@@ -108,9 +108,9 @@ class LocationsController extends Controller
     }
     public function getTotalDetail(Request $request)
     {
-        $this->authorize('view', \App\Models\Location::class);
+        $this->authorize('view', Location::class);
 
-        $locationQuery = \App\Models\Location::select(['id', 'name', 'deleted_at'])
+        $locationQuery = Location::select(['id', 'name', 'deleted_at'])
             ->withCount([
                 'assets as assets_count',
                 'users as users_count',

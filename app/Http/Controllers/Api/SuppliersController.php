@@ -79,6 +79,41 @@ class SuppliersController extends Controller
 
         return (new SuppliersTransformer)->transformSuppliers($suppliers, $total);
     }
+    public function getTotalDetail(Request $request)
+    {
+        $this->authorize('view', Supplier::class);
+
+        $supplierQuery = Supplier::select(['id', 'name', 'deleted_at'])
+            ->withCount([
+                'assets as assets_count',
+                'licenses as licenses_count',
+                'accessories as accessories_count',
+                'consumables as consumables_count',
+                'tools as tools_count',
+                'digital_signatures as digital_signatures_count',
+            ])
+            ->whereNull('deleted_at');
+
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $supplierQuery->where('name', 'like', '%' . $search . '%');
+        }
+
+        $suppliers = $supplierQuery->get();
+
+        $result = [
+            ['name' => 'Assets', 'total' => $suppliers->sum('assets_count')],
+            ['name' => 'Licenses', 'total' => $suppliers->sum('licenses_count')],
+            ['name' => 'Accessories', 'total' => $suppliers->sum('accessories_count')],
+            ['name' => 'Consumables', 'total' => $suppliers->sum('consumables_count')],
+            ['name' => 'Tools', 'total' => $suppliers->sum('tools_count')],
+            ['name' => 'Digital Signatures', 'total' => $suppliers->sum('digital_signatures_count')],
+        ];
+
+        return response()->json(
+            Helper::formatStandardApiResponse('success', $result, null)
+        );
+    }
 
 
     /**
