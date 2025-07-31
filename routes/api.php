@@ -812,7 +812,13 @@ Route::group(['prefix' => 'v1', 'middleware' => ['api', 'throttle:' . config('ap
                 'selectlist'
             ]
         )->name('api.locations.selectlist');
-
+        Route::get(
+            'total-detail',
+            [
+                Api\LocationsController::class,
+                'getTotalDetail'
+            ]
+        )->name('api.locations.total-detail');
         Route::get(
             '{location}/users',
             [
@@ -1069,6 +1075,13 @@ Route::group(['prefix' => 'v1', 'middleware' => ['api', 'throttle:' . config('ap
                 'selectlist'
             ]
         )->name('api.suppliers.selectlist');
+        Route::get(
+            'total-detail',
+            [
+                Api\SuppliersController::class,
+                'getTotalDetail'
+            ]
+        )->name('api.suppliers.total-detail');
     });
 
     Route::resource(
