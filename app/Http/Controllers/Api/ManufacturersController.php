@@ -194,4 +194,32 @@ class ManufacturersController extends Controller
 
         return (new SelectlistTransformer)->transformSelectlist($manufacturers);
     }
+    public function getTotalDetail(Request $request)
+    {
+        $this->authorize('view', \App\Models\Manufacturer::class);
+        $manufacturers = \App\Models\Manufacturer::select(
+            ['id', 'name', 'deleted_at']
+        )->withCount(
+            'assets as assets_count',
+            'licenses as licenses_count',
+            'consumables as consumables_count',
+            'accessories as accessories_count'
+        );
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+
+            $manufacturers->where('name', 'like', '%' . $search . '%');
+        }
+        $manufacturers->whereNull('deleted_at');
+        $data = $manufacturers->get();
+        $result = [
+            ['name' => 'Assets', 'total' => $data->sum('assets_count')],
+            ['name' => 'Licenses', 'total' => $data->sum('licenses_count')],
+            ['name' => 'Consumable', 'total' => $data->sum('consumables_count')],
+            ['name' => 'Accessories', 'total' => $data->sum('accessories_count')],
+        ];
+        return response()->json(
+            Helper::formatStandardApiResponse('success', $result, null)
+        );
+    }
 }

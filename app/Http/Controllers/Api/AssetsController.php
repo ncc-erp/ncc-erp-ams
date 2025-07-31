@@ -361,11 +361,11 @@ class AssetsController extends Controller
 
         if (isset($request->from)) {
             $from = Carbon::createFromFormat('Y-m-d', $request->from)->startOfDay()->toDateTimeString();
-            $assets = $assets->where('created_at', '>=', $from);
+            $assets = $assets->where('assets.created_at', '>=', $from);
         }
         if (isset($request->to)) {
             $to = Carbon::createFromFormat('Y-m-d', $request->to)->endOfDay()->toDateTimeString();
-            $assets = $assets->where('created_at', '<=', $to);
+            $assets = $assets->where('assets.created_at', '<=', $to);
         }
         if ($request->filled('maintenance_date') && $request->input('maintenance_date') == 1) {
             $assets->hasMaintenanceDate();

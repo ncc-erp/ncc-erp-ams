@@ -876,6 +876,13 @@ Route::group(['prefix' => 'v1', 'middleware' => ['api', 'throttle:' . config('ap
                 'selectlist'
             ]
         )->name('api.manufacturers.selectlist');
+        Route::get(
+            'total-detail',
+            [
+                Api\ManufacturersController::class,
+                'getTotalDetail'
+            ]
+        )->name('api.categories.total-detail');
     });
 
     Route::resource(
