@@ -882,7 +882,7 @@ Route::group(['prefix' => 'v1', 'middleware' => ['api', 'throttle:' . config('ap
                 Api\ManufacturersController::class,
                 'getTotalDetail'
             ]
-        )->name('api.categories.total-detail');
+        )->name('api.manufacturers.total-detail');
     });
 
     Route::resource(
