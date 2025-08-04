@@ -111,13 +111,13 @@ class ClientAssetsController extends Controller
                     $checkinWebhooks = Webhook::whereJsonContains('type', 'CONFIRM_CHECKIN')
                         ->get();
                     foreach ($checkinWebhooks as $checkinWebhook) {
-                        $this->sendNotification($assets, $checkinWebhook, true, true);
+                        $this->sendNotification("CONFIRM_CHECKIN",$assets, $checkinWebhook, true, true);
                     }
                 } else {
                     $checkoutWebhooks = Webhook::whereJsonContains('type', 'CONFIRM_CHECKOUT')
                         ->get();
                     foreach ($checkoutWebhooks as $checkoutWebhook) {
-                        $this->sendNotification($assets, $checkoutWebhook, false, true);
+                        $this->sendNotification("CONFIRM_CHECKOUT",$assets, $checkoutWebhook, false, true);
                     }
                 }
             } elseif ($request->assigned_status === config('enum.assigned_status.REJECT')) {
@@ -125,13 +125,13 @@ class ClientAssetsController extends Controller
                     $checkinWebhooks = Webhook::whereJsonContains('type', 'REJECT_CHECKIN')
                         ->get();
                     foreach ($checkinWebhooks as $checkinWebhook) {
-                        $this->sendNotification($assets, $checkinWebhook, true, false, true);
+                        $this->sendNotification("REJECT_CHECKIN",$assets, $checkinWebhook, true, false, true);
                     }
                 } else {
                     $checkoutWebhooks = Webhook::whereJsonContains('type', 'REJECT_CHECKOUT')
                         ->get();
                     foreach ($checkoutWebhooks as $checkoutWebhook) {
-                        $this->sendNotification($assets, $checkoutWebhook, false, false, true);
+                        $this->sendNotification("REJECT_CHECKOUT",$assets, $checkoutWebhook, false, false, true);
                     }
                 }
             }
@@ -245,7 +245,7 @@ class ClientAssetsController extends Controller
             $checkinWebhooks = Webhook::whereJsonContains('type', 'CHECKIN_CLIENT_ASSET')
                 ->get();
             foreach ($checkinWebhooks as $checkinWebhook) {
-                $this->sendNotification($assets, $checkinWebhook, true);
+                $this->sendNotification("CHECKIN_CLIENT_ASSET",$assets, $checkinWebhook, true);
             }
             return response()->json(Helper::formatStandardApiResponse(
                 'success',
@@ -271,7 +271,7 @@ class ClientAssetsController extends Controller
             $checkoutWebhooks = Webhook::whereJsonContains('type', 'CHECKOUT_CLIENT_ASSET')
                 ->get();
             foreach ($checkoutWebhooks as $checkoutWebhook) {
-                $this->sendNotification($assets, $checkoutWebhook);
+                $this->sendNotification("CHECKOUT_CLIENT_ASSET",$assets, $checkoutWebhook);
             }
 
             return response()->json(Helper::formatStandardApiResponse(
@@ -283,7 +283,7 @@ class ClientAssetsController extends Controller
             throw $th;
         }
     }
-    private function sendNotification($item, $webhook, $isCheckin = false, $isConfirmed = false, $isRejected = false)
+    private function sendNotification($type, $item, $webhook, $isCheckin = false, $isConfirmed = false, $isRejected = false)
     {
 
 
@@ -322,13 +322,17 @@ class ClientAssetsController extends Controller
             'Content-Type' => 'application/json',
         ])->post($webhook->url, $payload);
 
+        $success = $response->successful();
+        $status_message = $success ? 'Webhook sent successfully' : 'Webhook failed to send';
+
         WebhookLog::create([
             'webhook_id' => $webhook->id,
             'url' => $webhook->url,
-            'payload' => $payload,
+            'message' => $messageText,
             'status_code' => $response->status(),
-            'response' => $response->body(),
-            'asset_id' => $item->id,
+            'response' => $status_message,
+            'asset' => $item->name,
+            'type' => $type,
         ]);
     }
 }

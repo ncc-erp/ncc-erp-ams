@@ -1254,7 +1254,7 @@ class AssetsController extends Controller
                         $checkinWebhooks = Webhook::whereJsonContains('type', 'CONFIRM_CHECKIN')
                             ->get();
                         foreach ($checkinWebhooks as $checkinWebhook) {
-                            $this->sendNotification($asset, $checkinWebhook, true, true);
+                            $this->sendNotification("CONFIRM_CHECKIN",$asset, $checkinWebhook, true, true);
                         }
 
                         SendConfirmRevokeMail::dispatch($data, $it_ncc_email);
@@ -1266,7 +1266,7 @@ class AssetsController extends Controller
                         $checkoutWebhooks = Webhook::whereJsonContains('type', 'CONFIRM_CHECKOUT')
                             ->get();
                         foreach ($checkoutWebhooks as $checkoutWebhook) {
-                            $this->sendNotification($asset, $checkoutWebhook, false, true);
+                            $this->sendNotification("CCONFIRM_CHECKOUT",$asset, $checkoutWebhook, false, true);
                         }
 
                         SendConfirmMail::dispatch($data, $it_ncc_email);
@@ -1282,7 +1282,7 @@ class AssetsController extends Controller
                         $checkinWebhooks = Webhook::whereJsonContains('type', 'REJECT_CHECKIN')
                             ->get();
                         foreach ($checkinWebhooks as $checkinWebhook) {
-                            $this->sendNotification($asset, $checkinWebhook, true, false, true);
+                            $this->sendNotification("REJECT_CHECKIN",$asset, $checkinWebhook, true, false, true);
                         }
 
                         SendRejectRevokeMail::dispatch($data, $it_ncc_email);
@@ -1301,7 +1301,7 @@ class AssetsController extends Controller
                         $checkoutWebhooks = Webhook::whereJsonContains('type', 'REJECT_CHECKOUT')
                             ->get();
                         foreach ($checkoutWebhooks as $checkoutWebhook) {
-                            $this->sendNotification($asset, $checkoutWebhook, false, false, true);
+                            $this->sendNotification("REJECT_CHECKOUT",$asset, $checkoutWebhook, false, false, true);
                         }
 
                         SendRejectAllocateMail::dispatch($data, $it_ncc_email);
@@ -1742,7 +1742,7 @@ class AssetsController extends Controller
             $checkinWebhooks = Webhook::whereJsonContains('type', 'CHECKIN_ASSET')
                 ->get();
             foreach ($checkinWebhooks as $checkinWebhook) {
-                $this->sendNotification($asset, $checkinWebhook, true);
+                $this->sendNotification("CHECKIN_ASSET",$asset, $checkinWebhook, true);
             }
 
             SendCheckinMail::dispatch($data, $data['user_email']);
@@ -1845,7 +1845,7 @@ class AssetsController extends Controller
             $checkoutWebhooks = Webhook::whereJsonContains('type', 'CHECKOUT_ASSET')
                 ->get();
             foreach ($checkoutWebhooks as $checkoutWebhook) {
-                $this->sendNotification($asset, $checkoutWebhook);
+                $this->sendNotification("CHECKOUT_ASSET",$asset, $checkoutWebhook);
             }
 
             SendCheckoutMail::dispatch($data, $user_email);
@@ -1854,7 +1854,7 @@ class AssetsController extends Controller
 
         return response()->json(Helper::formatStandardApiResponse('error', ['asset' => e($asset->asset_tag)], trans('admin/hardware/message.checkout.error')));
     }
-    private function sendNotification($item, $webhook, $isCheckin = false, $isConfirm = false, $isReject= false)
+    private function sendNotification($type, $item, $webhook, $isCheckin = false, $isConfirm = false, $isReject= false)
     {
 
         $messageText = "[{$item->model->category->category_type}] {$item->name} - {$item->model->category->name} is requested to check out.";
@@ -1891,13 +1891,17 @@ class AssetsController extends Controller
             'Content-Type' => 'application/json',
         ])->post($webhook->url, $payload);
 
+        $success = $response->successful();
+        $status_message = $success ? 'Webhook sent successfully' : 'Webhook failed to send';
+
         WebhookLog::create([
             'webhook_id' => $webhook->id,
             'url' => $webhook->url,
-            'payload' => $payload,
+            'message' => $messageText,
             'status_code' => $response->status(),
-            'response' => $response->body(),
-            'asset_id' => $item->id,
+            'response' => $status_message,
+            'asset' => $item->name,
+            'type' => $type,
         ]);
     }
 
