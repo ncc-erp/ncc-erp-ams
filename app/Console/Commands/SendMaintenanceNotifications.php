@@ -66,13 +66,17 @@ class SendMaintenanceNotifications extends Command
                 'Content-Type' => 'application/json',
             ])->post($item->webhook->url, $payload);
 
+            $success = $response->successful();
+            $status_message = $success ? 'Webhook sent successfully' : 'Webhook failed to send';
+
             WebhookLog::create([
                 'webhook_id' => $item->webhook->id,
                 'url' => $item->webhook->url,
-                'payload' => $payload,
+                'message' => $messageText,
                 'status_code' => $response->status(),
-                'response' => $response->body(),
-                'asset_id' => $item->id,
+                'response' => $status_message,
+                'asset' => $item->name,
+                'type' => $webhookType
             ]);
 
             $this->info("Notification sent for {$item->type}: {$item->name}");

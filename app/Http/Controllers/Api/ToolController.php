@@ -68,13 +68,13 @@ class ToolController extends Controller
                     $checkinWebhooks = Webhook::whereJsonContains('type', 'CONFIRM_CHECKIN')
                         ->get();
                     foreach ($checkinWebhooks as $checkinWebhook) {
-                        $this->sendNotification($tool, $checkinWebhook, true, true);
+                        $this->sendNotification("CONFIRM_CHECKIN",$tool, $checkinWebhook, true, true);
                     }
                 } else {
                     $checkoutWebhooks = Webhook::whereJsonContains('type', 'CONFIRM_CHECKOUT')
                         ->get();
                     foreach ($checkoutWebhooks as $checkoutWebhook) {
-                        $this->sendNotification($tool, $checkoutWebhook, false, true);
+                        $this->sendNotification("CONFIRM_CHECKOUT",$tool, $checkoutWebhook, false, true);
                     }
                 }
             } else {
@@ -82,13 +82,13 @@ class ToolController extends Controller
                     $checkinWebhooks = Webhook::whereJsonContains('type', 'REJECT_CHECKIN')
                         ->get();
                     foreach ($checkinWebhooks as $checkinWebhook) {
-                        $this->sendNotification($tool, $checkinWebhook, true, false, true);
+                        $this->sendNotification("REJECT_CHECKIN",$tool, $checkinWebhook, true, false, true);
                     }
                 } else {
                     $checkoutWebhooks = Webhook::whereJsonContains('type', 'REJECT_CHECKOUT')
                         ->get();
                     foreach ($checkoutWebhooks as $checkoutWebhook) {
-                        $this->sendNotification($tool, $checkoutWebhook, false, false, true);
+                        $this->sendNotification("REJECT_CHECKOUT",$tool, $checkoutWebhook, false, false, true);
                     }
                 }
             }
@@ -148,7 +148,7 @@ class ToolController extends Controller
             $checkoutWebhooks = Webhook::whereJsonContains('type', 'CHECKOUT_TOOL')
                 ->get();
             foreach ($checkoutWebhooks as $checkoutWebhook) {
-                $this->sendNotification($tool, $checkoutWebhook);
+                $this->sendNotification("CHECKOUT_TOOL",$tool, $checkoutWebhook);
             }
             return response()->json(
                 Helper::formatStandardApiResponse(
@@ -162,7 +162,7 @@ class ToolController extends Controller
             throw $e;
         }
     }
-    private function sendNotification($item, $webhook, $isCheckin = false, $isConfirmed = false, $isRejected = false)
+    private function sendNotification($type ,$item, $webhook, $isCheckin = false, $isConfirmed = false, $isRejected = false)
     {
 
         $messageText = "[{$item->category->category_type}] {$item->name} - {$item->category->name} is requested to check out.";
@@ -199,13 +199,17 @@ class ToolController extends Controller
             'Content-Type' => 'application/json',
         ])->post($webhook->url, $payload);
 
+        $success = $response->successful();
+        $status_message = $success ? 'Webhook sent successfully' : 'Webhook failed to send';
+
         WebhookLog::create([
             'webhook_id' => $webhook->id,
             'url' => $webhook->url,
-            'payload' => $payload,
+            'message' => $messageText,
             'status_code' => $response->status(),
-            'response' => $response->body(),
-            'asset_id' => $item->id,
+            'response' => $status_message,
+            'asset' => $item->name,
+            'type' => $type,
         ]);
     }
 
@@ -239,7 +243,7 @@ class ToolController extends Controller
             $checkinWebhooks = Webhook::whereJsonContains('type', 'CHECKIN_TOOL')
                 ->get();
             foreach ($checkinWebhooks as $checkinWebhook) {
-                $this->sendNotification($tool, $checkinWebhook, true);
+                $this->sendNotification("CHECKIN_TOOL",$tool, $checkinWebhook, true);
             }
             return response()->json(
                 Helper::formatStandardApiResponse(

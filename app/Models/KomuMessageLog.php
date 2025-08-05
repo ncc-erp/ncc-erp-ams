@@ -5,10 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Traits\Searchable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class KomuMessageLog extends SnipeModel
 {
-    use SoftDeletes, Searchable;
+    use SoftDeletes, Searchable, HasFactory;
 
     /**
      * The table associated with the model.
@@ -111,4 +112,8 @@ class KomuMessageLog extends SnipeModel
     {
         return $this->status === 0;
     }
-} 
+    public function isDeletable()
+    {
+        return true;
+    }
+}

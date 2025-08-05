@@ -1706,4 +1706,53 @@ Route::group(['prefix' => 'v1', 'middleware' => ['api', 'throttle:' . config('ap
         ]
     );
 
+    Route::resource(
+        'webhook-logs',
+        Api\WebhookLogsController::class,
+        [
+            'names' =>
+                [
+                    'index' => 'api.webhook_logs.index',
+                    'destroy' => 'api.webhook_logs.destroy',
+                ],
+            'except' => ['create', 'edit', 'show'],
+        ]
+    );
+
+    Route::group(['prefix' => 'webhook-logs'], function () {
+
+        Route::get(
+            'total-detail',
+            [
+                Api\WebhookLogsController::class,
+                'getTotalDetail'
+            ]
+        )->name('api.webhook_logs.totalDetail');
+    });
+
+    //Route Komu Logs
+    Route::resource(
+        'komu-logs',
+        Api\KomuLogsController::class,
+        [
+            'names' =>
+                [
+                    'index' => 'api.komu_logs.index',
+                    'destroy' => 'api.komu_logs.destroy',
+                ],
+            'except' => ['create', 'edit', 'show'],
+        ]
+    );
+
+    Route::group(['prefix' => 'komu-logs'], function () {
+
+        Route::get(
+            'total-detail',
+            [
+                Api\KomuLogsController::class,
+                'getTotalDetail'
+            ]
+        )->name('api.komu_logs.totalDetail');
+    });
+
 }); // end API routes
