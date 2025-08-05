@@ -1104,11 +1104,11 @@ class AssetsController extends Controller
         $asset->assigned_status = $request->get('assigned_status', 0);
         $asset->maintenance_cycle = $request->get('maintenance_cycle', 0);
         $asset->maintenance_date = $request->get('maintenance', null);
-        $asset->customer                = $request->get('customer', null);
-        $asset->project                 = $request->get('project', null);
-        $asset->customer_code           = $request->get('customer_code', null);
-        $asset->project_code            = $request->get('project_code', null);
-        $asset->isCustomerRenting       = filter_var($request->get('isCustomerRenting', false), FILTER_VALIDATE_BOOLEAN);
+        $asset->customer = $request->get('customer', null);
+        $asset->project = $request->get('project', null);
+        $asset->customer_code = $request->get('customer_code', null);
+        $asset->project_code = $request->get('project_code', null);
+        $asset->isCustomerRenting = filter_var($request->get('isCustomerRenting', false), FILTER_VALIDATE_BOOLEAN);
         $asset->webhook_id = $request->get('webhook_id', null);
         $asset->startRentalDate = $request->get('startRentalDate', null);
 
@@ -1202,9 +1202,9 @@ class AssetsController extends Controller
             $asset->isCustomerRenting = filter_var($request->get('isCustomerRenting'), FILTER_VALIDATE_BOOLEAN);
             ($request->filled('webhook_id')) ?
                 $asset->webhook_id = $request->get('webhook_id') : null;
-            ($request->filled('startRentalDate')) ? 
+            ($request->filled('startRentalDate')) ?
                 $asset->startRentalDate = $request->get('startRentalDate') : null;
-            
+
             /**
              * this is here just legacy reasons. Api\AssetController
              * used image_source  once to allow encoded image uploads.
@@ -1264,7 +1264,7 @@ class AssetsController extends Controller
                         $checkinWebhooks = Webhook::whereJsonContains('type', 'CONFIRM_CHECKIN')
                             ->get();
                         foreach ($checkinWebhooks as $checkinWebhook) {
-                            $this->sendNotification("CONFIRM_CHECKIN",$asset, $checkinWebhook, true, true);
+                            $this->sendNotification("CONFIRM_CHECKIN", $asset, $checkinWebhook, true, true);
                         }
 
                         SendConfirmRevokeMail::dispatch($data, $it_ncc_email);
@@ -1276,7 +1276,7 @@ class AssetsController extends Controller
                         $checkoutWebhooks = Webhook::whereJsonContains('type', 'CONFIRM_CHECKOUT')
                             ->get();
                         foreach ($checkoutWebhooks as $checkoutWebhook) {
-                            $this->sendNotification("CCONFIRM_CHECKOUT",$asset, $checkoutWebhook, false, true);
+                            $this->sendNotification("CCONFIRM_CHECKOUT", $asset, $checkoutWebhook, false, true);
                         }
 
                         SendConfirmMail::dispatch($data, $it_ncc_email);
@@ -1292,7 +1292,7 @@ class AssetsController extends Controller
                         $checkinWebhooks = Webhook::whereJsonContains('type', 'REJECT_CHECKIN')
                             ->get();
                         foreach ($checkinWebhooks as $checkinWebhook) {
-                            $this->sendNotification("REJECT_CHECKIN",$asset, $checkinWebhook, true, false, true);
+                            $this->sendNotification("REJECT_CHECKIN", $asset, $checkinWebhook, true, false, true);
                         }
 
                         SendRejectRevokeMail::dispatch($data, $it_ncc_email);
@@ -1311,7 +1311,7 @@ class AssetsController extends Controller
                         $checkoutWebhooks = Webhook::whereJsonContains('type', 'REJECT_CHECKOUT')
                             ->get();
                         foreach ($checkoutWebhooks as $checkoutWebhook) {
-                            $this->sendNotification("REJECT_CHECKOUT",$asset, $checkoutWebhook, false, false, true);
+                            $this->sendNotification("REJECT_CHECKOUT", $asset, $checkoutWebhook, false, false, true);
                         }
 
                         SendRejectAllocateMail::dispatch($data, $it_ncc_email);
@@ -1597,6 +1597,8 @@ class AssetsController extends Controller
             $current_time = Carbon::now();
             $location = Location::find($asset->location_id);
             $location_address = null;
+            $isCustomerRenting = filter_var($request->get('isCustomerRenting'), FILTER_VALIDATE_BOOLEAN);
+            $startRentalDate = request('startRentalDate', null);
 
             // concat asset's address information
             $location_arr = array();
@@ -1638,7 +1640,20 @@ class AssetsController extends Controller
 
             $asset->status_id = config('enum.status_id.ASSIGN');
 
-            if ($asset->checkOut($target, Auth::user(), $checkout_at, $expected_checkin, $note, $asset->name, $asset->location_id, config('enum.assigned_status.WAITINGCHECKOUT'))) {
+            if (
+                $asset->checkOut(
+                    $target,
+                    Auth::user(),
+                    $checkout_at,
+                    $expected_checkin,
+                    $note,
+                    $asset->name,
+                    $asset->location_id,
+                    config('enum.assigned_status.WAITINGCHECKOUT'),
+                    $isCustomerRenting,
+                    $startRentalDate
+                )
+            ) {
                 $this->saveAssetHistory($asset_id, config('enum.asset_history.CHECK_OUT_TYPE'));
             }
         }
@@ -1752,7 +1767,7 @@ class AssetsController extends Controller
             $checkinWebhooks = Webhook::whereJsonContains('type', 'CHECKIN_ASSET')
                 ->get();
             foreach ($checkinWebhooks as $checkinWebhook) {
-                $this->sendNotification("CHECKIN_ASSET",$asset, $checkinWebhook, true);
+                $this->sendNotification("CHECKIN_ASSET", $asset, $checkinWebhook, true);
             }
 
             SendCheckinMail::dispatch($data, $data['user_email']);
@@ -1795,6 +1810,8 @@ class AssetsController extends Controller
         $expected_checkin = request('expected_checkin', null);
         $note = request('note', null);
         $asset_name = request('name', null);
+        $isCustomerRenting = filter_var($request->get('isCustomerRenting'), FILTER_VALIDATE_BOOLEAN);
+        $startRentalDate = request('startRentalDate', null);
 
         // Set the location ID to the RTD location id if there is one
         // Wait, why are we doing this? This overrides the stuff we set further up, which makes no sense.
@@ -1842,7 +1859,20 @@ class AssetsController extends Controller
 
         $asset->status_id = config('enum.status_id.ASSIGN');
 
-        if ($asset->checkOut($target, Auth::user(), $checkout_at, $expected_checkin, $note, $asset->name, $asset->location_id, config('enum.assigned_status.WAITINGCHECKOUT'))) {
+        if (
+            $asset->checkOut(
+                $target,
+                Auth::user(),
+                $checkout_at,
+                $expected_checkin,
+                $note,
+                $asset->name,
+                $asset->location_id,
+                config('enum.assigned_status.WAITINGCHECKOUT'),
+                $isCustomerRenting,
+                $startRentalDate
+            )
+        ) {
             $this->saveAssetHistory($asset_id, config('enum.asset_history.CHECK_OUT_TYPE'));
             $data = [
                 'user_name' => $user_name,
@@ -1855,7 +1885,7 @@ class AssetsController extends Controller
             $checkoutWebhooks = Webhook::whereJsonContains('type', 'CHECKOUT_ASSET')
                 ->get();
             foreach ($checkoutWebhooks as $checkoutWebhook) {
-                $this->sendNotification("CHECKOUT_ASSET",$asset, $checkoutWebhook);
+                $this->sendNotification("CHECKOUT_ASSET", $asset, $checkoutWebhook);
             }
 
             SendCheckoutMail::dispatch($data, $user_email);
@@ -1864,7 +1894,8 @@ class AssetsController extends Controller
 
         return response()->json(Helper::formatStandardApiResponse('error', ['asset' => e($asset->asset_tag)], trans('admin/hardware/message.checkout.error')));
     }
-    private function sendNotification($type, $item, $webhook, $isCheckin = false, $isConfirm = false, $isReject= false)
+
+    private function sendNotification($type, $item, $webhook, $isCheckin = false, $isConfirm = false, $isReject = false)
     {
 
         $messageText = "[{$item->model->category->category_type}] {$item->name} - {$item->model->category->name} is requested to check out.";
@@ -2127,7 +2158,6 @@ class AssetsController extends Controller
         return $data;
     }
 
-    
     public function getAssignedTotalDetail(Request $request)
     {
         $this->authorize('view', Asset::class);
@@ -2138,7 +2168,7 @@ class AssetsController extends Controller
 
         if ($request->filled('search')) {
             $search = $request->input('search');
-            $query->where('name', 'like', '%'.$search.'%');
+            $query->where('name', 'like', '%' . $search . '%');
         }
 
         if ($request->filled('user_id')) {
@@ -2183,9 +2213,9 @@ class AssetsController extends Controller
 
         $result = $query->groupBy('assigned_status')->get();
 
-        $result = $result->map(function($item) {
+        $result = $result->map(function ($item) {
             $statusName = '';
-            switch($item->assigned_status) {
+            switch ($item->assigned_status) {
                 case 0:
                     $statusName = 'Chưa checkout';
                     break;
@@ -2207,7 +2237,7 @@ class AssetsController extends Controller
                 default:
                     $statusName = 'Unknown';
             }
-            
+
             return [
                 'name' => $statusName,
                 'total' => $item->total
@@ -2328,7 +2358,7 @@ class AssetsController extends Controller
                 break;
             case 'location':
                 $assetQuery->OrderLocation($sortOrder);
-                // fallthrough
+            // fallthrough
             case 'rtd_location':
                 $assetQuery->OrderRtdLocation($sortOrder);
                 break;
