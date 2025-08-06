@@ -23,12 +23,11 @@ The type indicates the purpose of the commit. Allowed types are:
 - **BREAKING CHANGE**: A change that breaks backward compatibility.
 
 ### **2. Scope**
-The scope specifies the area of the backend codebase affected by the commit. Examples:
-- **API**: API-related changes.
-- **DB**: Database-related changes.
-- **AUTH**: Authentication-related changes.
-- **MODEL**: Model-related changes.
-- **CONTROLLER**: Controller-related changes.
+The scope specifies the ticket number of the task or feature affected by the commit. Examples:
+- **123**: Refers to ticket number 123 in the project management system.
+- **456**: Refers to ticket number 456 in the project management system.
+
+Using ticket numbers as scope ensures traceability and clarity in the commit history.
 
 ### **3. Subject**
 The subject is a brief description of the change. It must:
@@ -40,17 +39,18 @@ The subject is a brief description of the change. It must:
 
 ## Examples
 ### Valid Commit Messages:
-- `feat(API): add user authentication endpoint`
-- `fix(DB): resolve migration issue`
-- `refactor(MODEL): optimize asset model`
-- `test(CONTROLLER): add unit tests for checkout controller`
-- `hotfix(AUTH): fix critical bug in token generation`
+- `feat(123): add new login page`
+- `fix(456): resolve issue with checkout endpoint integration`
+- `refactor(789): update button styling`
+- `test(321): add unit tests for asset list component`
+- `hotfix(654): fix critical bug in environment variables`
 
 ### Invalid Commit Messages:
 - `Added new feature` (missing type and scope)
 - `fix: resolve issue` (missing scope)
-- `feat(API): Add new feature.` (subject should not end with a period)
+- `feat(123): Add new feature.` (subject should not end with a period)
 
+---
 ---
 
 ## Commitlint Configuration
