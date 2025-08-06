@@ -39,11 +39,11 @@ The subject is a brief description of the change. It must:
 
 ## Examples
 ### Valid Commit Messages:
-- `feat(123): add new login page`
-- `fix(456): resolve issue with checkout endpoint integration`
-- `refactor(789): update button styling`
-- `test(321): add unit tests for asset list component`
-- `hotfix(654): fix critical bug in environment variables`
+- `feat(AMS-123): add new login page`
+- `fix(AMS-456): resolve issue with checkout endpoint integration`
+- `refactor(AMS-789): update button styling`
+- `test(AMS-321): add unit tests for asset list component`
+- `hotfix(AMS-654): fix critical bug in environment variables`
 
 ### Invalid Commit Messages:
 - `Added new feature` (missing type and scope)
