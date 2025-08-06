@@ -200,7 +200,7 @@ class Asset extends Depreciable
         'model' => ['name', 'model_number'],
         'model.category' => ['name'],
         'model.manufacturer' => ['name'],
-        'webhook' => ['name'],  
+        'webhook' => ['name'],
     ];
 
     /**
@@ -398,8 +398,18 @@ class Asset extends Depreciable
      * @since [v3.0]
      * @return bool
      */
-    public function checkOut($target, $admin = null, $checkout_at = null, $expected_checkin = null, $note = null, $name = null, $location = null, $assigned_status = null)
-    {
+    public function checkOut(
+        $target,
+        $admin = null,
+        $checkout_at = null,
+        $expected_checkin = null,
+        $note = null,
+        $name = null,
+        $location = null,
+        $assigned_status = null,
+        $isCustomerRenting = false,
+        $startRentalDate = null
+    ) {
         if (!$target) {
             return false;
         }
@@ -414,7 +424,6 @@ class Asset extends Depreciable
         $this->last_checkout = $checkout_at;
 
         $this->assignedTo()->associate($target);
-
 
         if ($name != null) {
             $this->name = $name;
@@ -432,6 +441,10 @@ class Asset extends Depreciable
         }
         if ($assigned_status !== null) {
             $this->assigned_status = $assigned_status;
+        }
+        $this->isCustomerRenting = $isCustomerRenting;
+        if ($isCustomerRenting) {
+            $this->startRentalDate = $startRentalDate;
         }
 
         if ($this->save()) {
