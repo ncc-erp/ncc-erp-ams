@@ -78,12 +78,6 @@ Before you begin, ensure you have met the following requirements:
    ```bash
    php artisan passport:install
    ```
-
-9. **Migrate passport** for generate auth token:
-    ```bash
-    php artisan passport:install
-    ```
-
 ---
 
 
