@@ -49,7 +49,7 @@ class ReleaseNoteService
         return Cache::remember($cacheKey, now()->addHour(), function () use ($owner, $repo, $perPage) {
             $header = $this->getHeaders();
             $url = "{$this->baseUrl}/repos/{$owner}/{$repo}/releases";
-            \Log::info("Fetching release notes from: {$url} with perPage: {$perPage}");
+            Log::info("Fetching release notes from: {$url} with perPage: {$perPage}");
             
             $response = $this->getHttpClient()
                 ->withHeaders($header)  // Add headers for the request
@@ -58,7 +58,7 @@ class ReleaseNoteService
                 ]);
 
             if ($response->failed()) {
-                \Log::error('GitHub API error: ' . $response->body());
+                Log::error('GitHub API error: ' . $response->body());
                 return [];
             }
 
