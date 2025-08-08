@@ -7,11 +7,20 @@ use Illuminate\Support\Facades\Log;
 
 class ReleaseNoteService
 {
-    protected $baseUrl = 'https://api.github.com';
+    protected $baseUrl;
     protected $token;
+    protected $apiVersion;
+    protected $timeout;
+    protected $verifySSL;
+    protected $repositories;
 
     public function __construct() {
+        $this->baseUrl = config('github.api.base_url');
         $this->token = config('github.token');
+        $this->apiVersion = config('github.api.version');
+        $this->timeout = config('github.api.timeout');
+        $this->verifySSL = config('github.verify_ssl');
+        $this->repositories = config('github.repositories');
     }
 
     public function getAllReleaseNotes($perPage = 30) {
@@ -19,8 +28,16 @@ class ReleaseNoteService
         $cacheKey = "github_all_releases_{$perPage}";
 
         return Cache::remember($cacheKey, now()->addHour(), function () use ($perPage) {
-            $frontend = $this->getReleaseNotes('ncc-erp', 'ncc-erp-ams-fe', $perPage);
-            $backend = $this->getReleaseNotes('ncc-erp', 'ncc-erp-ams', $perPage);
+            $frontend = $this->getReleaseNotes(
+                $this->repositories['frontend']['owner'],
+                $this->repositories['frontend']['repo'],
+                $perPage
+            );
+            $backend = $this->getReleaseNotes(
+                $this->repositories['backend']['owner'],
+                $this->repositories['backend']['repo'],
+                $perPage
+            );
 
             Log::info($frontend);
             Log::info($backend);
@@ -72,7 +89,7 @@ class ReleaseNoteService
         // Prepare headers for GitHub API requests
         $header = [
             'Accept' => 'application/vnd.github.v3+json',
-            'X-Github-Api-Version' => '2022-11-28',
+            'X-Github-Api-Version' => $this->apiVersion,
         ];
 
         // If a token is set, add it to the headers to upgrade github rate limit
@@ -96,8 +113,8 @@ class ReleaseNoteService
 
     private function getHttpClient() {
         $options = [
-            'timeout' => 30,
-            'verify' => false,  // TODO:: Set to true in production
+            'timeout' => $this->timeout,
+            'verify' => $this->verifySSL,
         ];
 
         // Create instance of HTTP client with options
