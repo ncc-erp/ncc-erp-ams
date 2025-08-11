@@ -2,7 +2,7 @@
 
 ## Overview
 
-This feature fetches and displays release notes from Github repositories (frontend & backend) using Github's REST API.
+This feature fetches and displays release notes from GitHub repositories (frontend & backend) using GitHub's REST API.
 
 ## Table of Contents
 
@@ -30,7 +30,7 @@ This feature fetches and displays release notes from Github repositories (fronte
 ### API Settings
 
 - **`GITHUB_API_URL`**: Github API base URL
-  - **Purpose**: API endpoint for Github requests
+  - **Purpose**: API endpoint for GitHub requests
   - **Default**: `https://api.github.com`
   
 - **`GITHUB_API_VERSION`**: API version header, require when send request to github's api.
@@ -79,7 +79,7 @@ This feature fetches and displays release notes from Github repositories (fronte
 
 #### Fine-grained Personal Access Token
 
-1. Go to GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens.
+1. Go to Github → Settings → Developer settings → Personal access tokens → Fine-grained tokens.
 2. Click "Generate new token".
 3. Enter a Token name and optional Description.
 4. Set Expiration date (mandatory).
@@ -161,7 +161,7 @@ GET /api/releases-notes?per_page=10
 
 - **`GET /repos/{owner}/{repo}/releases`**: Fetches release notes from specified repository
 
-- To fetch release notes from github api, we should fetch from:
+- To fetch release notes from GitHub api, we should fetch from:
   `https://api.github.com/repos/ncc-erp/ncc-erp-ams-fe/releases`
   `https://api.github.com/repos/ncc-erp/ncc-erp-ams/releases`
 
