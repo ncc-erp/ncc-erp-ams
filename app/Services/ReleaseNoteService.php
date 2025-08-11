@@ -13,6 +13,7 @@ class ReleaseNoteService
     protected $timeout;
     protected $verifySSL;
     protected $repositories;
+    protected $supportedTypes = ['ALL', 'BE', 'FE'];
 
     public function __construct() {
         $this->baseUrl = config('github.api.base_url');
@@ -23,41 +24,70 @@ class ReleaseNoteService
         $this->repositories = config('github.repositories');
     }
 
-    public function getAllReleaseNotes($perPage = 30) {
-        // Key for caching all releases in perPage
-        $cacheKey = "github_all_releases_{$perPage}";
+    public function getAllReleaseNotes($type = 'ALL', $page = 1, $limit = null) {
+        $page = max(1, (int) $page);
+        $limit = $limit ? max(1, min(100, (int) $limit)) : 10;
 
-        return Cache::remember($cacheKey, now()->addHour(), function () use ($perPage) {
+        // Key for caching all releases by type, page, limit
+        $cacheKey = "github_releases_{$type}_{$page}_{$limit}";
+
+        $allReleases = [];
+
+        // Fetch enough data to handle pagination properly
+        // GitHub API default is 30, max is 100 per request
+        $fetchLimit = min(100, max(50, $limit * 5)); // Get at least enough for 5 pages
+
+        // Fetch releases by type
+        if ($type === 'FE' || $type === 'ALL') {
             $frontend = $this->getReleaseNotes(
                 $this->repositories['frontend']['owner'],
                 $this->repositories['frontend']['repo'],
-                $perPage
+                $fetchLimit
             );
+
+            foreach ($frontend as $release) {
+                $release['type'] = 'FE';
+                $allReleases[] = $release;
+            }
+        }
+
+        if ($type === 'BE' || $type === 'ALL') {
             $backend = $this->getReleaseNotes(
                 $this->repositories['backend']['owner'],
                 $this->repositories['backend']['repo'],
-                $perPage
+                $fetchLimit
             );
 
-            Log::info($frontend);
-            Log::info($backend);
-
-            // Merge all release notes from frontend and backend
-            $allReleases = [];
-            foreach ($frontend as $release) {
-                $allReleases[] = $release;
-            }
             foreach ($backend as $release) {
+                $release['type'] = 'BE';
                 $allReleases[] = $release;
             }
+        }
 
-            // Sort releases by published date in descending order (newest first)
-            usort($allReleases, function ($a, $b) {
-                return strtotime($b['published_at']) - strtotime($a['published_at']);
-            });
-
-            return $allReleases;
+        // Sort releases by published date in descending order (newest first)
+        usort($allReleases, function ($a, $b) {
+            return strtotime($b['published_at']) - strtotime($a['published_at']);
         });
+
+        // Apply pagination
+        $total = count($allReleases);
+        $offset = ($page - 1) * $limit;
+
+        if ($offset >= $total && $total > 0) {
+            $offset = 0;
+            $page = 1;
+        }
+
+        $paginatedReleases = array_slice($allReleases, $offset, $limit);
+
+        return [
+            'releases' => $paginatedReleases,
+            'total' => $total
+        ];
+
+        // return Cache::remember($cacheKey, now()->addHour(), function () use ($type, $page, $limit) {
+            
+        // });
     }
 
     public function getReleaseNotes($owner, $repo, $perPage = 10) {
