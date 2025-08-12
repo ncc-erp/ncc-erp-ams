@@ -13,7 +13,7 @@ class ReleaseNoteService
     protected $timeout;
     protected $verifySSL;
     protected $repositories;
-    protected $supportedTypes = ['ALL', 'BE', 'FE'];
+    protected $releaseNotesConfig;
 
     public function __construct() {
         $this->baseUrl = config('github.api.base_url');
@@ -22,22 +22,32 @@ class ReleaseNoteService
         $this->timeout = config('github.api.timeout');
         $this->verifySSL = config('github.verify_ssl');
         $this->repositories = config('github.repositories');
+        $this->releaseNotesConfig = config('enum.release_notes');
     }
 
-    public function getAllReleaseNotes($type = 'ALL', $page = 1, $limit = null) {
-        $page = max(1, (int) $page);
-        $limit = $limit ? max(1, min(100, (int) $limit)) : 10;
+    public function getAllReleaseNotes($type = null, $page = null, $limit = null) {
+        // Use config defaults if not provided
+        $type = $type ?: $this->releaseNotesConfig['default_type'];
+        $page = max(1, (int) ($page ?: $this->releaseNotesConfig['default_page']));
+        $limit = $limit ? max(
+            $this->releaseNotesConfig['min_page_size'], 
+            min($this->releaseNotesConfig['max_page_size'], (int) $limit)
+        ) : $this->releaseNotesConfig['default_page_size'];
         
         // Key for caching all releases by type, page, limit
         $cacheKey = "github_releases_{$type}_{$page}_{$limit}";
         
         return Cache::remember($cacheKey, now()->addHour(), function () use ($type, $page, $limit) {
-
             $allReleases = [];
 
-            // Fetch enough data to handle pagination properly
-            // GitHub API default is 30, max is 100 per request
-            $fetchLimit = min(100, max(50, $limit * 5)); // Get at least enough for 5 pages
+            // Calculate fetch limit based on config
+            $fetchLimit = min(
+                $this->releaseNotesConfig['fetch_limit_max'],
+                max(
+                    $this->releaseNotesConfig['fetch_limit_min'],
+                    $limit * $this->releaseNotesConfig['fetch_limit_multiplier']
+                )
+            );
 
             // Fetch releases by type
             if ($type === 'FE' || $type === 'ALL') {
@@ -89,7 +99,8 @@ class ReleaseNoteService
         });
     }
 
-    public function getReleaseNotes($owner, $repo, $perPage = 10) {
+    public function getReleaseNotes($owner, $repo, $perPage = null) {
+        $perPage = $perPage ?: $this->releaseNotesConfig['default_page_size'];
         $cacheKey = "github_releases_{$owner}_{$repo}_{$perPage}";
 
         return Cache::remember($cacheKey, now()->addHour(), function () use ($owner, $repo, $perPage) {
@@ -98,8 +109,8 @@ class ReleaseNoteService
             Log::info("Fetching release notes from: {$url} with perPage: {$perPage}");
             
             $response = $this->getHttpClient()
-                ->withHeaders($header)  // Add headers for the request
-                ->get($url, [   // Send GET request to GitHub API & Query params
+                ->withHeaders($header)
+                ->get($url, [
                     'per_page' => $perPage,
                 ]);
 
@@ -129,7 +140,9 @@ class ReleaseNoteService
         return $header;
     }
 
-    public function clearCache($owner = null, $repo = null, $perPage = 30) {
+    public function clearCache($owner = null, $repo = null, $perPage = null) {
+        $perPage = $perPage ?: $this->releaseNotesConfig['default_page_size'];
+        
         // Clear the cache for release notes
         if ($owner && $repo) {
             $cacheKey = "github_releases_{$owner}_{$repo}_{$perPage}";
@@ -140,13 +153,16 @@ class ReleaseNoteService
         }
     }
 
+    public function getSupportedTypes() {
+        return $this->releaseNotesConfig['valid_types'];
+    }
+
     private function getHttpClient() {
         $options = [
             'timeout' => $this->timeout,
             'verify' => $this->verifySSL,
         ];
 
-        // Create instance of HTTP client with options
         return Http::withOptions($options);
     }
 }

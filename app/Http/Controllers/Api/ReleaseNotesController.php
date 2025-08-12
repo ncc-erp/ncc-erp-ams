@@ -8,12 +8,12 @@ use App\Services\ReleaseNoteService;
 use Codeception\Util\HttpCode;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Validation\Rule;
 
 class ReleaseNotesController extends Controller
 {
     protected $releaseNoteService;
     protected $releaseNotesTransformer;
+    protected $releaseNotesConfig;
 
     public function __construct(
         ReleaseNoteService $releaseNoteService,
@@ -21,12 +21,14 @@ class ReleaseNotesController extends Controller
     ) {
         $this->releaseNoteService = $releaseNoteService;
         $this->releaseNotesTransformer = $releaseNotesTransformer;
+        $this->releaseNotesConfig = config('enum.release_notes');
     }
 
     public function releasesNotes(Request $request) {
         $this->authorize('view', ReleaseNoteService::class);
 
         Log::info('Release notes endpoint called');
+        Log::info($this->releaseNotesConfig);
 
         try {
             // Get with defaults & sanitized - prioritize pageSize from frontend
@@ -83,14 +85,15 @@ class ReleaseNotesController extends Controller
     }
 
     private function getValidReleaseType($type) {
-        $defaultType = 'ALL';
-        $validTypes = ['ALL', 'BE', 'FE'];
+        $defaultType = $this->releaseNotesConfig['default_type'];
+        $validTypes = $this->releaseNotesConfig['valid_types'];
+        $invalidValues = ['null', 'undefined'];
 
         if (
             is_null($type) ||
             !is_string($type) ||
             trim($type) === '' ||
-            in_array(strtolower(trim($type)), ['null', 'undefined'], true)
+            in_array(strtolower(trim($type)), $invalidValues, true)
         ) {
             return $defaultType;
         }
@@ -101,13 +104,14 @@ class ReleaseNotesController extends Controller
     }
 
     private function getValidPage($page) {
-        $defaultPage = 1;
+        $defaultPage = $this->releaseNotesConfig['default_page'];
+        $invalidValues = ['null', 'undefined'];
 
         // Handle null, empty, 'null', 'undefined' 
         if (
             is_null($page) || 
             $page === '' ||
-            in_array(strtolower(trim((string)$page)), ['null', 'undefined'], true)
+            in_array(strtolower(trim((string)$page)), $invalidValues, true)
         ) {
             return $defaultPage;
         }
@@ -123,15 +127,16 @@ class ReleaseNotesController extends Controller
     }
 
     private function getValidPageSize($pageSize) {
-        $defaultPageSize = 10;
-        $maxPageSize = 50;
-        $minPageSize = 1;
+        $defaultPageSize = $this->releaseNotesConfig['default_page_size'];
+        $maxPageSize = $this->releaseNotesConfig['max_page_size'];
+        $minPageSize = $this->releaseNotesConfig['min_page_size'];
+        $invalidValues = ['null', 'undefined'];
 
         // Handle null, empty, 'null', 'undefined'
         if (
             is_null($pageSize) || 
             $pageSize === '' || 
-            in_array(strtolower(trim((string)$pageSize)), ['null', 'undefined'], true)
+            in_array(strtolower(trim((string)$pageSize)), $invalidValues, true)
         ) {
             return $defaultPageSize;
         }
