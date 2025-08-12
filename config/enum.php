@@ -54,17 +54,19 @@ return [
     
     // Pagination settings
     'default_page' => 1,
-    'default_page_size' => 10,
+    'default_page_size' => 5,
     'max_page_size' => 50,
     'min_page_size' => 1,
     
     // GitHub API fetch settings
-    'fetch_limit_multiplier' => 5,  // Multiply page size by this for prefetching
-    'fetch_limit_min' => 50,        // Minimum items to fetch from GitHub
-    'fetch_limit_max' => 100,       // Maximum items to fetch (GitHub API limit)
+    'fetch_base_limit' => 300,      // Default fetched items each repo
+    'fetch_limit_min' => 200,
+    'fetch_limit_max' => 300,
+    'max_pages_to_fetch' => 5,
     
     // Cache settings
-    'cache_duration_hours' => 1,
+    'cache_duration_hours' => 1,    // Cache 1 hour
+    'cache_key_prefix' => 'github_releases_', 
     
     // Input validation
     'invalid_string_values' => ['null', 'undefined', ''],

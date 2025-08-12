@@ -28,7 +28,6 @@ class ReleaseNotesController extends Controller
         $this->authorize('view', ReleaseNoteService::class);
 
         Log::info('Release notes endpoint called');
-        Log::info($this->releaseNotesConfig);
 
         try {
             // Get with defaults & sanitized - prioritize pageSize from frontend
@@ -87,7 +86,7 @@ class ReleaseNotesController extends Controller
     private function getValidReleaseType($type) {
         $defaultType = $this->releaseNotesConfig['default_type'];
         $validTypes = $this->releaseNotesConfig['valid_types'];
-        $invalidValues = ['null', 'undefined'];
+        $invalidValues = $this->releaseNotesConfig['invalid_string_values'];
 
         if (
             is_null($type) ||
@@ -104,8 +103,8 @@ class ReleaseNotesController extends Controller
     }
 
     private function getValidPage($page) {
-        $defaultPage = $this->releaseNotesConfig['default_page'];
-        $invalidValues = ['null', 'undefined'];
+        $defaultPage = $this->releaseNotesConfig['default_page'];   // page =1
+        $invalidValues = $this->releaseNotesConfig['invalid_string_values'];
 
         // Handle null, empty, 'null', 'undefined' 
         if (
@@ -127,10 +126,10 @@ class ReleaseNotesController extends Controller
     }
 
     private function getValidPageSize($pageSize) {
-        $defaultPageSize = $this->releaseNotesConfig['default_page_size'];
-        $maxPageSize = $this->releaseNotesConfig['max_page_size'];
-        $minPageSize = $this->releaseNotesConfig['min_page_size'];
-        $invalidValues = ['null', 'undefined'];
+        $defaultPageSize = $this->releaseNotesConfig['default_page_size'];  // pageSize = 5
+        $maxPageSize = $this->releaseNotesConfig['max_page_size'];  // 50
+        $minPageSize = $this->releaseNotesConfig['min_page_size'];  // 1
+        $invalidValues = $this->releaseNotesConfig['invalid_string_values'];
 
         // Handle null, empty, 'null', 'undefined'
         if (
@@ -141,7 +140,7 @@ class ReleaseNotesController extends Controller
             return $defaultPageSize;
         }
 
-        // Handle non-numeric strings
+        // Handle non-numeric strings (like 'abc', '1.5abc', etc.)
         if (!is_numeric($pageSize)) {
             return $defaultPageSize;
         }

@@ -9,6 +9,7 @@ class ReleaseNoteService
 {
     protected $baseUrl;
     protected $token;
+    protected $apiAcceptFormat;
     protected $apiVersion;
     protected $timeout;
     protected $verifySSL;
@@ -19,6 +20,7 @@ class ReleaseNoteService
         $this->baseUrl = config('github.api.base_url');
         $this->token = config('github.token');
         $this->apiVersion = config('github.api.version');
+        $this->apiAcceptFormat = config('github.api.accept_format');
         $this->timeout = config('github.api.timeout');
         $this->verifySSL = config('github.verify_ssl');
         $this->repositories = config('github.repositories');
@@ -34,101 +36,167 @@ class ReleaseNoteService
             min($this->releaseNotesConfig['max_page_size'], (int) $limit)
         ) : $this->releaseNotesConfig['default_page_size'];
         
-        // Key for caching all releases by type, page, limit
-        $cacheKey = "github_releases_{$type}_{$page}_{$limit}";
-        
-        return Cache::remember($cacheKey, now()->addHour(), function () use ($type, $page, $limit) {
-            $allReleases = [];
+        // Cache key by type, page, limit
+        $cacheKey = $this->releaseNotesConfig['cache_key_prefix'] . "merged_{$type}_{$page}_{$limit}";
 
-            // Calculate fetch limit based on config
-            $fetchLimit = min(
-                $this->releaseNotesConfig['fetch_limit_max'],
-                max(
-                    $this->releaseNotesConfig['fetch_limit_min'],
-                    $limit * $this->releaseNotesConfig['fetch_limit_multiplier']
-                )
-            );
+        $allReleases = Cache::remember(
+            $cacheKey,
+            now()->addHours($this->releaseNotesConfig['cache_duration_hours']),
+            function () use ($type) {
+                $releases = [];
+                $fetchLimit = $this->releaseNotesConfig['fetch_limit_max'] ?? 300;
 
-            // Fetch releases by type
-            if ($type === 'FE' || $type === 'ALL') {
-                $frontend = $this->getReleaseNotes(
-                    $this->repositories['frontend']['owner'],
-                    $this->repositories['frontend']['repo'],
-                    $fetchLimit
-                );
+                Log::info("Using fetch limit for releases: {$fetchLimit}");
 
-                foreach ($frontend as $release) {
-                    $release['type'] = 'FE';
-                    $allReleases[] = $release;
+                try {
+                    if ($type === 'FE' || $type === 'ALL') {
+                        $frontend = $this->getReleaseNotes(
+                            $this->repositories['frontend']['owner'],
+                            $this->repositories['frontend']['repo'],
+                            $fetchLimit
+                        );
+                        foreach ($frontend as $release) {
+                            $release['type'] = 'FE';
+                            $releases[] = $release;
+                        }
+                    }
+
+                    if ($type === 'BE' || $type === 'ALL') {
+                        $backend = $this->getReleaseNotes(
+                            $this->repositories['backend']['owner'],
+                            $this->repositories['backend']['repo'],
+                            $fetchLimit
+                        );
+                        foreach ($backend as $release) {
+                            $release['type'] = 'BE';
+                            $releases[] = $release;
+                        }
+                    }
+                } catch (\Exception $e) {
+                    Log::error("Error fetching release notes: " . $e->getMessage());
                 }
+
+                // Sort by published date desc
+                usort($releases, function ($a, $b) {
+                    $dateA = isset($a['published_at']) ? $a['published_at'] : $a['created_at'];
+                    $dateB = isset($b['published_at']) ? $b['published_at'] : $b['created_at'];
+                    return strtotime($dateB) - strtotime($dateA);
+                });
+
+                Log::info("Total merged releases: " . count($releases));
+
+                return $releases;
             }
+        );
 
-            if ($type === 'BE' || $type === 'ALL') {
-                $backend = $this->getReleaseNotes(
-                    $this->repositories['backend']['owner'],
-                    $this->repositories['backend']['repo'],
-                    $fetchLimit
-                );
+        // Apply pagination after getting all releases
+        $total = count($allReleases);
+        $offset = ($page - 1) * $limit;
 
-                foreach ($backend as $release) {
-                    $release['type'] = 'BE';
-                    $allReleases[] = $release;
-                }
-            }
-
-            // Sort releases by published date in descending order (newest first)
-            usort($allReleases, function ($a, $b) {
-                return strtotime($b['published_at']) - strtotime($a['published_at']);
-            });
-
-            // Apply pagination
-            $total = count($allReleases);
+        // If offset exceeds total, return last page
+        if ($offset >= $total && $total > 0) {
+            $page = ceil($total / $limit);
             $offset = ($page - 1) * $limit;
+        }
 
-            if ($offset >= $total && $total > 0) {
-                $offset = 0;
-                $page = 1;
-            }
+        $paginatedReleases = array_slice($allReleases, $offset, $limit);
 
-            $paginatedReleases = array_slice($allReleases, $offset, $limit);
-
-            return [
-                'releases' => $paginatedReleases,
-                'total' => $total
-            ];
-        });
+        return [
+            'releases' => $paginatedReleases,
+            'total' => $total,
+        ];
     }
 
-    public function getReleaseNotes($owner, $repo, $perPage = null) {
-        $perPage = $perPage ?: $this->releaseNotesConfig['default_page_size'];
-        $cacheKey = "github_releases_{$owner}_{$repo}_{$perPage}";
+    public function getReleaseNotes($owner, $repo, $totalNeeded = null) {
+        $totalNeeded = $totalNeeded ?: $this->releaseNotesConfig['default_page_size'];
+        
+        // Cache key by owner, repo, totalNeeded
+        $cacheKey = $this->releaseNotesConfig['cache_key_prefix'] . "repo_{$owner}_{$repo}_{$totalNeeded}";
 
-        return Cache::remember($cacheKey, now()->addHour(), function () use ($owner, $repo, $perPage) {
-            $header = $this->getHeaders();
-            $url = "{$this->baseUrl}/repos/{$owner}/{$repo}/releases";
-            Log::info("Fetching release notes from: {$url} with perPage: {$perPage}");
-            
-            $response = $this->getHttpClient()
-                ->withHeaders($header)
-                ->get($url, [
-                    'per_page' => $perPage,
-                ]);
+        return Cache::remember(
+            $cacheKey,
+            now()->addHours($this->releaseNotesConfig['cache_duration_hours']),
+            function () use ($owner, $repo, $totalNeeded) {
+                $allReleases = [];
+                $page = 1;
+                $perPage = 100;  // GitHub API max per page
+                $header = $this->getHeaders();
+                $url = "{$this->baseUrl}/repos/{$owner}/{$repo}/releases";
 
-            if ($response->failed()) {
-                Log::error('GitHub API error: ' . $response->body());
-                return [];
+                Log::info("Fetching release notes from: {$url} (need {$totalNeeded} releases)");
+
+                try {
+                    $maxPages = $this->releaseNotesConfig['max_pages_to_fetch'] ?? 5;
+
+                    while ($page <= $maxPages && count($allReleases) < $totalNeeded) {
+                        Log::info("Fetching GitHub page {$page} for {$owner}/{$repo}");
+
+                        try {
+                            $response = $this->getHttpClient()
+                                ->withHeaders($header)
+                                ->get($url, [
+                                    'per_page' => $perPage,
+                                    'page' => $page
+                                ]);
+
+                            if ($response->failed()) {
+                                Log::error('GitHub API error: ' . $response->status() . ' - ' . $response->body());
+                                break;
+                            }
+
+                            $pageReleases = $response->json();
+
+                            if (empty($pageReleases)) {
+                                Log::info("No more releases found at page {$page}");
+                                break;
+                            }
+
+                            $allReleases = array_merge($allReleases, $pageReleases);
+
+                            Log::info("Got " . count($pageReleases) . " releases from page {$page} (total: " . count($allReleases) . ")");
+
+                            // Stop when enough data is collected
+                            if (count($allReleases) >= $totalNeeded) {
+                                break;
+                            }
+
+                            // Stop when no more pages (last page returns less than perPage)
+                            if (count($pageReleases) < $perPage) {
+                                Log::info("Page {$page} returned less than {$perPage} releases, assuming last page");
+                                break;
+                            }
+
+                            $page++;
+                        } catch (\Exception $e) {
+                            Log::error("Error fetching GitHub releases for {$owner}/{$repo} on page {$page}: " . $e->getMessage());
+                            break;
+                        }
+                    }
+
+                    if ($page > $maxPages) {
+                        Log::warning("Reached maximum page limit ({$maxPages}) for {$owner}/{$repo}");
+                    }
+
+                    // Limit results as requested
+                    if (count($allReleases) > $totalNeeded) {
+                        $allReleases = array_slice($allReleases, 0, $totalNeeded);
+                    }
+
+                    Log::info("Total releases fetched for {$owner}/{$repo}: " . count($allReleases));
+                } catch (\Exception $e) {
+                    Log::error("Fatal error fetching GitHub releases for {$owner}/{$repo}: " . $e->getMessage());
+                    $allReleases = [];
+                }
+
+                return $allReleases;
             }
-
-            $releaseNotes = $response->json();
-
-            return $releaseNotes;
-        });
+        );
     }
 
     public function getHeaders() {
         // Prepare headers for GitHub API requests
         $header = [
-            'Accept' => 'application/vnd.github.v3+json',
+            'Accept' => $this->apiAcceptFormat,
             'X-Github-Api-Version' => $this->apiVersion,
         ];
 
@@ -138,19 +206,6 @@ class ReleaseNoteService
         }
 
         return $header;
-    }
-
-    public function clearCache($owner = null, $repo = null, $perPage = null) {
-        $perPage = $perPage ?: $this->releaseNotesConfig['default_page_size'];
-        
-        // Clear the cache for release notes
-        if ($owner && $repo) {
-            $cacheKey = "github_releases_{$owner}_{$repo}_{$perPage}";
-            Cache::forget($cacheKey);
-        } else {
-            $cacheKey = "github_all_releases_{$perPage}";
-            Cache::forget($cacheKey);
-        }
     }
 
     public function getSupportedTypes() {

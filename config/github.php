@@ -35,6 +35,7 @@ return [
         'base_url' => env('GITHUB_API_URL', 'https://api.github.com'),
         'version' => env('GITHUB_API_VERSION', '2022-11-28'),
         'timeout' => env('GITHUB_API_TIMEOUT', 30),
+        'accept_format' => env('GITHUB_API_ACCEPT_FORMAT', 'application/vnd.github.v3+json'),
     ],
 
     /*
