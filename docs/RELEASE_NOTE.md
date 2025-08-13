@@ -42,6 +42,11 @@ This feature fetches and displays release notes from GitHub repositories (fronte
   - **Purpose**: Prevents hanging requests, can change timeout value.
   - **Default**: `30`
 
+- **`GITHUB_API_ACCEPT_FORMAT`**: Accept header for GitHub API
+  - **Purpose**: Specifies the media type for the API response, usually set to `application/vnd.github.v3+json` for REST v3.
+  - **Default**: `application/vnd.github.v3+json`
+  - **Reference**: [GitHub API Media Types](https://docs.github.com/en/rest/overview/media-types)
+
 ### Repository Configuration
 
 - **`GITHUB_FE_OWNER`**: Frontend repository owner
