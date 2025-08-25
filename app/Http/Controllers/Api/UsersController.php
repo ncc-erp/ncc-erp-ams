@@ -8,6 +8,7 @@ use App\Http\Requests\SaveUserRequest;
 use App\Http\Transformers\AccessoriesTransformer;
 use App\Http\Transformers\AssetsTransformer;
 use App\Http\Transformers\ConsumablesTransformer;
+use App\Http\Transformers\DatatablesTransformer;
 use App\Http\Transformers\LicensesTransformer;
 use App\Http\Transformers\SelectlistTransformer;
 use App\Http\Transformers\UsersTransformer;
@@ -40,6 +41,7 @@ class UsersController extends Controller
             'users.address',
             'users.avatar',
             'users.city',
+            'users.mezon_id',
             'users.company_id',
             'users.country',
             'users.created_at',
@@ -67,6 +69,8 @@ class UsersController extends Controller
             'users.zip',
             'users.remote',
             'users.ldap_import',
+            'users.user_type',
+            'users.job_position_code'
 
         ])->with('manager', 'groups', 'userloc', 'company', 'department', 'assets', 'licenses', 'accessories', 'consumables')
             ->withCount('assets as assets_count', 'licenses as licenses_count', 'accessories as accessories_count', 'consumables as consumables_count');
@@ -87,8 +91,8 @@ class UsersController extends Controller
             $users = $users->where('users.company_id', '=', $request->input('company_id'));
         }
 
-        if ($request->filled('location_id')) {
-            $users = $users->where('users.location_id', '=', $request->input('location_id'));
+        if ($request->filled('location')) {
+            $users = $users->whereIn('users.location_id', $request->input('location'));
         }
 
         if ($request->filled('email')) {
@@ -143,6 +147,14 @@ class UsersController extends Controller
             $users = $users->where('remote', '=', $request->input('remote'));
         }
 
+        if($request->filled('user_type')) {
+            $users = $users->whereIn('user_type', $request->input('user_type'));
+        }
+
+        if($request->filled('job_position_code')) {
+            $users = $users->whereIn('job_position_code', $request->input('job_position_code'));
+        }
+
         if ($request->filled('assets_count')) {
             $users->has('assets', '=', $request->input('assets_count'));
         }
@@ -194,7 +206,7 @@ class UsersController extends Controller
                         'assets', 'accessories', 'consumables', 'licenses', 'groups', 'activated', 'created_at',
                         'two_factor_enrolled', 'two_factor_optin', 'last_login', 'assets_count', 'licenses_count',
                         'consumables_count', 'accessories_count', 'phone', 'address', 'city', 'state',
-                        'country', 'zip', 'id', 'ldap_import', 'remote',
+                        'country', 'zip', 'id', 'ldap_import', 'remote', 'mezon_id'
                     ];
 
                 $sort = in_array($request->get('sort'), $allowed_columns) ? $request->get('sort') : 'first_name';
@@ -776,11 +788,33 @@ class UsersController extends Controller
 
             $mezonUserInfo = $this->getMezonUserProfile($accessTokenValue);
             $mezonUserEmail = $mezonUserInfo['sub'];
-            $mezonUserAud = $mezonUserInfo['aud'][0];
+            $mezonUserAud = $mezonUserInfo['user_id'];
 
-            
+            $user = User::where('mezon_id', $mezonUserAud)->first();
+            if ($user) {// process mezon id flow
+                $permissions = $user->permissions ? json_decode($user->permissions, true) : [];
+                $scopes = [];
+                foreach ($permissions as $key => $value) {
+                    if ($value == "1") {
+                        $scopes[] = $key;
+                    }
+                }
+    
+                $token = $user->createToken('mezon-login', $scopes)->accessToken;
+                return response()->json([
+                    "token_type" => $tokenType,
+                    "access_token" => $token,
+                ]);
+                // end flow mezon id
+            }
+            // incase check api
+            [$emailNamePart, $domain] = explode('@', $mezonUserEmail);
+            if ($domain != 'ncc.asia') {
+                return response()->json([
+                    'message' => 'Not ncc.asia email or not found mezon id',
+                ], 401);
+            }
             if(Helper::checkValidEmail( $mezonUserEmail )) { 
-                [$emailNamePart, $domain] = explode('@', $mezonUserEmail);
                 $firstName = $emailNamePart;
                 $lastName = '';
                 if (strpos($emailNamePart, '.') !== false) {
@@ -964,6 +998,18 @@ class UsersController extends Controller
                 'message' => $e->getMessage(),
             ], 401);
         }
+    }
+
+    public function getListUserType()
+    {
+        $list = User::select('users.user_type as name')->distinct()->get();
+        return (new DatatablesTransformer)->transformDatatables($list);
+    }
+
+    public function getListJobPosition()
+    {
+        $list = User::select('users.job_position_code as name')->distinct()->get();
+        return (new DatatablesTransformer)->transformDatatables($list);
     }
 
 }

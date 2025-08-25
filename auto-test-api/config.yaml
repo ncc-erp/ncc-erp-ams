@@ -1,0 +1,17 @@
+
+dev:
+  ams_manager:
+    base_url: https://ams.nccsoft.vn/api/v1
+
+
+test:
+  ams_manager:
+    base_url: https://ams.nccsoft.vn/api/v1
+
+pre:
+  ams_manager:
+    base_url: https://ams.nccsoft.vn/api/v1
+
+prod:
+  ams_manager:
+    base_url: https://ams.nccsoft.vn/api/v1

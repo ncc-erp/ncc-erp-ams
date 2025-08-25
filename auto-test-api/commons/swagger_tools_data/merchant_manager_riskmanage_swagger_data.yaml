@@ -1,0 +1,14 @@
+req_url : http://172.31.24.105:8008/dx-merchant-manager/v2/api-docs?group=%E9%A3%8E%E6%8E%A7
+module_path : merchant_manager/risk_manage/
+class_module_name : merchantManagerRiskManage
+module_desc_name : 中控后台
+module_name : merchant_manager
+mark : merchant_manager_risk
+sub_module_desc_name : 风控模块
+base_url_path : 
+tag_map : {
+     后台登录IP白名单管理: userLoginIpWhitelist,
+     风控-黑名单管理: windControlBlacklist,
+     风控对象: windControlUser,
+     风控层级: windControlLevel
+}

@@ -11,12 +11,16 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Mail;
 use App\Models\Setting;
 use App\Mail\CheckinMail;
+use App\Services\KomuService;
+use App\Services\MailService;
+use App\Helpers\KomuMessages;
 
 class SendCheckinMail implements ShouldQueue
 {
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    
     protected $data;
     protected $user_email;
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     /**
      * Create a new job instance.
@@ -36,6 +40,25 @@ class SendCheckinMail implements ShouldQueue
      */
     public function handle()
     {
-        Mail::to($this->user_email)->cc(Setting::first()->admin_cc_email)->send(new CheckinMail($this->data));
+        try {
+            $user_name = explode('@', $this->user_email)[0];
+            $message = KomuMessages::assetCheckin($this->data);
+            
+            // Send Komu message
+            KomuService::sendMessage($user_name, $message);
+            
+            // Send mail with logging
+            $ccEmails = [Setting::first()->admin_cc_email];
+            MailService::sendMail(
+                new CheckinMail($this->data), 
+                $this->user_email, 
+                $ccEmails,
+                'checkin',
+                'Asset Checkin Notification'
+            );
+            
+        } catch (\Exception $e) {
+            \Log::error('SendCheckinMail: ' . $e->getMessage());
+        }
     }
 }

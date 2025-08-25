@@ -16,6 +16,9 @@ use DB;
 use Illuminate\Http\Request;
 use App\Http\Requests\ImageUploadRequest;
 use Illuminate\Http\Response;
+use App\Models\Webhook;
+use Illuminate\Support\Facades\Http;
+use App\Models\WebhookLog;
 
 class AccessoriesController extends Controller
 {
@@ -342,12 +345,56 @@ class AccessoriesController extends Controller
                 'note' => $request->get('note'),
             ]);
 
+            $checkoutWebhooks = Webhook::whereJsonContains('type', 'CHECKOUT_ACCESSORY')
+                ->get();
+            foreach ($checkoutWebhooks as $checkoutWebhook) {
+                $this->sendNotification($accessory, $checkoutWebhook);
+            }
+
             $accessory->logCheckout($request->input('note'), $user);
 
             return response()->json(Helper::formatStandardApiResponse('success', ['accessory' => e($accessory->name)], trans('admin/accessories/message.checkout.success')));
         }
 
         return response()->json(Helper::formatStandardApiResponse('error', ['accessory' => e($accessory->name)], 'No accessories remaining'));
+    }
+    private function sendNotification($item, $webhook, $isCheckin = false)
+    {
+
+        $messageText = "[{$item->category->category_type}] {$item->name} - {$item->category->name} is requested to check out.";
+        if ($isCheckin) {
+            $messageText = "[{$item->category->category_type}] {$item->name} - {$item->category->name} is requested to check in.";
+        }
+        $payload = [
+            'type' => 'hook',
+            'message' => [
+                't' => $messageText,
+                'mk' => [
+                    [
+                        'type' => 'pre',
+                        's' => 0,
+                        'e' => strlen($messageText),
+                    ]
+                ],
+            ],
+        ];
+
+        $response = Http::withHeaders([
+            'Content-Type' => 'application/json',
+        ])->post($webhook->url, $payload);
+
+        $success = $response->successful();
+        $status_message = $success ? 'Webhook sent successfully' : 'Webhook failed to send';
+
+        WebhookLog::create([
+            'webhook_id' => $webhook->id,
+            'url' => $webhook->url,
+            'message' => $messageText,
+            'status_code' => $response->status(),
+            'response' => $status_message,
+            'asset' => $item->name,
+            'type' => $isCheckin ? 'CHECKIN_ACCESSORY' : 'CHECKOUT_ACCESSORY',
+        ]);
     }
 
     /**
@@ -386,7 +433,12 @@ class AccessoriesController extends Controller
             $data['item_tag'] = '';
             $data['note'] = $logaction->note;
 
-            return response()->json(Helper::formatStandardApiResponse('success', ['accessory' => e($accessory->name)],  trans('admin/accessories/message.checkin.success')));
+            $checkinWebhooks = Webhook::whereJsonContains('type', 'CHECKOUT_ACCESSORY')
+                ->get();
+            foreach ($checkinWebhooks as $checkinWebhook) {
+                $this->sendNotification($accessory, $checkinWebhook, true);
+            }
+            return response()->json(Helper::formatStandardApiResponse('success', ['accessory' => e($accessory->name)], trans('admin/accessories/message.checkin.success')));
         }
 
         return response()->json(Helper::formatStandardApiResponse('error', ['accessory' => e($accessory->name)], trans('admin/accessories/message.checkin.error')));

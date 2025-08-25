@@ -10,6 +10,9 @@ use App\Services\ToolService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Throwable;
+use App\Models\Webhook;
+use Illuminate\Support\Facades\Http;
+use App\Models\WebhookLog;
 
 class ToolController extends Controller
 {
@@ -58,7 +61,37 @@ class ToolController extends Controller
     {
         $this->authorize('update', Tool::class);
         try {
+            $tool = Tool::find($id);
             $data = $this->toolService->update($request->all(), $id);
+            if ($request->assigned_status === config('enum.assigned_status.ACCEPT')) {
+                if ($tool->withdraw_from) {
+                    $checkinWebhooks = Webhook::whereJsonContains('type', 'CONFIRM_CHECKIN')
+                        ->get();
+                    foreach ($checkinWebhooks as $checkinWebhook) {
+                        $this->sendNotification("CONFIRM_CHECKIN",$tool, $checkinWebhook, true, true);
+                    }
+                } else {
+                    $checkoutWebhooks = Webhook::whereJsonContains('type', 'CONFIRM_CHECKOUT')
+                        ->get();
+                    foreach ($checkoutWebhooks as $checkoutWebhook) {
+                        $this->sendNotification("CONFIRM_CHECKOUT",$tool, $checkoutWebhook, false, true);
+                    }
+                }
+            } else {
+                if ($tool->withdraw_from) {
+                    $checkinWebhooks = Webhook::whereJsonContains('type', 'REJECT_CHECKIN')
+                        ->get();
+                    foreach ($checkinWebhooks as $checkinWebhook) {
+                        $this->sendNotification("REJECT_CHECKIN",$tool, $checkinWebhook, true, false, true);
+                    }
+                } else {
+                    $checkoutWebhooks = Webhook::whereJsonContains('type', 'REJECT_CHECKOUT')
+                        ->get();
+                    foreach ($checkoutWebhooks as $checkoutWebhook) {
+                        $this->sendNotification("REJECT_CHECKOUT",$tool, $checkoutWebhook, false, false, true);
+                    }
+                }
+            }
             return response()->json(Helper::formatStandardApiResponse(
                 'success',
                 $data,
@@ -110,7 +143,13 @@ class ToolController extends Controller
     {
         $this->authorize('checkout', Tool::class);
         try {
+            $tool = Tool::find($tool_id);
             $data = $this->toolService->checkout($request->all(), $tool_id);
+            $checkoutWebhooks = Webhook::whereJsonContains('type', 'CHECKOUT_TOOL')
+                ->get();
+            foreach ($checkoutWebhooks as $checkoutWebhook) {
+                $this->sendNotification("CHECKOUT_TOOL",$tool, $checkoutWebhook);
+            }
             return response()->json(
                 Helper::formatStandardApiResponse(
                     'success',
@@ -122,6 +161,56 @@ class ToolController extends Controller
         } catch (Throwable $e) {
             throw $e;
         }
+    }
+    private function sendNotification($type ,$item, $webhook, $isCheckin = false, $isConfirmed = false, $isRejected = false)
+    {
+
+        $messageText = "[{$item->category->category_type}] {$item->name} - {$item->category->name} is requested to check out.";
+        if ($isCheckin) {
+            $messageText = "[{$item->category->category_type}] {$item->name} - {$item->category->name} is requested to checked in.";
+        }
+        if($isConfirmed && !$isCheckin) {
+            $messageText = "[{$item->category->category_type}] {$item->name} - {$item->category->name} is confirmed to check out.";
+        }
+        if($isConfirmed && $isCheckin) {
+            $messageText = "[{$item->category->category_type}] {$item->name} - {$item->category->name} is confirmed to check in.";
+        }
+        if($isRejected && !$isCheckin) {
+            $messageText = "[{$item->category->category_type}] {$item->name} - {$item->category->name} is rejected to check out.";
+        }
+        if($isRejected && $isCheckin) {
+            $messageText = "[{$item->category->category_type}] {$item->name} - {$item->category->name} is rejected to check in.";
+        }
+        $payload = [
+            'type' => 'hook',
+            'message' => [
+                't' => $messageText,
+                'mk' => [
+                    [
+                        'type' => 'pre',
+                        's' => 0,
+                        'e' => strlen($messageText),
+                    ]
+                ],
+            ],
+        ];
+
+        $response = Http::withHeaders([
+            'Content-Type' => 'application/json',
+        ])->post($webhook->url, $payload);
+
+        $success = $response->successful();
+        $status_message = $success ? 'Webhook sent successfully' : 'Webhook failed to send';
+
+        WebhookLog::create([
+            'webhook_id' => $webhook->id,
+            'url' => $webhook->url,
+            'message' => $messageText,
+            'status_code' => $response->status(),
+            'response' => $status_message,
+            'asset' => $item->name,
+            'type' => $type,
+        ]);
     }
 
     public function multiCheckout(Request $request)
@@ -149,7 +238,13 @@ class ToolController extends Controller
     {
         $this->authorize('checkin', Tool::class);
         try {
+            $tool = Tool::find($tool_id);
             $data = $this->toolService->checkin($request->all(), $tool_id);
+            $checkinWebhooks = Webhook::whereJsonContains('type', 'CHECKIN_TOOL')
+                ->get();
+            foreach ($checkinWebhooks as $checkinWebhook) {
+                $this->sendNotification("CHECKIN_TOOL",$tool, $checkinWebhook, true);
+            }
             return response()->json(
                 Helper::formatStandardApiResponse(
                     'success',

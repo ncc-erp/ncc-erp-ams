@@ -1,0 +1,17 @@
+requests~=2.31.0
+pytest~=7.4.3
+pytest-base-url
+allure-pytest
+pytest-yaml
+pytest-ordering
+pytest-dependency
+jsonpath~=0.82.2
+PyYAML~=6.0.1
+pytest-xdist
+filelock
+requests_toolbelt
+pymysql
+pyotp
+redis-py-cluster
+pycryptodome
+jsonpath-ng

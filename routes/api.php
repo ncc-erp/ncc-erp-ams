@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api;
 // use Illuminate\Http\Request;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\CustomerProjectController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -17,6 +18,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+
 Route::group(['prefix' => 'v1', 'middleware' => ['api', 'throttle:' . config('app.api_throttle_per_minute') . ',1']], function () {
 
 
@@ -30,7 +32,7 @@ Route::group(['prefix' => 'v1', 'middleware' => ['api', 'throttle:' . config('ap
             404
         );
     });
-
+    Route::get('customer-project', [CustomerProjectController::class , 'index',]);
 
     /**
      * Account routes
@@ -132,8 +134,15 @@ Route::group(['prefix' => 'v1', 'middleware' => ['api', 'throttle:' . config('ap
                 'selectlist'
             ]
         )->name('api.categories.selectlist');
-    });
 
+        Route::get(
+            'total-detail',
+            [
+                Api\CategoriesController::class,
+                'getTotalDetail'
+            ]
+        )->name('api.categories.total-detail');
+    });
     Route::resource(
         'categories',
         Api\CategoriesController::class,
@@ -596,6 +605,30 @@ Route::group(['prefix' => 'v1', 'middleware' => ['api', 'throttle:' . config('ap
                 'multiUpdate'
             ]
         );
+
+        Route::get(
+            'assigned-total-detail',
+            [
+                Api\AssetsController::class,
+                'getAssignedTotalDetail'
+            ]
+        )->name('api.assets.assignedTotalDetail');
+
+        Route::get(
+            'customer-renting',
+            [
+                Api\AssetsController::class,
+                'getCustomerRentingAssets'
+            ]
+        )->name('api.assets.customerRenting');
+
+        Route::get(
+            'customer-renting-total-detail',
+            [
+                Api\AssetsController::class,
+                'getCustomerRentingAssetsTotalDetail'
+            ]
+        )->name('api.assets.customerRentingTotalDetail');
     });
 
 
@@ -883,6 +916,14 @@ Route::group(['prefix' => 'v1', 'middleware' => ['api', 'throttle:' . config('ap
                 'assets'
             ]
         )->name('api.models.assets');
+
+        Route::get(
+            'total-detail',
+            [
+                Api\AssetModelsController::class,
+                'getTotalDetail'
+            ]
+        )->name('api.models.total-detail');
     });
 
     Route::resource(
@@ -1149,10 +1190,23 @@ Route::group(['prefix' => 'v1', 'middleware' => ['api', 'throttle:' . config('ap
                 'syncListUser'
             ]
         )->name('api.users.syncListUser');
-    });
 
-    Route::resource(
-        'users',
+        Route::get('/list-user-type',
+            [
+                Api\UsersController::class,
+                'getListUserType'
+            ]
+        )->name('api.users.getListUserType');
+
+        Route::get('/list-user-position',
+            [
+                Api\UsersController::class,
+                'getListJobPosition'
+            ]
+        )->name('api.users.getListJobPosition');
+    }); 
+    
+        Route::resource('users', 
         Api\UsersController::class,
         [
             'names' =>
@@ -1633,5 +1687,72 @@ Route::group(['prefix' => 'v1', 'middleware' => ['api', 'throttle:' . config('ap
         ],
     );
     //End Route Client Asset
+    
+    //Route Webhooks
+    Route::resource(
+        'webhooks',
+        Api\WebhookController::class,
+        [
+            'names' =>
+                [
+                    'index' => 'api.webhooks.index',
+                    'show' => 'api.webhooks.show',
+                    'update' => 'api.webhooks.update',
+                    'store' => 'api.webhooks.store',
+                    'destroy' => 'api.webhooks.destroy',
+                ],
+            'except' => ['create', 'edit'],
+            'parameters' => ['webhook' => 'webhook_id'],
+        ]
+    );
+
+    Route::resource(
+        'webhook-logs',
+        Api\WebhookLogsController::class,
+        [
+            'names' =>
+                [
+                    'index' => 'api.webhook_logs.index',
+                    'destroy' => 'api.webhook_logs.destroy',
+                ],
+            'except' => ['create', 'edit', 'show'],
+        ]
+    );
+
+    Route::group(['prefix' => 'webhook-logs'], function () {
+
+        Route::get(
+            'total-detail',
+            [
+                Api\WebhookLogsController::class,
+                'getTotalDetail'
+            ]
+        )->name('api.webhook_logs.totalDetail');
+    });
+
+    //Route Komu Logs
+    Route::resource(
+        'komu-logs',
+        Api\KomuLogsController::class,
+        [
+            'names' =>
+                [
+                    'index' => 'api.komu_logs.index',
+                    'destroy' => 'api.komu_logs.destroy',
+                ],
+            'except' => ['create', 'edit', 'show'],
+        ]
+    );
+
+    Route::group(['prefix' => 'komu-logs'], function () {
+
+        Route::get(
+            'total-detail',
+            [
+                Api\KomuLogsController::class,
+                'getTotalDetail'
+            ]
+        )->name('api.komu_logs.totalDetail');
+    });
 
 }); // end API routes

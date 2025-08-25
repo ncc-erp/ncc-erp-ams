@@ -223,14 +223,16 @@ class CheckoutableListener
      */
     public function subscribe($events)
     {
-        $events->listen(
-            \App\Events\CheckoutableCheckedIn::class,
-            'App\Listeners\CheckoutableListener@onCheckedIn'
-        ); 
-
-        $events->listen(
-            \App\Events\CheckoutableCheckedOut::class,
-            'App\Listeners\CheckoutableListener@onCheckedOut'
-        ); 
+        // WARNING: duplicate send mail
+        if(!env('ENABLE_TESTING') ){
+            $events->listen(
+                \App\Events\CheckoutableCheckedIn::class,
+                'App\Listeners\CheckoutableListener@onCheckedIn'
+            ); 
+            $events->listen(
+                \App\Events\CheckoutableCheckedOut::class,
+                'App\Listeners\CheckoutableListener@onCheckedOut'
+            ); 
+        }
     }
 }

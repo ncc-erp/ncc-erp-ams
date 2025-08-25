@@ -1,0 +1,13 @@
+req_url : http://172.31.24.105:8007/dx-client-server/v2/api-docs?group=OB%E5%8C%85%E7%BD%91
+module_path : client_server/venue_app/
+class_module_name : clientServerVenueApp
+module_desc_name : 信用盘后台
+module_name : client_server
+mark : client_server_venue_app
+sub_module_desc_name : 游戏app模块
+base_url_path : 
+tag_map : {
+     场馆调用接口: dxVenue,
+     游戏模块: game,
+     美播真人调用接口: meibo
+}

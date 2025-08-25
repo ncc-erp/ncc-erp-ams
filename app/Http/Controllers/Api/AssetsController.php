@@ -45,6 +45,9 @@ use App\Http\Requests\AssetCheckinRequest;
 use App\Jobs\SendRejectAllocateMail;
 use App\Jobs\SendRejectRevokeMail;
 use App\Models\Category;
+use App\Models\Webhook;
+use Illuminate\Support\Facades\Http;
+use App\Models\WebhookLog;
 
 /**
  * This class controls all actions related to assets for
@@ -115,6 +118,8 @@ class AssetsController extends Controller
             'checkout_counter',
             'checkin_counter',
             'requests_counter',
+            'maintenance_date',
+            'maintenance_cycle',
         ];
 
         $all_custom_fields = CustomField::all(); //used as a 'cache' of custom fields throughout this page load
@@ -132,7 +137,8 @@ class AssetsController extends Controller
                 'model.category',
                 'model.manufacturer',
                 'model.fieldset',
-                'supplier'
+                'supplier',
+                'webhook',
             );
         $assets = $this->filters($assets, $request);
 
@@ -211,11 +217,12 @@ class AssetsController extends Controller
          * Include additional associated relationships
          */
         if ($request->input('components')) {
-            $assets->loadMissing(['components' => function ($query) {
-                $query->orderBy('created_at', 'desc');
-            }]);
+            $assets->loadMissing([
+                'components' => function ($query) {
+                    $query->orderBy('created_at', 'desc');
+                }
+            ]);
         }
-
 
         /**
          * Here we're just determining which Transformer (via $transformer) to use based on the 
@@ -360,8 +367,16 @@ class AssetsController extends Controller
             $to = Carbon::createFromFormat('Y-m-d', $request->to)->endOfDay()->toDateTimeString();
             $assets = $assets->where('created_at', '<=', $to);
         }
-
+        if ($request->filled('maintenance_date') && $request->input('maintenance_date') == 1) {
+            $assets->hasMaintenanceDate();
+        }
         $assets = $assets->where('assets.is_external', '=', false);
+        if ($request->filled('startRentalDate_gte') && $request->filled('startRentalDate_lte')) {
+            $assets->whereBetween('assets.startRentalDate', [
+                $request->input('startRentalDate_gte'),
+                $request->input('startRentalDate_lte')
+            ]);
+        }
 
         return $assets;
     }
@@ -616,9 +631,11 @@ class AssetsController extends Controller
          * Include additional associated relationships
          */
         if ($request->input('components')) {
-            $assets->loadMissing(['components' => function ($query) {
-                $query->orderBy('created_at', 'desc');
-            }]);
+            $assets->loadMissing([
+                'components' => function ($query) {
+                    $query->orderBy('created_at', 'desc');
+                }
+            ]);
         }
 
 
@@ -630,9 +647,10 @@ class AssetsController extends Controller
 
         $data = [];
         $data['total'] = 0;
-        $assets =  (new $transformer)->transformAssets($assets, $total, $request);
+        $assets = (new $transformer)->transformAssets($assets, $total, $request);
         foreach ($assets['rows'] as $asset) {
-            if (!$asset['warranty_expires']) continue;
+            if (!$asset['warranty_expires'])
+                continue;
             if ((new Carbon($asset['warranty_expires']['date']))->lte($expiration)) {
                 $data['rows'][] = $asset;
                 $data['total'] += 1;
@@ -669,8 +687,9 @@ class AssetsController extends Controller
     public function showBySerial(Request $request, $serial)
     {
         $this->authorize('index', Asset::class);
-        if ($assets = Asset::with('assetstatus')->with('assignedTo')
-            ->withTrashed()->where('serial', $serial)->get()
+        if (
+            $assets = Asset::with('assetstatus')->with('assignedTo')
+                ->withTrashed()->where('serial', $serial)->get()
         ) {
             return (new AssetsTransformer)->transformAssets($assets, $assets->count());
         }
@@ -700,8 +719,9 @@ class AssetsController extends Controller
      */
     public function show(Request $request, $id)
     {
-        if ($asset = Asset::with('assetstatus')->with('assignedTo')->withTrashed()
-            ->withCount('checkins as checkins_count', 'checkouts as checkouts_count', 'userRequests as user_requests_count')->findOrFail($id)
+        if (
+            $asset = Asset::with('assetstatus')->with('assignedTo')->withTrashed()
+                ->withCount('checkins as checkins_count', 'checkouts as checkouts_count', 'userRequests as user_requests_count')->findOrFail($id)
         ) {
             $this->authorize('view', $asset);
 
@@ -963,9 +983,11 @@ class AssetsController extends Controller
          * Include additional associated relationships
          */
         if ($request->input('components')) {
-            $assets->loadMissing(['components' => function ($query) {
-                $query->orderBy('created_at', 'desc');
-            }]);
+            $assets->loadMissing([
+                'components' => function ($query) {
+                    $query->orderBy('created_at', 'desc');
+                }
+            ]);
         }
 
         /**
@@ -1059,28 +1081,36 @@ class AssetsController extends Controller
 
         $asset = new Asset();
         $asset->model()->associate(AssetModel::find((int) $request->get('model_id')));
-
-        $asset->name                    = $request->get('name');
-        $asset->serial                  = $request->get('serial');
-        $asset->company_id              = Company::getIdForCurrentUser($request->get('company_id'));
-        $asset->model_id                = $request->get('model_id');
-        $asset->order_number            = $request->get('order_number');
-        $asset->notes                   = $request->get('notes');
-        $asset->asset_tag               = $request->get('asset_tag', Asset::autoincrement_asset());
-        $asset->user_id                 = Auth::id();
-        $asset->archived                = '0';
-        $asset->physical                = '1';
-        $asset->depreciate              = '0';
-        $asset->status_id               = $request->get('status_id', 0);
-        $asset->warranty_months         = $request->get('warranty_months', null);
-        $asset->purchase_cost           = Helper::ParseCurrency($request->get('purchase_cost')); // this is the API's store method, so I don't know that I want to do this? Confusing. FIXME (or not?!)
-        $asset->purchase_date           = $request->get('purchase_date', null);
-        $asset->assigned_to             = $request->get('assigned_to', null);
-        $asset->supplier_id             = $request->get('supplier_id', 0);
-        $asset->requestable             = $request->get('requestable', 0);
-        $asset->rtd_location_id         = $request->get('rtd_location_id', null);
-        $asset->location_id             = $request->get('location_id', null);
-        $asset->assigned_status         = $request->get('assigned_status', 0);
+        $asset->name = $request->get('name');
+        $asset->serial = $request->get('serial');
+        $asset->company_id = Company::getIdForCurrentUser($request->get('company_id'));
+        $asset->model_id = $request->get('model_id');
+        $asset->order_number = $request->get('order_number');
+        $asset->notes = $request->get('notes');
+        $asset->asset_tag = $request->get('asset_tag', Asset::autoincrement_asset());
+        $asset->user_id = Auth::id();
+        $asset->archived = '0';
+        $asset->physical = '1';
+        $asset->depreciate = '0';
+        $asset->status_id = $request->get('status_id', 0);
+        $asset->warranty_months = $request->get('warranty_months', null);
+        $asset->purchase_cost = Helper::ParseCurrency($request->get('purchase_cost')); // this is the API's store method, so I don't know that I want to do this? Confusing. FIXME (or not?!)
+        $asset->purchase_date = $request->get('purchase_date', null);
+        $asset->assigned_to = $request->get('assigned_to', null);
+        $asset->supplier_id = $request->get('supplier_id', 0);
+        $asset->requestable = $request->get('requestable', 0);
+        $asset->rtd_location_id = $request->get('rtd_location_id', null);
+        $asset->location_id = $request->get('location_id', null);
+        $asset->assigned_status = $request->get('assigned_status', 0);
+        $asset->maintenance_cycle = $request->get('maintenance_cycle', 0);
+        $asset->maintenance_date = $request->get('maintenance', null);
+        $asset->customer = $request->get('customer', null);
+        $asset->project = $request->get('project', null);
+        $asset->customer_code = $request->get('customer_code', null);
+        $asset->project_code = $request->get('project_code', null);
+        $asset->isCustomerRenting = filter_var($request->get('isCustomerRenting', false), FILTER_VALIDATE_BOOLEAN);
+        $asset->webhook_id = $request->get('webhook_id', null);
+        $asset->startRentalDate = $request->get('startRentalDate', null);
 
         /**
          * this is here just legacy reasons. Api\AssetController
@@ -1089,6 +1119,7 @@ class AssetsController extends Controller
         if ($request->has('image_source')) {
             $request->offsetSet('image', $request->offsetGet('image_source'));
         }
+
 
         $asset = $request->handleImages($asset);
         // Update custom fields in the database.
@@ -1126,7 +1157,6 @@ class AssetsController extends Controller
                 $asset->{$field->convertUnicodeDbSlug()} = $field_val;
             }
         }
-
         if ($asset->save()) {
             if ($asset->image) {
                 $asset->image = $asset->image_url;
@@ -1135,7 +1165,7 @@ class AssetsController extends Controller
             return response()->json(Helper::formatStandardApiResponse('success', $asset, trans('admin/hardware/message.create.success')));
         }
 
-        return response()->json(Helper::formatStandardApiResponse('error', null, $asset->getErrors()),  Response::HTTP_UNPROCESSABLE_ENTITY);
+        return response()->json(Helper::formatStandardApiResponse('error', null, $asset->getErrors()), Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
 
@@ -1162,6 +1192,19 @@ class AssetsController extends Controller
                 $asset->company_id = Company::getIdForCurrentUser($request->get('company_id')) : '';
             ($request->filled('rtd_location_id')) ?
                 $asset->location_id = $request->get('rtd_location_id') : null;
+            ($request->filled('rtd_location_id')) ?
+                $asset->location_id = $request->get('rtd_location_id') : null;
+
+            ($request->filled('maintenance_cycle')) ?
+                $asset->maintenance_cycle = $request->get('maintenance_cycle') : null;
+            ($request->filled('maintenance')) ?
+                $asset->maintenance_date = $request->get('maintenance') : null;
+            $asset->isCustomerRenting = filter_var($request->get('isCustomerRenting'), FILTER_VALIDATE_BOOLEAN);
+            ($request->filled('webhook_id')) ?
+                $asset->webhook_id = $request->get('webhook_id') : null;
+            ($request->filled('startRentalDate')) ?
+                $asset->startRentalDate = $request->get('startRentalDate') : null;
+
             /**
              * this is here just legacy reasons. Api\AssetController
              * used image_source  once to allow encoded image uploads.
@@ -1217,11 +1260,25 @@ class AssetsController extends Controller
                         $asset->assigned_to = null;
                         $asset->assignedTo()->disassociate($this);
                         $asset->accepted = null;
+
+                        $checkinWebhooks = Webhook::whereJsonContains('type', 'CONFIRM_CHECKIN')
+                            ->get();
+                        foreach ($checkinWebhooks as $checkinWebhook) {
+                            $this->sendNotification("CONFIRM_CHECKIN", $asset, $checkinWebhook, true, true);
+                        }
+
                         SendConfirmRevokeMail::dispatch($data, $it_ncc_email);
                     } else {
                         $asset->increment('checkout_counter', 1);
                         $data['is_confirm'] = 'đã xác nhận cấp phát';
                         $asset->status_id = config('enum.status_id.ASSIGN');
+
+                        $checkoutWebhooks = Webhook::whereJsonContains('type', 'CONFIRM_CHECKOUT')
+                            ->get();
+                        foreach ($checkoutWebhooks as $checkoutWebhook) {
+                            $this->sendNotification("CCONFIRM_CHECKOUT", $asset, $checkoutWebhook, false, true);
+                        }
+
                         SendConfirmMail::dispatch($data, $it_ncc_email);
                     }
                 } elseif ($asset->assigned_status === config('enum.assigned_status.REJECT')) {
@@ -1231,6 +1288,13 @@ class AssetsController extends Controller
                         $asset->status_id = config('enum.status_id.ASSIGN');
                         $asset->assigned_status = config('enum.assigned_status.ACCEPT');
                         $data['reason'] = 'Lý do: ' . $request->get('reason');
+
+                        $checkinWebhooks = Webhook::whereJsonContains('type', 'REJECT_CHECKIN')
+                            ->get();
+                        foreach ($checkinWebhooks as $checkinWebhook) {
+                            $this->sendNotification("REJECT_CHECKIN", $asset, $checkinWebhook, true, false, true);
+                        }
+
                         SendRejectRevokeMail::dispatch($data, $it_ncc_email);
                     } else {
                         $data['is_confirm'] = 'đã từ chối nhận';
@@ -1243,6 +1307,13 @@ class AssetsController extends Controller
                         $asset->assigned_to = null;
                         $asset->assignedTo()->disassociate($this);
                         $asset->accepted = null;
+
+                        $checkoutWebhooks = Webhook::whereJsonContains('type', 'REJECT_CHECKOUT')
+                            ->get();
+                        foreach ($checkoutWebhooks as $checkoutWebhook) {
+                            $this->sendNotification("REJECT_CHECKOUT", $asset, $checkoutWebhook, false, false, true);
+                        }
+
                         SendRejectAllocateMail::dispatch($data, $it_ncc_email);
                     }
                 }
@@ -1456,7 +1527,7 @@ class AssetsController extends Controller
             $logaction = new Actionlog();
             $logaction->item_type = Asset::class;
             $logaction->item_id = $asset->id;
-            $logaction->created_at =  date("Y-m-d H:i:s");
+            $logaction->created_at = date("Y-m-d H:i:s");
             $logaction->user_id = Auth::user()->id;
             $logaction->logaction('restored');
 
@@ -1526,6 +1597,8 @@ class AssetsController extends Controller
             $current_time = Carbon::now();
             $location = Location::find($asset->location_id);
             $location_address = null;
+            $isCustomerRenting = filter_var($request->get('isCustomerRenting'), FILTER_VALIDATE_BOOLEAN);
+            $startRentalDate = request('startRentalDate', null);
 
             // concat asset's address information
             $location_arr = array();
@@ -1567,7 +1640,20 @@ class AssetsController extends Controller
 
             $asset->status_id = config('enum.status_id.ASSIGN');
 
-            if ($asset->checkOut($target, Auth::user(), $checkout_at, $expected_checkin, $note, $asset->name, $asset->location_id, config('enum.assigned_status.WAITINGCHECKOUT'))) {
+            if (
+                $asset->checkOut(
+                    $target,
+                    Auth::user(),
+                    $checkout_at,
+                    $expected_checkin,
+                    $note,
+                    $asset->name,
+                    $asset->location_id,
+                    config('enum.assigned_status.WAITINGCHECKOUT'),
+                    $isCustomerRenting,
+                    $startRentalDate
+                )
+            ) {
                 $this->saveAssetHistory($asset_id, config('enum.asset_history.CHECK_OUT_TYPE'));
             }
         }
@@ -1678,6 +1764,11 @@ class AssetsController extends Controller
             $this->saveAssetHistory($asset_id, config('enum.asset_history.CHECK_IN_TYPE'));
             $data = $this->setDataUser($user->id, $asset_name, $countAssets);
 
+            $checkinWebhooks = Webhook::whereJsonContains('type', 'CHECKIN_ASSET')
+                ->get();
+            foreach ($checkinWebhooks as $checkinWebhook) {
+                $this->sendNotification("CHECKIN_ASSET", $asset, $checkinWebhook, true);
+            }
 
             SendCheckinMail::dispatch($data, $data['user_email']);
             return response()->json(Helper::formatStandardApiResponse('success', ['asset' => e($asset->asset_tag)], trans('admin/hardware/message.checkin.success')));
@@ -1719,6 +1810,8 @@ class AssetsController extends Controller
         $expected_checkin = request('expected_checkin', null);
         $note = request('note', null);
         $asset_name = request('name', null);
+        $isCustomerRenting = filter_var($request->get('isCustomerRenting'), FILTER_VALIDATE_BOOLEAN);
+        $startRentalDate = request('startRentalDate', null);
 
         // Set the location ID to the RTD location id if there is one
         // Wait, why are we doing this? This overrides the stuff we set further up, which makes no sense.
@@ -1766,7 +1859,20 @@ class AssetsController extends Controller
 
         $asset->status_id = config('enum.status_id.ASSIGN');
 
-        if ($asset->checkOut($target, Auth::user(), $checkout_at, $expected_checkin, $note, $asset->name, $asset->location_id, config('enum.assigned_status.WAITINGCHECKOUT'))) {
+        if (
+            $asset->checkOut(
+                $target,
+                Auth::user(),
+                $checkout_at,
+                $expected_checkin,
+                $note,
+                $asset->name,
+                $asset->location_id,
+                config('enum.assigned_status.WAITINGCHECKOUT'),
+                $isCustomerRenting,
+                $startRentalDate
+            )
+        ) {
             $this->saveAssetHistory($asset_id, config('enum.asset_history.CHECK_OUT_TYPE'));
             $data = [
                 'user_name' => $user_name,
@@ -1776,12 +1882,68 @@ class AssetsController extends Controller
                 'time' => $current_time->format('d-m-Y'),
                 'link' => config('client.my_assets.link'),
             ];
+            $checkoutWebhooks = Webhook::whereJsonContains('type', 'CHECKOUT_ASSET')
+                ->get();
+            foreach ($checkoutWebhooks as $checkoutWebhook) {
+                $this->sendNotification("CHECKOUT_ASSET", $asset, $checkoutWebhook);
+            }
 
             SendCheckoutMail::dispatch($data, $user_email);
             return response()->json(Helper::formatStandardApiResponse('success', ['asset' => e($asset->asset_tag)], trans('admin/hardware/message.checkout.success')));
         }
 
         return response()->json(Helper::formatStandardApiResponse('error', ['asset' => e($asset->asset_tag)], trans('admin/hardware/message.checkout.error')));
+    }
+
+    private function sendNotification($type, $item, $webhook, $isCheckin = false, $isConfirm = false, $isReject = false)
+    {
+
+        $messageText = "[{$item->model->category->category_type}] {$item->name} - {$item->model->category->name} is requested to check out.";
+        if ($isCheckin && !$isConfirm) {
+            $messageText = "[{$item->model->category->category_type}] {$item->name} - {$item->model->category->name} is requested to check in.";
+        }
+        if ($isCheckin && $isConfirm) {
+            $messageText = "[{$item->model->category->category_type}] {$item->name} - {$item->model->category->name} is confirmed check in.";
+        }
+        if ($isConfirm && !$isCheckin) {
+            $messageText = "[{$item->model->category->category_type}] {$item->name} - {$item->model->category->name} is confirmed check out.";
+        }
+        if ($isReject && !$isCheckin) {
+            $messageText = "[{$item->model->category->category_type}] {$item->name} - {$item->model->category->name} is rejected check out.";
+        }
+        if ($isReject && $isCheckin) {
+            $messageText = "[{$item->model->category->category_type}] {$item->name} - {$item->model->category->name} is rejected check in.";
+        }
+        $payload = [
+            'type' => 'hook',
+            'message' => [
+                't' => $messageText,
+                'mk' => [
+                    [
+                        'type' => 'pre',
+                        's' => 0,
+                        'e' => strlen($messageText),
+                    ]
+                ],
+            ],
+        ];
+
+        $response = Http::withHeaders([
+            'Content-Type' => 'application/json',
+        ])->post($webhook->url, $payload);
+
+        $success = $response->successful();
+        $status_message = $success ? 'Webhook sent successfully' : 'Webhook failed to send';
+
+        WebhookLog::create([
+            'webhook_id' => $webhook->id,
+            'url' => $webhook->url,
+            'message' => $messageText,
+            'status_code' => $response->status(),
+            'response' => $status_message,
+            'asset' => $item->name,
+            'type' => $type,
+        ]);
     }
 
     /**
@@ -1815,7 +1977,6 @@ class AssetsController extends Controller
      * @return JsonResponse
      */
     public function audit(Request $request)
-
     {
         $this->authorize('audit', Asset::class);
         $rules = [
@@ -1995,5 +2156,276 @@ class AssetsController extends Controller
         ];
 
         return $data;
+    }
+
+    public function getAssignedTotalDetail(Request $request)
+    {
+        $this->authorize('view', Asset::class);
+
+        $user_id = Auth::id();
+        $query = \App\Models\Asset::query()
+            ->selectRaw('assigned_status, COUNT(id) as total');
+
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where('name', 'like', '%' . $search . '%');
+        }
+
+        if ($request->filled('user_id')) {
+            $user_id = $request->input('user_id');
+            $query->where('user_id', $user_id);
+        }
+
+        if ($request->filled('status_id')) {
+            $query->where('assets.status_id', '=', $request->input('status_id'));
+        }
+
+        if ($request->filled('assigned_status')) {
+            $query->InAssignedStatus($request->input('assigned_status'));
+        }
+
+        if ($request->filled('model_id')) {
+            $query->InModelList([$request->input('model_id')]);
+        }
+
+        if ($request->filled('category_id')) {
+            $query->InCategory($request->input('category_id'));
+        }
+
+        if ($request->filled('location_id')) {
+            $query->where('assets.location_id', '=', $request->input('location_id'));
+        }
+
+        if ($request->filled('rtd_location_id')) {
+            $query->where('assets.rtd_location_id', '=', $request->input('rtd_location_id'));
+        }
+
+        if ($request->filled('supplier_id')) {
+            $query->where('assets.supplier_id', '=', $request->input('supplier_id'));
+        }
+
+        if (($request->filled('assigned_to')) && ($request->filled('assigned_type'))) {
+            $query->where('assets.assigned_to', '=', $request->input('assigned_to'))
+                ->where('assets.assigned_type', '=', $request->input('assigned_type'));
+        }
+
+        $query->where('assets.assigned_to', '=', $user_id);
+
+        $result = $query->groupBy('assigned_status')->get();
+
+        $result = $result->map(function ($item) {
+            $statusName = '';
+            switch ($item->assigned_status) {
+                case 0:
+                    $statusName = 'Chưa checkout';
+                    break;
+                case 1:
+                    $statusName = 'Chờ xác nhận';
+                    break;
+                case 2:
+                    $statusName = 'Chờ xác nhận cấp phát';
+                    break;
+                case 3:
+                    $statusName = 'Chờ xác nhận thu hồi';
+                    break;
+                case 4:
+                    $statusName = 'Đã xác nhận';
+                    break;
+                case 5:
+                    $statusName = 'Đã từ chối';
+                    break;
+                default:
+                    $statusName = 'Unknown';
+            }
+
+            return [
+                'name' => $statusName,
+                'total' => $item->total
+            ];
+        });
+
+        return response()->json(Helper::formatStandardApiResponse('success', $result, null));
+    }
+
+    public function getCustomerRentingAssets(Request $request, $audit = null)
+    {
+        // Get application settings
+        $settings = Setting::getSettings();
+
+        // List of allowed columns for sorting/filtering
+        $allowedColumns = [
+            'id',
+            'name',
+            'asset_tag',
+            'serial',
+            'model_number',
+            'last_checkout',
+            'notes',
+            'expected_checkin',
+            'order_number',
+            'image',
+            'assigned_to',
+            'created_at',
+            'updated_at',
+            'purchase_date',
+            'purchase_cost',
+            'last_audit_date',
+            'next_audit_date',
+            'assigned_status',
+            'requestable',
+            'warranty_months',
+            'checkout_counter',
+            'checkin_counter',
+            'requests_counter',
+            'maintenance_date',
+            'maintenance_cycle',
+            'startRentalDate',
+        ];
+
+        // Add custom fields to allowed columns
+        $customFields = CustomField::all();
+        foreach ($customFields as $field) {
+            $allowedColumns[] = $field->db_column_name();
+        }
+
+        // Query assets that are being rented by customers
+        $assetQuery = Company::scopeCompanyables(Asset::select('assets.*'), 'company_id', 'assets')
+            ->where('assets.isCustomerRenting', true)
+            ->with(
+                'location',
+                'assetstatus',
+                'company',
+                'defaultLoc',
+                'assignedTo',
+                'model.category',
+                'model.manufacturer',
+                'model.fieldset',
+                'supplier',
+                'webhook',
+            );
+        $assetQuery = $this->filters($assetQuery, $request);
+
+        // Filter by order number if provided
+        if ($request->filled('order_number')) {
+            $assetQuery = $assetQuery->where('assets.order_number', '=', e($request->get('order_number')));
+        }
+
+        // Calculate offset for pagination
+        $totalAssets = $assetQuery->count();
+        $offset = ($request->get('offset', 0) > $totalAssets) ? $totalAssets : $request->get('offset', 0);
+
+        // Determine limit for pagination
+        $limit = config('app.max_results');
+        if ($request->filled('limit') && config('app.max_results') >= $request->input('limit')) {
+            $limit = $request->input('limit');
+        }
+
+        // Determine sort order
+        $sortOrder = $request->input('order') === 'asc' ? 'asc' : 'desc';
+
+        // Apply audit filters if needed
+        if (Gate::allows('audit', Asset::class)) {
+            switch ($audit) {
+                case 'due':
+                    $assetQuery->DueOrOverdueForAudit($settings);
+                    break;
+                case 'overdue':
+                    $assetQuery->overdueForAudit($settings);
+                    break;
+            }
+        }
+
+        // Determine which column to sort by
+        $sortField = str_replace('custom_fields.', '', $request->input('sort'));
+        $columnToSort = in_array($sortField, $allowedColumns) ? $sortField : 'assets.created_at';
+
+        // Apply sorting logic
+        switch ($sortField) {
+            case 'model':
+                $assetQuery->OrderModels($sortOrder);
+                break;
+            case 'model_number':
+                $assetQuery->OrderModelNumber($sortOrder);
+                break;
+            case 'category':
+                $assetQuery->OrderCategory($sortOrder);
+                break;
+            case 'manufacturer':
+                $assetQuery->OrderManufacturer($sortOrder);
+                break;
+            case 'company':
+                $assetQuery->OrderCompany($sortOrder);
+                break;
+            case 'location':
+                $assetQuery->OrderLocation($sortOrder);
+            // fallthrough
+            case 'rtd_location':
+                $assetQuery->OrderRtdLocation($sortOrder);
+                break;
+            case 'status_label':
+                $assetQuery->OrderStatus($sortOrder);
+                break;
+            case 'supplier':
+                $assetQuery->OrderSupplier($sortOrder);
+                break;
+            case 'assigned_to':
+                $assetQuery->OrderAssigned($sortOrder);
+                break;
+            default:
+                $assetQuery->orderBy($columnToSort, $sortOrder);
+                break;
+        }
+
+        // Get total after filters and sorting
+        $totalAssets = $assetQuery->count();
+
+        // Fetch paginated results
+        $assets = $assetQuery->skip($offset)->take($limit)->get();
+
+        // Optionally load components relationship if requested
+        if ($request->input('components')) {
+            $assets->loadMissing([
+                'components' => function ($query) {
+                    $query->orderBy('created_at', 'desc');
+                }
+            ]);
+        }
+
+        // Transform and return the asset data
+        $transformer = new \App\Http\Transformers\AssetsTransformer();
+        return $transformer->transformAssets($assets, $totalAssets);
+    }
+
+    public function getCustomerRentingAssetsTotalDetail(Request $request)
+    {
+        $this->authorize('index', Asset::class);
+
+        // Query assets that are being rented by customers
+        $assets = Company::scopeCompanyables(Asset::select('assets.*'), 'company_id', 'assets')
+            ->where('assets.isCustomerRenting', true);
+
+        // Apply filters from request
+        $assets = $this->filters($assets, $request);
+
+        // Filter by order number if provided
+        if ($request->filled('order_number')) {
+            $assets = $assets->where('assets.order_number', '=', e($request->get('order_number')));
+        }
+
+        // Get total assets by category
+        $total_asset_by_model = $assets->selectRaw('c.name as category_name, count(*) as total')
+            ->join('models as m', 'assets.model_id', '=', 'm.id')
+            ->join('categories as c', 'm.category_id', '=', 'c.id')
+            ->groupBy('category_name')
+            ->pluck('total', 'category_name');
+
+        $total_detail = $total_asset_by_model->map(function ($value, $key) {
+            return [
+                'name' => $key,
+                'total' => $value
+            ];
+        })->values()->toArray();
+
+        return response()->json(Helper::formatStandardApiResponse('success', $total_detail, null));
     }
 }

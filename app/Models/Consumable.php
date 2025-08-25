@@ -23,25 +23,31 @@ class Consumable extends SnipeModel
     protected $table = 'consumables';
     protected $casts = [
         'purchase_date' => 'datetime',
-        'requestable'    => 'boolean',
-        'category_id'    => 'integer',
-        'company_id'     => 'integer',
-        'qty'            => 'integer',
-        'min_amt'        => 'integer', 
-        'supplier_id'    => 'integer'   
-     ];
+        'requestable' => 'boolean',
+        'category_id' => 'integer',
+        'company_id' => 'integer',
+        'qty' => 'integer',
+        'min_amt' => 'integer',
+        'supplier_id' => 'integer',
+        'maintenance_date' => 'datetime:Y-m-d',
+        'maintenance_cycle' => 'integer',
+        'webhook_id' => 'integer',
+    ];
 
     /**
      * Category validation rules
      */
     public $rules = [
-        'name'        => 'required|max:255',
-        'qty'         => 'required|integer|min:0',
+        'name' => 'required|max:255',
+        'qty' => 'required|integer|min:0',
         'category_id' => 'required|integer',
-        'company_id'  => 'integer|nullable',
-        'min_amt'     => 'integer|min:0|nullable',
-        'purchase_cost'   => 'numeric|nullable|min:1',
+        'company_id' => 'integer|nullable',
+        'min_amt' => 'integer|min:0|nullable',
+        'purchase_cost' => 'numeric|nullable|min:1',
         'warranty_months' => 'numeric|nullable|digits_between:0,240',
+        'maintenance_date' => 'date|nullable|after_or_equal:purchase_date',
+        'maintenance_cycle' => 'integer|nullable|min:0',
+        'webhook_id' => 'exists:webhooks,id|nullable',
     ];
 
     /**
@@ -75,7 +81,10 @@ class Consumable extends SnipeModel
         'requestable',
         'notes',
         'supplier_id',
-        'warranty_months'
+        'warranty_months',
+        'maintenance_date',
+        'maintenance_cycle',
+        'webhook_id',
     ];
 
     use Searchable;
@@ -93,10 +102,11 @@ class Consumable extends SnipeModel
      * @var array
      */
     protected $searchableRelations = [
-        'category'     => ['name'],
-        'company'      => ['name'],
-        'location'     => ['name'],
+        'category' => ['name'],
+        'company' => ['name'],
+        'location' => ['name'],
         'manufacturer' => ['name'],
+        'webhook' => ['name'],
     ];
 
     /**
@@ -120,6 +130,10 @@ class Consumable extends SnipeModel
         $this->attributes['requestable'] = filter_var($value, FILTER_VALIDATE_BOOLEAN);
     }
 
+    public function webhook()
+    {
+        return $this->belongsTo(\App\Models\Webhook::class, 'webhook_id');
+    }
     /**
      * Establishes the consumable -> admin user relationship
      *
@@ -215,7 +229,7 @@ class Consumable extends SnipeModel
     public function getImageUrlAttribute()
     {
         if ($this->image) {
-            return Storage::disk('public')->url(app('consumables_upload_path').$this->image);
+            return Storage::disk('public')->url(app('consumables_upload_path') . $this->image);
         }
         return false;
 
@@ -260,7 +274,7 @@ class Consumable extends SnipeModel
      */
     public function getRequireAcceptanceAttribute()
     {
-        return $this->category->require_acceptance;
+        return $this->category ? $this->category->require_acceptance : false;
     }
 
     /**
@@ -275,9 +289,13 @@ class Consumable extends SnipeModel
     {
         $Parsedown = new \Parsedown();
 
-        if ($this->category->eula_text) {
+        if ($this->category && $this->category->eula_text) {
             return $Parsedown->text(e($this->category->eula_text));
-        } elseif ((Setting::getSettings()->default_eula_text) && ($this->category->use_default_eula == '1')) {
+        } elseif (
+            $this->category &&
+            $this->category->use_default_eula == '1' &&
+            Setting::getSettings()->default_eula_text
+        ) {
             return $Parsedown->text(e(Setting::getSettings()->default_eula_text));
         } else {
             return null;
@@ -329,8 +347,8 @@ class Consumable extends SnipeModel
     public function scopeInCategory($query, $category_id)
     {
         $data = $query->join('categories', 'consumables.category_id', '=', 'categories.id');
-        if(is_array($category_id)) {
-            $data = $data->whereIn('consumables.category_id',$category_id);
+        if (is_array($category_id)) {
+            $data = $data->whereIn('consumables.category_id', $category_id);
         } else {
             $data = $data->where('consumables.category_id', '=', $category_id);
         }
@@ -375,5 +393,9 @@ class Consumable extends SnipeModel
     public function scopeOrderCompany($query, $order)
     {
         return $query->leftJoin('companies', 'consumables.company_id', '=', 'companies.id')->orderBy('companies.name', $order);
+    }
+    public function scopeHasMaintenanceDate($query)
+    {
+        return $query->whereNotNull('consumables.maintenance_date');
     }
 }
