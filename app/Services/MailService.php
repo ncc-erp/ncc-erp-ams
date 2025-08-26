@@ -10,7 +10,7 @@ use Exception;
 
 class MailService
 {
-    public static function sendMail($mailable, string | null $sendTo, array $ccEmails = [], string $messageType = 'default', string $subject = null): void
+    public static function sendMail($mailable, ?string $sendTo, array $ccEmails = [], string $messageType = 'default', ?string $subject = null): void
     {
         
         if (empty($sendTo)) {

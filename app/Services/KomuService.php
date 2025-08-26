@@ -28,6 +28,10 @@ class KomuService
             'message' => $message
         ];
 
+        \Log::debug('Komu API response', [
+            'requestData' => $requestData
+        ]);
+
         $responseBody = null;
 
         try {
@@ -39,6 +43,9 @@ class KomuService
                 ->post($komuApiUrl . 'sendMessageToUser', $requestData);
 
                 $responseBody = $response->body();
+                \Log::debug('Komu API response', [
+                    'response' => $responseBody
+                ]);
             }
 
             KomuMessageLog::create([
