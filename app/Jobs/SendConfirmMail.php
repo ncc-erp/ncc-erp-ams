@@ -1,9 +1,7 @@
 <?php
 namespace App\Jobs;
 
-use App\Helpers\KomuMessages;
 use App\Mail\ConfirmMail;
-use App\Services\KomuService;
 use App\Services\MailService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -38,12 +36,6 @@ class SendConfirmMail implements ShouldQueue
     public function handle()
     {
         try {
-            $user_name = explode('@', $this->it_ncc_email)[0];
-            $message   = KomuMessages::assetConfirmCheckout($this->data);
-
-            // Send Komu message
-            KomuService::sendMessage($user_name, $message);
-            
             // Send mail with logging
             MailService::sendMail(
                 new ConfirmMail($this->data), 

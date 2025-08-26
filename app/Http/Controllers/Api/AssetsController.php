@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Events\CheckoutableCheckedIn;
+use App\Helpers\KomuMessages;
+use App\Services\KomuService;
 use App\Helpers\DateFormatter;
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
@@ -1235,7 +1236,7 @@ class AssetsController extends Controller
             if ($user && $request->has('assigned_status') && $assigned_status !== $request->get('assigned_status')) {
                 $asset->assigned_status = $request->get('assigned_status');
                 $it_ncc_email = Setting::first()->admin_cc_email;
-                $user_name = $user->first_name . ' ' . $user->last_name;
+                $user_name = $user->username;
                 $current_time = Carbon::now();
                 $data = [
                     'user_name' => $user_name,
@@ -1279,6 +1280,11 @@ class AssetsController extends Controller
                             $this->sendNotification("CCONFIRM_CHECKOUT", $asset, $checkoutWebhook, false, true);
                         }
 
+                        // Send Komu message
+                        $message   = KomuMessages::assetConfirmCheckout($data);
+                        KomuService::sendMessage($user_name, $message);
+                        
+                        // Send Mail
                         SendConfirmMail::dispatch($data, $it_ncc_email);
                     }
                 } elseif ($asset->assigned_status === config('enum.assigned_status.REJECT')) {
@@ -1314,6 +1320,11 @@ class AssetsController extends Controller
                             $this->sendNotification("REJECT_CHECKOUT", $asset, $checkoutWebhook, false, false, true);
                         }
 
+                        // Send Komu message
+                        $message   = KomuMessages::assetRejectAllocate($data);
+                        KomuService::sendMessage($user_name, $message);
+
+                        // Send Mail
                         SendRejectAllocateMail::dispatch($data, $it_ncc_email);
                     }
                 }
@@ -1391,7 +1402,7 @@ class AssetsController extends Controller
 
                 if ($user && $request->has('assigned_status') && $assigned_status !== $request->get('assigned_status')) {
                     $it_ncc_email = Setting::first()->admin_cc_email;
-                    $user_name = $user->first_name . ' ' . $user->last_name;
+                    $user_name = $user->username;
                     $current_time = Carbon::now();
                     $data = [
                         'user_name' => $user_name,
@@ -1593,7 +1604,7 @@ class AssetsController extends Controller
 
             $user = User::find($request->assigned_user);
             $user_email = $user->email;
-            $user_name = $user->first_name . ' ' . $user->last_name;
+            $user_name = $user->username;
             $current_time = Carbon::now();
             $location = Location::find($asset->location_id);
             $location_address = null;
@@ -1819,7 +1830,7 @@ class AssetsController extends Controller
 
         $user = User::find($request->assigned_user);
         $user_email = $user->email;
-        $user_name = $user->first_name . ' ' . $user->last_name;
+        $user_name = $user->username;
         $current_time = Carbon::now();
         $location = Location::find($asset->location_id);
         $location_address = null;
