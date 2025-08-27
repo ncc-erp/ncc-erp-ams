@@ -23,7 +23,7 @@ jobs:
         run: |
           set -e
           cd $APP_DIR
-          git fetch --all
+          git fetch origin
           git reset --hard origin/${{ github.event.inputs.branch }}
 
       - name: Clear/prime Laravel caches (optional)

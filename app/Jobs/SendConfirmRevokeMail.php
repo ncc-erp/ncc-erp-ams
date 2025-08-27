@@ -42,7 +42,7 @@ class SendConfirmRevokeMail implements ShouldQueue
             $message   = KomuMessages::assetConfirmRevoke($this->data);
 
             // Send Komu message
-            KomuService::sendMessage($user_name, $message);
+            // KomuService::sendMessage($user_name, $message);
             
             // Send mail with logging
             MailService::sendMail(

@@ -42,7 +42,7 @@ class SendConfirmMailTool implements ShouldQueue
             $message   = KomuMessages::confirmToolCheckout($this->data);
 
             // Send Komu message
-            KomuService::sendMessage($user_name, $message);
+            // KomuService::sendMessage($user_name, $message);
             
             // Send mail with logging
             MailService::sendMail(
