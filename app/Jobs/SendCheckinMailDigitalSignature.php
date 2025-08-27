@@ -44,7 +44,7 @@ class SendCheckinMailDigitalSignature implements ShouldQueue
             $message = KomuMessages::toolCheckinDigitalSignature($this->data);
             
             // Send Komu message
-            KomuService::sendMessage($user_name, $message);
+            // KomuService::sendMessage($user_name, $message);
             
             // Send mail with logging
             $ccEmails = [Setting::first()->admin_cc_email];
