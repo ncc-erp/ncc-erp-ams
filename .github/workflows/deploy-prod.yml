@@ -1,0 +1,52 @@
+name: Deploy NCC-ERP-AMS-BE-PROD
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Branch to deploy"
+        required: true
+        default: "master"
+
+jobs:
+  deploy:
+    runs-on: ams-prod
+    env:
+      APP_DIR: /home/nccsoft/NCC-ITTools
+    if: github.event.inputs.branch == 'master'
+    steps:
+      - name: Backup Database
+        run: |
+          bash $APP_DIR/backup_db.sh
+
+      - name: Pull latest code
+        run: |
+          set -e
+          cd $APP_DIR
+          git fetch --all
+          git reset --hard origin/${{ github.event.inputs.branch }}
+
+      - name: Clear/prime Laravel caches (optional)
+        run: |
+          cd $APP_DIR
+          php artisan optimize:clear || true
+          php artisan config:cache || true
+          php artisan route:cache || true
+          php artisan view:cache  || true
+
+      - name: Check pending migration
+        id: migration_step
+        run: |
+          cd $APP_DIR
+          php artisan migrate:status | grep 'No' > /tmp/pending_migration.txt || true
+          if [ -s /tmp/pending_migration.txt ]; then
+            echo "Pending migrations found."
+            php artisan migrate --force
+          else
+            echo "No pending migrations."
+          fi
+
+      - name: Rollback (Restore DB if migration error)
+        if: steps.migration_step.outcome == 'failure'
+        run: |
+          bash $APP_DIR/rollback_db.sh

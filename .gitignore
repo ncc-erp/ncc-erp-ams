@@ -65,3 +65,5 @@ _ide_helper_models.php
 /.phplint-cache
 storage/ldap_client_tls.cert
 storage/ldap_client_tls.key
+backup_db.sh
+rollback_db.sh
