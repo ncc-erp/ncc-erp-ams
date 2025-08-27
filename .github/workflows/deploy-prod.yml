@@ -26,14 +26,6 @@ jobs:
           git fetch origin
           git reset --hard origin/${{ github.event.inputs.branch }}
 
-      - name: Clear/prime Laravel caches (optional)
-        run: |
-          cd $APP_DIR
-          php artisan optimize:clear || true
-          php artisan config:cache || true
-          php artisan route:cache || true
-          php artisan view:cache  || true
-
       - name: Check pending migration
         id: migration_step
         run: |
