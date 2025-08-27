@@ -42,7 +42,7 @@ class SendConfirmCheckoutMail implements ShouldQueue
             $message   = KomuMessages::confirmCheckoutDigitalSignature($this->data);
 
             // Send Komu message
-            KomuService::sendMessage($user_name, $message);
+            // KomuService::sendMessage($user_name, $message);
             
             // Send mail with logging (no CC for IT emails)
             MailService::sendMail(
