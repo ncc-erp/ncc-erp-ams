@@ -1755,4 +1755,13 @@ Route::group(['prefix' => 'v1', 'middleware' => ['api', 'throttle:' . config('ap
         )->name('api.komu_logs.totalDetail');
     });
 
+    // Route Release Notes
+    Route::group(['prefix' => 'release-notes'], function () {
+        Route::get('/releases', [
+            Api\ReleaseNotesController::class,
+            'releasesNotes'
+        ])->name('api.release_notes.releases');
+    });
+    // End Route Release Notes
+
 }); // end API routes

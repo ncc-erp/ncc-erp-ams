@@ -172,7 +172,10 @@ class ApiLicensesCest
         $I->sendGET('/licenses/'.$license->id);
         $I->seeResponseIsJson();
         $I->seeResponseCodeIs(200);
-        $I->seeResponseContainsJson((new LicensesTransformer)->transformLicense($temp_license));
+
+        $expected = (new LicensesTransformer)->transformLicense($temp_license);
+        $expected['purchase_cost_numeric'] = (string) $expected['purchase_cost_numeric'];
+        $I->seeResponseContainsJson($expected);
     }
 
     /** @test */

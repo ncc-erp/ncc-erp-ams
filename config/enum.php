@@ -46,5 +46,29 @@ return [
   "mail_type" => [
     "CHECKIN" => "checkin",
     "CHECKOUT" => "checkout"
-  ]
+  ],
+  "release_notes" => [
+    // Valid release types
+    'valid_types' => ['ALL', 'BE', 'FE'],
+    'default_type' => 'ALL',
+    
+    // Pagination settings
+    'default_page' => 1,
+    'default_page_size' => 5,
+    'max_page_size' => 50,
+    'min_page_size' => 1,
+    
+    // GitHub API fetch settings
+    'fetch_base_limit' => 300,      // Default fetched items each repo
+    'fetch_limit_min' => 200,
+    'fetch_limit_max' => 300,
+    'max_pages_to_fetch' => 5,
+    
+    // Cache settings
+    'cache_duration_hours' => 1,    // Cache 1 hour
+    'cache_key_prefix' => 'github_releases_', 
+    
+    // Input validation
+    'invalid_string_values' => ['null', 'undefined', ''],
+  ],
 ];

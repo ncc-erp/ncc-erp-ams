@@ -38,7 +38,11 @@ class LicenseFactory extends Factory
      */
     public function definition()
     {
+        $category = Category::where('category_type', '=', 'license')->inRandomOrder()->first();
 
+        if (!$category) {
+            $category = Category::factory()->create(['category_type' => 'license']);
+        }
 
         return [
             'user_id' => 1,
@@ -53,7 +57,7 @@ class LicenseFactory extends Factory
             'reassignable' => $this->faker->boolean(),
             'termination_date' => $this->faker->dateTimeBetween('-1 years', 'now', date_default_timezone_get())->format('Y-m-d H:i:s'),
             'supplier_id' => $this->faker->numberBetween(1, 5),
-            'category_id' => Category::where('category_type', '=', 'license')->inRandomOrder()->first()->id
+            'category_id' => $category->id
         ];
     }
 

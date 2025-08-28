@@ -453,6 +453,9 @@ class ApiDigitalSignaturesCest
     {
         $I->wantTo('Checkout multiple digital signatures');
 
+        // Turn off email notifications
+        \Illuminate\Support\Facades\Notification::fake();
+
         $link = 'digital_signatures/checkout';
         $digital_signatures = $this->digitalSignatureFactory(3);
         $user = User::factory()->checkoutAssets()->create([
