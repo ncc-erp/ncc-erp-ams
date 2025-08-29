@@ -8,6 +8,7 @@ use App\Services\MailService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Mail;
@@ -42,20 +43,23 @@ class SendRejectCheckinMail implements ShouldQueue
             $user_name = explode('@', $this->it_ncc_email)[0];
             $message   = KomuMessages::rejectCheckinDigitalSignature($this->data);
 
+            Log::debug("[SendRejectCheckinMail / handle] Raw email: " . $this->it_ncc_email);
+            Log::debug("[SendRejectCheckinMail / handle] Raw username is extracted from email: " . $user_name);
+
             // Send Komu message
-            // KomuService::sendMessage($user_name, $message);
+            KomuService::sendMessage($user_name, $message);
             
             // Send mail with logging
-            MailService::sendMail(
-                new RejectCheckinDigitalSignature($this->data), 
-                $this->it_ncc_email, 
-                [],
-                'reject_checkin',
-                'Reject Checkin Digital Signature'
-            );
+            // MailService::sendMail(
+            //     new RejectCheckinDigitalSignature($this->data), 
+            //     $this->it_ncc_email, 
+            //     [],
+            //     'reject_checkin',
+            //     'Reject Checkin Digital Signature'
+            // );
             
         } catch (\Exception $e) {
-            \Log::error('SendRejectCheckinMail: ' . $e->getMessage());
+            Log::error('SendRejectCheckinMail: ' . $e->getMessage());
         }
     }
 }

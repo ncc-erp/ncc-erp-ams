@@ -15,6 +15,7 @@ use App\Mail\CheckoutMailSoftware;
 use App\Services\KomuService;
 use App\Services\MailService;
 use App\Helpers\KomuMessages;
+use Illuminate\Support\Facades\Log;
 
 class SendCheckoutMailSoftware implements ShouldQueue
 {
@@ -44,21 +45,23 @@ class SendCheckoutMailSoftware implements ShouldQueue
             $user_name = explode('@', $this->user_email)[0];
             $message = KomuMessages::softwareCheckout($this->data);
             
+            Log::debug("[SendCheckoutMailSoftware] Username to send Komu: " . $user_name);
+            
             // Send Komu message
             // KomuService::sendMessage($user_name, $message);
             
             // Send mail with logging
-            $ccEmails = [Setting::first()->admin_cc_email];
-            MailService::sendMail(
-                new CheckoutMailSoftware($this->data), 
-                $this->user_email, 
-                $ccEmails,
-                'checkout_software',
-                'Software Checkout Notification'
-            );
+            // $ccEmails = [Setting::first()->admin_cc_email];
+            // MailService::sendMail(
+            //     new CheckoutMailSoftware($this->data),
+            //     $this->user_email,
+            //     $ccEmails,
+            //     'checkout_software',
+            //     'Software Checkout Notification'
+            // );
             
         } catch (\Exception $e) {
-            \Log::error('SendCheckoutMailSoftware: ' . $e->getMessage());
+            Log::error('SendCheckoutMailSoftware: ' . $e->getMessage());
         }
     }
 }

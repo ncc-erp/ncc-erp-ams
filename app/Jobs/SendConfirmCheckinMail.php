@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Services\KomuService;
 use App\Helpers\KomuMessages;
 use App\Services\MailService;
+use Illuminate\Support\Facades\Log;
 
 class SendConfirmCheckinMail implements ShouldQueue
 {
@@ -42,19 +43,22 @@ class SendConfirmCheckinMail implements ShouldQueue
             $user_name = explode('@', $this->it_ncc_email)[0];
             $message   = KomuMessages::confirmCheckinDigitalSignature($this->data);
 
+            Log::debug("[SendConfirmCheckinMail / handle] Raw email: " . $this->it_ncc_email);
+            Log::debug("[SendConfirmCheckinMail / handle] Raw username is extracted from email: " . $user_name);
+
             // Send Komu message
-            // KomuService::sendMessage($user_name, $message);
+            KomuService::sendMessage($user_name, $message);
             
             // Send mail with logging
-            MailService::sendMail(
-                new ConfirmCheckinDigitalSignature($this->data), 
-                $this->it_ncc_email, 
-                [],
-                'confirm_checkin',
-                'Confirm Checkin Digital Signature'
-            );
+            // MailService::sendMail(
+            //     new ConfirmCheckinDigitalSignature($this->data), 
+            //     $this->it_ncc_email, 
+            //     [],
+            //     'confirm_checkin',
+            //     'Confirm Checkin Digital Signature'
+            // );
         } catch (\Exception $e) {
-            \Log::error('SendConfirmCheckinMail: ' . $e->getMessage());
+            Log::error('SendConfirmCheckinMail: ' . $e->getMessage());
         }
     }
 }

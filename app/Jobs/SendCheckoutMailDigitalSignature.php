@@ -6,6 +6,7 @@ use App\Mail\CheckoutMailDigitalSignature;
 use App\Models\Setting;
 use App\Services\KomuService;
 use App\Services\MailService;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -41,21 +42,23 @@ class SendCheckoutMailDigitalSignature implements ShouldQueue
             $user_name = explode('@', $this->user_email)[0];
             $message   = KomuMessages::toolCheckoutDigitalSignature($this->data);
 
+            Log::debug("[SendCheckoutMailDigitalSignature] Username to send Komu: " . $user_name);
+
             // Send Komu message
             // KomuService::sendMessage($user_name, $message);
             
             // Send mail with logging
-            $ccEmails = [Setting::first()->admin_cc_email];
-            MailService::sendMail(
-                new CheckoutMailDigitalSignature($this->data), 
-                $this->user_email, 
-                $ccEmails,
-                'checkout_digital_signature',
-                'Digital Signature Checkout Notification'
-            );
+            // $ccEmails = [Setting::first()->admin_cc_email];
+            // MailService::sendMail(
+            //     new CheckoutMailDigitalSignature($this->data), 
+            //     $this->user_email, 
+            //     $ccEmails,
+            //     'checkout_digital_signature',
+            //     'Digital Signature Checkout Notification'
+            // );
             
         } catch (\Exception $e) {
-            \Log::error('SendCheckoutMailDigitalSignature: ' . $e->getMessage());
+            Log::error('SendCheckoutMailDigitalSignature: ' . $e->getMessage());
         }
     }
 }

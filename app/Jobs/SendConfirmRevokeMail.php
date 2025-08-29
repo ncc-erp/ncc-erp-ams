@@ -6,6 +6,7 @@ use App\Mail\ConfirmRevokeMail;
 use App\Services\KomuService;
 use App\Services\MailService;
 use Illuminate\Bus\Queueable;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -41,20 +42,23 @@ class SendConfirmRevokeMail implements ShouldQueue
             $user_name = explode('@', $this->it_ncc_email)[0];
             $message   = KomuMessages::assetConfirmRevoke($this->data);
 
+            Log::debug("[SendConfirmRevokeMail / handle] Raw email: " . $this->it_ncc_email);
+            Log::debug("[SendConfirmRevokeMail / handle] Raw username is extracted from email: " . $user_name);
+
             // Send Komu message
-            // KomuService::sendMessage($user_name, $message);
+            KomuService::sendMessage($user_name, $message);
             
             // Send mail with logging
-            MailService::sendMail(
-                new ConfirmRevokeMail($this->data), 
-                $this->it_ncc_email, 
-                [],
-                'confirm_revoke',
-                'Confirm Revoke Request'
-            );
+            // MailService::sendMail(
+            //     new ConfirmRevokeMail($this->data), 
+            //     $this->it_ncc_email, 
+            //     [],
+            //     'confirm_revoke',
+            //     'Confirm Revoke Request'
+            // );
             
         } catch (\Exception $e) {
-            \Log::error('SendConfirmRevokeMail: ' . $e->getMessage());
+            Log::error('SendConfirmRevokeMail: ' . $e->getMessage());
         }
     }
 }

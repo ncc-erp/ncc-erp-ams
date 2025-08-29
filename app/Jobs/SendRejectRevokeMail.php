@@ -11,6 +11,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 
 class SendRejectRevokeMail implements ShouldQueue
 {
@@ -39,22 +40,26 @@ class SendRejectRevokeMail implements ShouldQueue
     {
         try {
             $user_name = explode('@', $this->it_ncc_email)[0];
+
+            Log::debug("[SendRejectRevokeMail / handle] Raw email: " . $this->it_ncc_email);
+            Log::debug("[SendRejectRevokeMail / handle] Raw username is extracted from email: " . $user_name);
+
             $message   = KomuMessages::rejectRevoke($this->data);
 
             // Send Komu message
-            // KomuService::sendMessage($user_name, $message);
+            KomuService::sendMessage($user_name, $message);
             
             // Send mail with logging
-            MailService::sendMail(
-                new RejectRevokeMail($this->data), 
-                $this->it_ncc_email, 
-                [],
-                'reject_revoke',
-                'Reject Revoke Request'
-            );
+            // MailService::sendMail(
+            //     new RejectRevokeMail($this->data), 
+            //     $this->it_ncc_email, 
+            //     [],
+            //     'reject_revoke',
+            //     'Reject Revoke Request'
+            // );
             
         } catch (\Exception $e) {
-            \Log::error('SendRejectRevokeMail: ' . $e->getMessage());
+            Log::error('SendRejectRevokeMail: ' . $e->getMessage());
         }
     }
 }

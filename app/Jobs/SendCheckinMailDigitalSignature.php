@@ -14,6 +14,7 @@ use App\Mail\CheckinMailDigitalSignature;
 use App\Services\KomuService;
 use App\Services\MailService;
 use App\Helpers\KomuMessages;
+use Illuminate\Support\Facades\Log;
 
 class SendCheckinMailDigitalSignature implements ShouldQueue
 {
@@ -42,22 +43,24 @@ class SendCheckinMailDigitalSignature implements ShouldQueue
         try {
             $user_name = explode('@', $this->user_email)[0];
             $message = KomuMessages::toolCheckinDigitalSignature($this->data);
-            
+
+            Log::debug("[SendCheckinMailDigitalSignature] Username to send Komu: " . $user_name);
+
             // Send Komu message
             // KomuService::sendMessage($user_name, $message);
             
             // Send mail with logging
-            $ccEmails = [Setting::first()->admin_cc_email];
-            MailService::sendMail(
-                new CheckinMailDigitalSignature($this->data), 
-                $this->user_email, 
-                $ccEmails,
-                'checkin_digital_signature',
-                'Digital Signature Checkin Notification'
-            );
+            // $ccEmails = [Setting::first()->admin_cc_email];
+            // MailService::sendMail(
+            //     new CheckinMailDigitalSignature($this->data), 
+            //     $this->user_email, 
+            //     $ccEmails,
+            //     'checkin_digital_signature',
+            //     'Digital Signature Checkin Notification'
+            // );
             
         } catch (\Exception $e) {
-            \Log::error('SendCheckinMailDigitalSignature: ' . $e->getMessage());
+            Log::error('SendCheckinMailDigitalSignature: ' . $e->getMessage());
         }
     }
 }

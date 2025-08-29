@@ -49,7 +49,7 @@ use App\Models\Category;
 use App\Models\Webhook;
 use Illuminate\Support\Facades\Http;
 use App\Models\WebhookLog;
-
+use Illuminate\Support\Facades\Log;
 /**
  * This class controls all actions related to assets for
  * the Snipe-IT Asset Management application.
@@ -1262,27 +1262,32 @@ class AssetsController extends Controller
                         $asset->assignedTo()->disassociate($this);
                         $asset->accepted = null;
 
-                        $checkinWebhooks = Webhook::whereJsonContains('type', 'CONFIRM_CHECKIN')
-                            ->get();
-                        foreach ($checkinWebhooks as $checkinWebhook) {
-                            $this->sendNotification("CONFIRM_CHECKIN", $asset, $checkinWebhook, true, true);
-                        }
+                        // $checkinWebhooks = Webhook::whereJsonContains('type', 'CONFIRM_CHECKIN')
+                        //     ->get();
+                        // foreach ($checkinWebhooks as $checkinWebhook) {
+                        //     $this->sendNotification("CONFIRM_CHECKIN", $asset, $checkinWebhook, true, true);
+                        // }
 
                         SendConfirmRevokeMail::dispatch($data, $it_ncc_email);
                     } else {
+                        /**
+                         * Xác nhận cấp phát tài sản
+                         * SendConfirmMail.php
+                         */
+
                         $asset->increment('checkout_counter', 1);
                         $data['is_confirm'] = 'đã xác nhận cấp phát';
                         $asset->status_id = config('enum.status_id.ASSIGN');
 
                         $checkoutWebhooks = Webhook::whereJsonContains('type', 'CONFIRM_CHECKOUT')
                             ->get();
-                        foreach ($checkoutWebhooks as $checkoutWebhook) {
-                            $this->sendNotification("CCONFIRM_CHECKOUT", $asset, $checkoutWebhook, false, true);
-                        }
+                        // foreach ($checkoutWebhooks as $checkoutWebhook) {
+                        //     $this->sendNotification("CCONFIRM_CHECKOUT", $asset, $checkoutWebhook, false, true);
+                        // }
 
                         // Send Komu message
-                        $message   = KomuMessages::assetConfirmCheckout($data);
-                        KomuService::sendMessage($user_name, $message);
+                        // $message   = KomuMessages::assetConfirmCheckout($data);
+                        // KomuService::sendMessage($user_name, $message);
                         
                         // Send Mail
                         SendConfirmMail::dispatch($data, $it_ncc_email);
@@ -1295,11 +1300,11 @@ class AssetsController extends Controller
                         $asset->assigned_status = config('enum.assigned_status.ACCEPT');
                         $data['reason'] = 'Lý do: ' . $request->get('reason');
 
-                        $checkinWebhooks = Webhook::whereJsonContains('type', 'REJECT_CHECKIN')
-                            ->get();
-                        foreach ($checkinWebhooks as $checkinWebhook) {
-                            $this->sendNotification("REJECT_CHECKIN", $asset, $checkinWebhook, true, false, true);
-                        }
+                        // $checkinWebhooks = Webhook::whereJsonContains('type', 'REJECT_CHECKIN')
+                        //     ->get();
+                        // foreach ($checkinWebhooks as $checkinWebhook) {
+                        //     $this->sendNotification("REJECT_CHECKIN", $asset, $checkinWebhook, true, false, true);
+                        // }
 
                         SendRejectRevokeMail::dispatch($data, $it_ncc_email);
                     } else {
@@ -1314,15 +1319,15 @@ class AssetsController extends Controller
                         $asset->assignedTo()->disassociate($this);
                         $asset->accepted = null;
 
-                        $checkoutWebhooks = Webhook::whereJsonContains('type', 'REJECT_CHECKOUT')
-                            ->get();
-                        foreach ($checkoutWebhooks as $checkoutWebhook) {
-                            $this->sendNotification("REJECT_CHECKOUT", $asset, $checkoutWebhook, false, false, true);
-                        }
+                        // $checkoutWebhooks = Webhook::whereJsonContains('type', 'REJECT_CHECKOUT')
+                        //     ->get();
+                        // foreach ($checkoutWebhooks as $checkoutWebhook) {
+                        //     $this->sendNotification("REJECT_CHECKOUT", $asset, $checkoutWebhook, false, false, true);
+                        // }
 
                         // Send Komu message
-                        $message   = KomuMessages::assetRejectAllocate($data);
-                        KomuService::sendMessage($user_name, $message);
+                        // $message   = KomuMessages::assetRejectAllocate($data);
+                        // KomuService::sendMessage($user_name, $message);
 
                         // Send Mail
                         SendRejectAllocateMail::dispatch($data, $it_ncc_email);
@@ -1775,11 +1780,11 @@ class AssetsController extends Controller
             $this->saveAssetHistory($asset_id, config('enum.asset_history.CHECK_IN_TYPE'));
             $data = $this->setDataUser($user->id, $asset_name, $countAssets);
 
-            $checkinWebhooks = Webhook::whereJsonContains('type', 'CHECKIN_ASSET')
-                ->get();
-            foreach ($checkinWebhooks as $checkinWebhook) {
-                $this->sendNotification("CHECKIN_ASSET", $asset, $checkinWebhook, true);
-            }
+            // $checkinWebhooks = Webhook::whereJsonContains('type', 'CHECKIN_ASSET')
+            //     ->get();
+            // foreach ($checkinWebhooks as $checkinWebhook) {
+            //     $this->sendNotification("CHECKIN_ASSET", $asset, $checkinWebhook, true);
+            // }
 
             SendCheckinMail::dispatch($data, $data['user_email']);
             return response()->json(Helper::formatStandardApiResponse('success', ['asset' => e($asset->asset_tag)], trans('admin/hardware/message.checkin.success')));
@@ -1788,6 +1793,9 @@ class AssetsController extends Controller
         return response()->json(Helper::formatStandardApiResponse('error', ['asset' => e($asset->asset_tag)], trans('admin/hardware/message.checkin.error')));
     }
 
+    /**
+     * Checkout Assets API
+     */
     public function checkout(AssetCheckoutRequest $request, $asset_id)
     {
         $this->authorize('checkout', Asset::class);
@@ -1885,6 +1893,16 @@ class AssetsController extends Controller
             )
         ) {
             $this->saveAssetHistory($asset_id, config('enum.asset_history.CHECK_OUT_TYPE'));
+            
+            // DEBUG: Log thông tin user trước khi gửi
+            Log::info('=== CHECKOUT DEBUG INFO ===');
+            Log::info('User ID: ' . $request->assigned_user);
+            Log::info('User object: ' . json_encode($user));
+            Log::info('User email: ' . $user_email);
+            Log::info('User name: ' . $user_name);
+            Log::info('User username: ' . $user->username);
+            Log::info('============================');
+            
             $data = [
                 'user_name' => $user_name,
                 'asset_name' => $asset->name,
@@ -1895,11 +1913,14 @@ class AssetsController extends Controller
             ];
             $checkoutWebhooks = Webhook::whereJsonContains('type', 'CHECKOUT_ASSET')
                 ->get();
-            foreach ($checkoutWebhooks as $checkoutWebhook) {
-                $this->sendNotification("CHECKOUT_ASSET", $asset, $checkoutWebhook);
-            }
+            // foreach ($checkoutWebhooks as $checkoutWebhook) {
+            //     $this->sendNotification("CHECKOUT_ASSET", $asset, $checkoutWebhook);
+            // }
 
             SendCheckoutMail::dispatch($data, $user_email);
+
+            Log::debug("SendCheckoutMail job dispatched successfully");
+
             return response()->json(Helper::formatStandardApiResponse('success', ['asset' => e($asset->asset_tag)], trans('admin/hardware/message.checkout.success')));
         }
 

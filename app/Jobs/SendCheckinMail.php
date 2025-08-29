@@ -14,6 +14,7 @@ use App\Mail\CheckinMail;
 use App\Services\KomuService;
 use App\Services\MailService;
 use App\Helpers\KomuMessages;
+use Illuminate\Support\Facades\Log;
 
 class SendCheckinMail implements ShouldQueue
 {
@@ -43,19 +44,22 @@ class SendCheckinMail implements ShouldQueue
         try {
             $user_name = explode('@', $this->user_email)[0];
             $message = KomuMessages::assetCheckin($this->data);
-            
+
+            Log::debug("[SendCheckinMail] Username to send Komu: " . $user_name);
+
             // Send Komu message
             // KomuService::sendMessage($user_name, $message);
             
+            // TODO: Turn off (When fixed all -> turn on)
             // Send mail with logging
-            $ccEmails = [Setting::first()->admin_cc_email];
-            MailService::sendMail(
-                new CheckinMail($this->data), 
-                $this->user_email, 
-                $ccEmails,
-                'checkin',
-                'Asset Checkin Notification'
-            );
+            // $ccEmails = [Setting::first()->admin_cc_email];
+            // MailService::sendMail(
+            //     new CheckinMail($this->data), 
+            //     $this->user_email, 
+            //     $ccEmails,
+            //     'checkin',
+            //     'Asset Checkin Notification'
+            // );
             
         } catch (\Exception $e) {
             \Log::error('SendCheckinMail: ' . $e->getMessage());
