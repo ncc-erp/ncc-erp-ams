@@ -10,6 +10,8 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Mail;
+use App\Helpers\KomuMessages;
+use App\Services\KomuService;
 
 class SendRejectAllocateMail implements ShouldQueue
 {
@@ -37,6 +39,15 @@ class SendRejectAllocateMail implements ShouldQueue
     public function handle()
     {
         try {
+            $user_name = explode('@', $this->it_ncc_email)[0];
+            $message   = KomuMessages::assetRejectAllocate($this->data);
+
+            Log::debug("[SendRejectAllocateMail / handle] Raw email: " . $this->it_ncc_email);
+            Log::debug("[SendRejectAllocateMail / handle] Raw username is extracted from email: " . $user_name);
+
+            // Send Komu message
+            KomuService::sendMessage($user_name, $message);
+
             // Send mail with logging
             MailService::sendMail(
                 new RejectMail($this->data), 

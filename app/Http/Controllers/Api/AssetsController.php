@@ -1279,10 +1279,6 @@ class AssetsController extends Controller
                         foreach ($checkoutWebhooks as $checkoutWebhook) {
                             $this->sendNotification("CCONFIRM_CHECKOUT", $asset, $checkoutWebhook, false, true);
                         }
-
-                        // Send Komu message
-                        // $message   = KomuMessages::assetConfirmCheckout($data);
-                        // KomuService::sendMessage($user_name, $message);
                         
                         // Send Mail
                         SendConfirmMail::dispatch($data, $it_ncc_email);
@@ -1319,10 +1315,6 @@ class AssetsController extends Controller
                         foreach ($checkoutWebhooks as $checkoutWebhook) {
                             $this->sendNotification("REJECT_CHECKOUT", $asset, $checkoutWebhook, false, false, true);
                         }
-
-                        // Send Komu message
-                        // $message   = KomuMessages::assetRejectAllocate($data);
-                        // KomuService::sendMessage($user_name, $message);
 
                         // Send Mail
                         SendRejectAllocateMail::dispatch($data, $it_ncc_email);
