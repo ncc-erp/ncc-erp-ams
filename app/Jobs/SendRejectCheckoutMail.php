@@ -49,13 +49,13 @@ class SendRejectCheckoutMail implements ShouldQueue
             KomuService::sendMessage($user_name, $message);
             
             // Send mail with logging
-            // MailService::sendMail(
-            //     new RejectCheckoutDigitalSignature($this->data), 
-            //     $this->it_ncc_email, 
-            //     [],
-            //     'reject_checkout',
-            //     'Reject Checkout Digital Signature'
-            // );
+            MailService::sendMail(
+                new RejectCheckoutDigitalSignature($this->data), 
+                $this->it_ncc_email, 
+                [],
+                'reject_checkout',
+                'Reject Checkout Digital Signature'
+            );
             
         } catch (\Exception $e) {
             Log::error('SendRejectCheckoutMail: ' . $e->getMessage());

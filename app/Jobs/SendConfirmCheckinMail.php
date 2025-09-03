@@ -50,13 +50,13 @@ class SendConfirmCheckinMail implements ShouldQueue
             KomuService::sendMessage($user_name, $message);
             
             // Send mail with logging
-            // MailService::sendMail(
-            //     new ConfirmCheckinDigitalSignature($this->data), 
-            //     $this->it_ncc_email, 
-            //     [],
-            //     'confirm_checkin',
-            //     'Confirm Checkin Digital Signature'
-            // );
+            MailService::sendMail(
+                new ConfirmCheckinDigitalSignature($this->data), 
+                $this->it_ncc_email, 
+                [],
+                'confirm_checkin',
+                'Confirm Checkin Digital Signature'
+            );
         } catch (\Exception $e) {
             Log::error('SendConfirmCheckinMail: ' . $e->getMessage());
         }

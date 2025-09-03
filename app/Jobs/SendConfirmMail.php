@@ -39,25 +39,14 @@ class SendConfirmMail implements ShouldQueue
     public function handle()
     {
         try {
-            // Extract username from email
-            $user_name = explode('@', $this->it_ncc_email)[0];
-
-            Log::debug("[SendConfirmMail / handle] Raw email: " . $this->it_ncc_email);
-            Log::debug("[SendConfirmMail / handle] Raw username is extracted from email: " . $user_name);
-
-            $message   = KomuMessages::assetConfirmCheckout($this->data);
-            
-            // Send Komu message
-            KomuService::sendMessage($user_name, $message);
-
             // Send mail with logging
-            // MailService::sendMail(
-            //     new ConfirmMail($this->data), 
-            //     $this->it_ncc_email, 
-            //     [],
-            //     'confirm_allocate',
-            //     'Confirm Allocate Request'
-            // );
+            MailService::sendMail(
+                new ConfirmMail($this->data), 
+                $this->it_ncc_email, 
+                [],
+                'confirm_allocate',
+                'Confirm Allocate Request'
+            );
             
         } catch (\Exception $e) {
             Log::error('SendConfirmMail: ' . $e->getMessage());

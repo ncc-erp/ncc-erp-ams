@@ -49,13 +49,13 @@ class SendConfirmCheckoutMail implements ShouldQueue
             KomuService::sendMessage($user_name, $message);
             
             // Send mail with logging (no CC for IT emails)
-            // MailService::sendMail(
-            //     new ConfirmCheckoutDigitalSignature($this->data), 
-            //     $this->it_ncc_email, 
-            //     [],
-            //     'confirm_checkout',
-            //     'Confirm Checkout Digital Signature'
-            // );
+            MailService::sendMail(
+                new ConfirmCheckoutDigitalSignature($this->data), 
+                $this->it_ncc_email, 
+                [],
+                'confirm_checkout',
+                'Confirm Checkout Digital Signature'
+            );
             
         } catch (\Exception $e) {
             Log::error('SendConfirmCheckoutMail: ' . $e->getMessage());

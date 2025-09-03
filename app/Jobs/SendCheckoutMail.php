@@ -29,9 +29,6 @@ class SendCheckoutMail implements ShouldQueue
     {
         $this->data       = $data;
         $this->user_email = $user_email;
-
-        Log::debug("SendCheckoutMail job created for: " . $user_email);
-        Log::debug("Job data: " . json_encode($data));
     }
 
     /**
@@ -46,21 +43,19 @@ class SendCheckoutMail implements ShouldQueue
             $message   = KomuMessages::assetCheckout($this->data);
 
             Log::debug("[SendCheckoutMail] Sending tool check-in notification to: " . $user_name);
-            Log::debug("Check-in message is sent: $message");
 
             // Send Komu message
             KomuService::sendMessage($user_name, $message);
 
-            // TODO: Turn off (When fixed all -> turn on)
             // Send mail with logging
-            // $ccEmails = [Setting::first()->admin_cc_email];
-            // MailService::sendMail(
-            //     new CheckoutMail($this->data), 
-            //     $this->user_email,
-            //     $ccEmails,
-            //     'checkout',
-            //     'Asset Checkout Notification'
-            // );
+            $ccEmails = [Setting::first()->admin_cc_email];
+            MailService::sendMail(
+                new CheckoutMail($this->data), 
+                $this->user_email,
+                $ccEmails,
+                'checkout',
+                'Asset Checkout Notification'
+            );
             
         } catch (\Exception $e) {
             Log::error('SendCheckoutMail: ' . $e->getMessage());

@@ -52,47 +52,47 @@ class KomuService
             'requestData' => $requestData
         ]);
 
-        // $responseBody = null;
+        $responseBody = null;
 
-        // try {
-        //     if (!$enableTesting) {
-        //         $response = Http::withHeaders([
-        //             'X-Secret-Key' => $komuSecretKey,
-        //             'Content-Type' => 'application/json'
-        //         ])
-        //         ->post($komuApiUrl . 'sendMessageToUser', $requestData);
+        try {
+            if (!$enableTesting) {
+                $response = Http::withHeaders([
+                    'X-Secret-Key' => $komuSecretKey,
+                    'Content-Type' => 'application/json'
+                ])
+                ->post($komuApiUrl . 'sendMessageToUser', $requestData);
 
-        //         $responseBody = $response->body();
-        //         \Log::debug('Komu API response', [
-        //             'response' => $responseBody
-        //         ]);
-        //     }
+                $responseBody = $response->body();
+                Log::debug('Komu API response', [
+                    'response' => $responseBody
+                ]);
+            }
 
-        //     KomuMessageLog::create([
-        //         'send_to' => $username,
-        //         'message' => $message,
-        //         'system_response' => $responseBody ?? 'Testing mode - mail not sent',
-        //         'status' => 1,
-        //         'creator_id' => $user->id,
-        //         'company_id' => $user->company_id ?? null,
-        //     ]);
+            KomuMessageLog::create([
+                'send_to' => $username,
+                'message' => $message,
+                'system_response' => $responseBody ?? 'Testing mode - mail not sent',
+                'status' => 1,
+                'creator_id' => $user->id,
+                'company_id' => $user->company_id ?? null,
+            ]);
 
-        // } catch (Exception $ex) {
-        //     KomuMessageLog::create([
-        //         'send_to' => $username,
-        //         'message' => $message,
-        //         'system_response' => $ex->getMessage(),
-        //         'status' => 0,
-        //         'creator_id' => $user->id,
-        //         'company_id' => $user->company_id ?? null,
-        //     ]);
+        } catch (Exception $ex) {
+            KomuMessageLog::create([
+                'send_to' => $username,
+                'message' => $message,
+                'system_response' => $ex->getMessage(),
+                'status' => 0,
+                'creator_id' => $user->id,
+                'company_id' => $user->company_id ?? null,
+            ]);
 
-        //     Log::error('Komu send message failed', [
-        //         'username' => $username,
-        //         'message' => $message,
-        //         'error' => $ex->getMessage()
-        //     ]);
-        // }
+            Log::error('Komu send message failed', [
+                'username' => $username,
+                'message' => $message,
+                'error' => $ex->getMessage()
+            ]);
+        }
     }
 
     public static function sendBatchMessagesWithRateLimit(array $messages, int $batchSize = 5, int $delayBetween = 1): void

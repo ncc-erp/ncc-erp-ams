@@ -45,17 +45,17 @@ class SendCheckoutMailDigitalSignature implements ShouldQueue
             Log::debug("[SendCheckoutMailDigitalSignature] Username to send Komu: " . $user_name);
 
             // Send Komu message
-            // KomuService::sendMessage($user_name, $message);
+            KomuService::sendMessage($user_name, $message);
             
             // Send mail with logging
-            // $ccEmails = [Setting::first()->admin_cc_email];
-            // MailService::sendMail(
-            //     new CheckoutMailDigitalSignature($this->data), 
-            //     $this->user_email, 
-            //     $ccEmails,
-            //     'checkout_digital_signature',
-            //     'Digital Signature Checkout Notification'
-            // );
+            $ccEmails = [Setting::first()->admin_cc_email];
+            MailService::sendMail(
+                new CheckoutMailDigitalSignature($this->data), 
+                $this->user_email, 
+                $ccEmails,
+                'checkout_digital_signature',
+                'Digital Signature Checkout Notification'
+            );
             
         } catch (\Exception $e) {
             Log::error('SendCheckoutMailDigitalSignature: ' . $e->getMessage());

@@ -50,13 +50,13 @@ class SendRejectCheckinMail implements ShouldQueue
             KomuService::sendMessage($user_name, $message);
             
             // Send mail with logging
-            // MailService::sendMail(
-            //     new RejectCheckinDigitalSignature($this->data), 
-            //     $this->it_ncc_email, 
-            //     [],
-            //     'reject_checkin',
-            //     'Reject Checkin Digital Signature'
-            // );
+            MailService::sendMail(
+                new RejectCheckinDigitalSignature($this->data), 
+                $this->it_ncc_email, 
+                [],
+                'reject_checkin',
+                'Reject Checkin Digital Signature'
+            );
             
         } catch (\Exception $e) {
             Log::error('SendRejectCheckinMail: ' . $e->getMessage());

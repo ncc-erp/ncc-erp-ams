@@ -49,13 +49,13 @@ class SendConfirmRevokeMail implements ShouldQueue
             KomuService::sendMessage($user_name, $message);
             
             // Send mail with logging
-            // MailService::sendMail(
-            //     new ConfirmRevokeMail($this->data), 
-            //     $this->it_ncc_email, 
-            //     [],
-            //     'confirm_revoke',
-            //     'Confirm Revoke Request'
-            // );
+            MailService::sendMail(
+                new ConfirmRevokeMail($this->data), 
+                $this->it_ncc_email, 
+                [],
+                'confirm_revoke',
+                'Confirm Revoke Request'
+            );
             
         } catch (\Exception $e) {
             Log::error('SendConfirmRevokeMail: ' . $e->getMessage());

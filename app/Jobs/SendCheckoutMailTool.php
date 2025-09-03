@@ -50,17 +50,17 @@ class SendCheckoutMailTool implements ShouldQueue
             Log::debug("[CheckoutMailTool] Username to send Komu: " . $user_name);
             
             // Send Komu message
-            // KomuService::sendMessage($user_name, $message);
+            KomuService::sendMessage($user_name, $message);
             
             // Send mail with logging
-            // $ccEmails = [Setting::first()->admin_cc_email];
-            // MailService::sendMail(
-            //     new CheckoutMailTool($this->data), 
-            //     $this->user_email, 
-            //     $ccEmails,
-            //     'checkout_tool',
-            //     'Tool Checkout Notification'
-            // );
+            $ccEmails = [Setting::first()->admin_cc_email];
+            MailService::sendMail(
+                new CheckoutMailTool($this->data), 
+                $this->user_email, 
+                $ccEmails,
+                'checkout_tool',
+                'Tool Checkout Notification'
+            );
             
         } catch (\Exception $e) {
             Log::error('SendCheckoutMailTool: ' . $e->getMessage());

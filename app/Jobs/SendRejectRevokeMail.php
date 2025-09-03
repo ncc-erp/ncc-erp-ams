@@ -50,13 +50,13 @@ class SendRejectRevokeMail implements ShouldQueue
             KomuService::sendMessage($user_name, $message);
             
             // Send mail with logging
-            // MailService::sendMail(
-            //     new RejectRevokeMail($this->data), 
-            //     $this->it_ncc_email, 
-            //     [],
-            //     'reject_revoke',
-            //     'Reject Revoke Request'
-            // );
+            MailService::sendMail(
+                new RejectRevokeMail($this->data), 
+                $this->it_ncc_email, 
+                [],
+                'reject_revoke',
+                'Reject Revoke Request'
+            );
             
         } catch (\Exception $e) {
             Log::error('SendRejectRevokeMail: ' . $e->getMessage());

@@ -46,17 +46,17 @@ class SendCheckinMailTool implements ShouldQueue
             // Log::debug("Check-in message is sent: $message");
 
             // Send Komu message
-            // KomuService::sendMessage($user_name, $message);
+            KomuService::sendMessage($user_name, $message);
             
             // Send mail with logging
-            // $ccEmails = [Setting::first()->admin_cc_email];
-            // MailService::sendMail(
-            //     new CheckinMailTool($this->data), 
-            //     $this->user_email, 
-            //     $ccEmails,
-            //     'checkin_tool',
-            //     'Tool Checkin Notification'
-            // );
+            $ccEmails = [Setting::first()->admin_cc_email];
+            MailService::sendMail(
+                new CheckinMailTool($this->data), 
+                $this->user_email, 
+                $ccEmails,
+                'checkin_tool',
+                'Tool Checkin Notification'
+            );
             
         } catch (\Exception $e) {
             \Log::error('SendCheckinMailTool: ' . $e->getMessage());

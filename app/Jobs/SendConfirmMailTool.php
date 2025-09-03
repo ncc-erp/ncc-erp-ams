@@ -41,23 +41,22 @@ class SendConfirmMailTool implements ShouldQueue
         try {
           // Extract username from email
             $user_name = explode('@', $this->it_ncc_email)[0];
+            $message   = KomuMessages::confirmToolCheckout($this->data);
 
             Log::debug("[SendConfirmMailTool / handle] Raw email: " . $this->it_ncc_email);
             Log::debug("[SendConfirmMailTool / handle] Raw username is extracted from email: " . $user_name);
-
-            $message   = KomuMessages::confirmToolCheckout($this->data);
 
             // Send Komu message
             KomuService::sendMessage($user_name, $message);
             
             // Send mail with logging
-            // MailService::sendMail(
-            //     new ConfirmMailTool($this->data), 
-            //     $this->it_ncc_email, 
-            //     [],
-            //     'confirm_tool',
-            //     'Confirm Tool Request'
-            // );
+            MailService::sendMail(
+                new ConfirmMailTool($this->data), 
+                $this->it_ncc_email, 
+                [],
+                'confirm_tool',
+                'Confirm Tool Request'
+            );
             
         } catch (\Exception $e) {
             Log::error('SendConfirmMailTool: ' . $e->getMessage());

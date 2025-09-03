@@ -48,17 +48,17 @@ class SendCheckoutMailSoftware implements ShouldQueue
             Log::debug("[SendCheckoutMailSoftware] Username to send Komu: " . $user_name);
             
             // Send Komu message
-            // KomuService::sendMessage($user_name, $message);
+            KomuService::sendMessage($user_name, $message);
             
             // Send mail with logging
-            // $ccEmails = [Setting::first()->admin_cc_email];
-            // MailService::sendMail(
-            //     new CheckoutMailSoftware($this->data),
-            //     $this->user_email,
-            //     $ccEmails,
-            //     'checkout_software',
-            //     'Software Checkout Notification'
-            // );
+            $ccEmails = [Setting::first()->admin_cc_email];
+            MailService::sendMail(
+                new CheckoutMailSoftware($this->data),
+                $this->user_email,
+                $ccEmails,
+                'checkout_software',
+                'Software Checkout Notification'
+            );
             
         } catch (\Exception $e) {
             Log::error('SendCheckoutMailSoftware: ' . $e->getMessage());

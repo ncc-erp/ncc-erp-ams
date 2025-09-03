@@ -345,11 +345,11 @@ class AccessoriesController extends Controller
                 'note' => $request->get('note'),
             ]);
 
-            // $checkoutWebhooks = Webhook::whereJsonContains('type', 'CHECKOUT_ACCESSORY')
-            //     ->get();
-            // foreach ($checkoutWebhooks as $checkoutWebhook) {
-            //     $this->sendNotification($accessory, $checkoutWebhook);
-            // }
+            $checkoutWebhooks = Webhook::whereJsonContains('type', 'CHECKOUT_ACCESSORY')
+                ->get();
+            foreach ($checkoutWebhooks as $checkoutWebhook) {
+                $this->sendNotification($accessory, $checkoutWebhook);
+            }
 
             $accessory->logCheckout($request->input('note'), $user);
 
@@ -433,11 +433,11 @@ class AccessoriesController extends Controller
             $data['item_tag'] = '';
             $data['note'] = $logaction->note;
 
-            // $checkinWebhooks = Webhook::whereJsonContains('type', 'CHECKOUT_ACCESSORY')
-            //     ->get();
-            // foreach ($checkinWebhooks as $checkinWebhook) {
-            //     $this->sendNotification($accessory, $checkinWebhook, true);
-            // }
+            $checkinWebhooks = Webhook::whereJsonContains('type', 'CHECKOUT_ACCESSORY')
+                ->get();
+            foreach ($checkinWebhooks as $checkinWebhook) {
+                $this->sendNotification($accessory, $checkinWebhook, true);
+            }
             return response()->json(Helper::formatStandardApiResponse('success', ['accessory' => e($accessory->name)], trans('admin/accessories/message.checkin.success')));
         }
 
