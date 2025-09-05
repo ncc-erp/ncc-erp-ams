@@ -6,6 +6,7 @@ use App\Mail\ConfirmMailTool;
 use App\Services\KomuService;
 use App\Services\MailService;
 use Illuminate\Bus\Queueable;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -38,11 +39,15 @@ class SendConfirmMailTool implements ShouldQueue
     public function handle()
     {
         try {
+          // Extract username from email
             $user_name = explode('@', $this->it_ncc_email)[0];
             $message   = KomuMessages::confirmToolCheckout($this->data);
 
+            Log::debug("[SendConfirmMailTool / handle] Raw email: " . $this->it_ncc_email);
+            Log::debug("[SendConfirmMailTool / handle] Raw username is extracted from email: " . $user_name);
+
             // Send Komu message
-            // KomuService::sendMessage($user_name, $message);
+            KomuService::sendMessage($user_name, $message);
             
             // Send mail with logging
             MailService::sendMail(
@@ -54,7 +59,7 @@ class SendConfirmMailTool implements ShouldQueue
             );
             
         } catch (\Exception $e) {
-            \Log::error('SendConfirmMailTool: ' . $e->getMessage());
+            Log::error('SendConfirmMailTool: ' . $e->getMessage());
         }
     }
 }

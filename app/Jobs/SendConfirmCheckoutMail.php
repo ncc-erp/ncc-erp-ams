@@ -5,6 +5,7 @@ use App\Helpers\KomuMessages;
 use App\Mail\ConfirmCheckoutDigitalSignature;
 use App\Services\KomuService;
 use App\Services\MailService;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -41,8 +42,11 @@ class SendConfirmCheckoutMail implements ShouldQueue
             $user_name = explode('@', $this->it_ncc_email)[0];
             $message   = KomuMessages::confirmCheckoutDigitalSignature($this->data);
 
+            Log::debug("[SendConfirmCheckoutMail / handle] Raw email: " . $this->it_ncc_email);
+            Log::debug("[SendConfirmCheckoutMail / handle] Raw username is extracted from email: " . $user_name);
+
             // Send Komu message
-            // KomuService::sendMessage($user_name, $message);
+            KomuService::sendMessage($user_name, $message);
             
             // Send mail with logging (no CC for IT emails)
             MailService::sendMail(
@@ -54,7 +58,7 @@ class SendConfirmCheckoutMail implements ShouldQueue
             );
             
         } catch (\Exception $e) {
-            \Log::error('SendConfirmCheckoutMail: ' . $e->getMessage());
+            Log::error('SendConfirmCheckoutMail: ' . $e->getMessage());
         }
     }
 }

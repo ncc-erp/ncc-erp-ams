@@ -12,7 +12,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Mail;
-
+use Illuminate\Support\Facades\Log;
 class SendCheckoutMail implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -42,21 +42,23 @@ class SendCheckoutMail implements ShouldQueue
             $user_name = explode('@', $this->user_email)[0];
             $message   = KomuMessages::assetCheckout($this->data);
 
+            Log::debug("[SendCheckoutMail] Sending tool check-in notification to: " . $user_name);
+
             // Send Komu message
-            // KomuService::sendMessage($user_name, $message);
-            
+            KomuService::sendMessage($user_name, $message);
+
             // Send mail with logging
             $ccEmails = [Setting::first()->admin_cc_email];
             MailService::sendMail(
                 new CheckoutMail($this->data), 
-                $this->user_email, 
+                $this->user_email,
                 $ccEmails,
                 'checkout',
                 'Asset Checkout Notification'
             );
             
         } catch (\Exception $e) {
-            \Log::error('SendCheckoutMail: ' . $e->getMessage());
+            Log::error('SendCheckoutMail: ' . $e->getMessage());
         }
     }
 }

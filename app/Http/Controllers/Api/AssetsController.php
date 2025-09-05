@@ -49,7 +49,7 @@ use App\Models\Category;
 use App\Models\Webhook;
 use Illuminate\Support\Facades\Http;
 use App\Models\WebhookLog;
-
+use Illuminate\Support\Facades\Log;
 /**
  * This class controls all actions related to assets for
  * the Snipe-IT Asset Management application.
@@ -1279,10 +1279,6 @@ class AssetsController extends Controller
                         foreach ($checkoutWebhooks as $checkoutWebhook) {
                             $this->sendNotification("CCONFIRM_CHECKOUT", $asset, $checkoutWebhook, false, true);
                         }
-
-                        // Send Komu message
-                        $message   = KomuMessages::assetConfirmCheckout($data);
-                        KomuService::sendMessage($user_name, $message);
                         
                         // Send Mail
                         SendConfirmMail::dispatch($data, $it_ncc_email);
@@ -1319,10 +1315,6 @@ class AssetsController extends Controller
                         foreach ($checkoutWebhooks as $checkoutWebhook) {
                             $this->sendNotification("REJECT_CHECKOUT", $asset, $checkoutWebhook, false, false, true);
                         }
-
-                        // Send Komu message
-                        $message   = KomuMessages::assetRejectAllocate($data);
-                        KomuService::sendMessage($user_name, $message);
 
                         // Send Mail
                         SendRejectAllocateMail::dispatch($data, $it_ncc_email);
@@ -1885,6 +1877,7 @@ class AssetsController extends Controller
             )
         ) {
             $this->saveAssetHistory($asset_id, config('enum.asset_history.CHECK_OUT_TYPE'));
+            
             $data = [
                 'user_name' => $user_name,
                 'asset_name' => $asset->name,
@@ -1900,6 +1893,7 @@ class AssetsController extends Controller
             }
 
             SendCheckoutMail::dispatch($data, $user_email);
+
             return response()->json(Helper::formatStandardApiResponse('success', ['asset' => e($asset->asset_tag)], trans('admin/hardware/message.checkout.success')));
         }
 
