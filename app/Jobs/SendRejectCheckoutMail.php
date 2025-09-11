@@ -39,16 +39,29 @@ class SendRejectCheckoutMail implements ShouldQueue
     public function handle()
     {
         try {
-            $user_name = explode('@', $this->it_ncc_email)[0];
-            $message   = KomuMessages::rejectCheckoutDigitalSignature($this->data);
-
-            Log::debug("[SendRejectCheckoutMail / handle] Raw email: " . $this->it_ncc_email);
-            Log::debug("[SendRejectCheckoutMail / handle] Raw username is extracted from email: " . $user_name);
+            // Send mail with logging
+            $this->sendRejectEmail();
 
             // Send Komu message
-            KomuService::sendMessage($user_name, $message);
-            
-            // Send mail with logging
+            $this->sendRejectKomuMessage();
+
+        } catch (\Exception $e) {
+            Log::error("[SendRejectCheckoutMail][Error] Job Failed: ", [
+              'it_ncc_email' => $this->it_ncc_email,
+              'message' => $e->getMessage(),
+              'file' => $e->getFile(),
+              'line' => $e->getLine()
+            ]);
+        }
+    }
+
+    private function sendRejectEmail(): void
+    {
+        try {
+            Log::info("[SendRejectCheckoutMail][Email] Starting email send", [
+                'to' => $this->it_ncc_email
+            ]);
+
             MailService::sendMail(
                 new RejectCheckoutDigitalSignature($this->data), 
                 $this->it_ncc_email, 
@@ -57,8 +70,42 @@ class SendRejectCheckoutMail implements ShouldQueue
                 'Reject Checkout Digital Signature'
             );
             
+            Log::info("[SendRejectCheckoutMail][Email] Email sent successfully", [
+                'to' => $this->it_ncc_email
+            ]);
+
         } catch (\Exception $e) {
-            Log::error('SendRejectCheckoutMail: ' . $e->getMessage());
+            Log::error("[SendRejectCheckoutMail][Email] Email send failed", [
+                'to' => $this->it_ncc_email,
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
+        }
+    }
+
+    private function sendRejectKomuMessage(): void
+    {
+        $user_name = null;
+        try {
+            $user_name = explode('@', $this->it_ncc_email)[0];
+            $message   = KomuMessages::rejectCheckoutDigitalSignature($this->data);
+
+            Log::info("[SendRejectCheckoutMail][Komu] Starting Komu message send", [
+                'username' => $user_name
+            ]);
+            
+            KomuService::sendMessage($user_name, $message);
+            
+            Log::info("[SendRejectCheckoutMail][Komu] Komu message sent successfully", [
+                'username' => $user_name
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error("[SendRejectCheckoutMail][Komu] Komu message send failed", [
+                'username' => $user_name ?? 'unknown',
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
         }
     }
 }

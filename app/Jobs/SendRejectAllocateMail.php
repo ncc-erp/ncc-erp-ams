@@ -39,16 +39,29 @@ class SendRejectAllocateMail implements ShouldQueue
     public function handle()
     {
         try {
-            $user_name = explode('@', $this->it_ncc_email)[0];
-            $message   = KomuMessages::assetRejectAllocate($this->data);
-
-            Log::debug("[SendRejectAllocateMail / handle] Raw email: " . $this->it_ncc_email);
-            Log::debug("[SendRejectAllocateMail / handle] Raw username is extracted from email: " . $user_name);
+            // Send mail with logging
+            $this->sendRejectEmail();
 
             // Send Komu message
-            KomuService::sendMessage($user_name, $message);
+            $this->sendRejectKomuMessage();
 
-            // Send mail with logging
+        } catch (\Exception $e) {
+            Log::error("[SendRejectAllocateMail][Error] Job Failed: ", [
+              'it_ncc_email' => $this->it_ncc_email,
+              'message' => $e->getMessage(),
+              'file' => $e->getFile(),
+              'line' => $e->getLine()
+            ]);
+        }
+    }
+
+    private function sendRejectEmail(): void
+    {
+        try {
+            Log::info("[SendRejectAllocateMail][Email] Starting email send", [
+                'to' => $this->it_ncc_email
+            ]);
+
             MailService::sendMail(
                 new RejectMail($this->data), 
                 $this->it_ncc_email, 
@@ -56,9 +69,43 @@ class SendRejectAllocateMail implements ShouldQueue
                 'reject_allocate',
                 'Reject Allocate Request'
             );
+            
+            Log::info("[SendRejectAllocateMail][Email] Email sent successfully", [
+                'to' => $this->it_ncc_email
+            ]);
 
         } catch (\Exception $e) {
-            Log::error('SendRejectAllocateMail: ' . $e->getMessage());
+            Log::error("[SendRejectAllocateMail][Email] Email send failed", [
+                'to' => $this->it_ncc_email,
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
+        }
+    }
+
+    private function sendRejectKomuMessage(): void
+    {
+        $user_name = null;
+        try {
+            $user_name = explode('@', $this->it_ncc_email)[0];
+            $message   = KomuMessages::assetRejectAllocate($this->data);
+
+            Log::info("[SendRejectAllocateMail][Komu] Starting Komu message send", [
+                'username' => $user_name
+            ]);
+            
+            KomuService::sendMessage($user_name, $message);
+            
+            Log::info("[SendRejectAllocateMail][Komu] Komu message sent successfully", [
+                'username' => $user_name
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error("[SendRejectAllocateMail][Komu] Komu message send failed", [
+                'username' => $user_name ?? 'unknown',
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
         }
     }
 }

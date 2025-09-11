@@ -39,27 +39,76 @@ class SendCheckinMailTool implements ShouldQueue
     public function handle()
     {
         try {
-            $user_name = explode('@', $this->user_email)[0];
-            $message   = KomuMessages::toolCheckin($this->data);
-
-            Log::debug("[SendCheckinMailTool] Sending tool check-in notification to: $user_name");
-            // Log::debug("Check-in message is sent: $message");
+            // Send mail with logging
+            $this->sendCheckinEmail();
 
             // Send Komu message
-            KomuService::sendMessage($user_name, $message);
-            
-            // Send mail with logging
+            $this->sendCheckinKomuMessage();
+
+        } catch (\Exception $e) {
+            Log::error("[SendCheckinMailTool][Error] Job Failed: ", [
+                'user_email' => $this->user_email,
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+        }
+    }
+
+    private function sendCheckinEmail(): void
+    {
+        try {
             $ccEmails = [Setting::first()->admin_cc_email];
+
+            Log::info("[SendCheckinMailTool][Email] Starting email send", [
+                'to' => $this->user_email,
+                'cc' => $ccEmails
+            ]);
+
             MailService::sendMail(
-                new CheckinMailTool($this->data), 
-                $this->user_email, 
+                new CheckinMailTool($this->data),
+                $this->user_email,
                 $ccEmails,
                 'checkin_tool',
                 'Tool Checkin Notification'
             );
-            
+
+            Log::info("[SendCheckinMailTool][Email] Email sent successfully", [
+                'to' => $this->user_email
+            ]);
+
         } catch (\Exception $e) {
-            \Log::error('SendCheckinMailTool: ' . $e->getMessage());
+            Log::error("[SendCheckinMailTool][Email] Email send failed", [
+                'to' => $this->user_email,
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
+        }
+    }
+
+    private function sendCheckinKomuMessage(): void
+    {
+        $user_name = null;
+        try {
+            $user_name = explode('@', $this->user_email)[0];
+            $message = KomuMessages::toolCheckin($this->data);
+
+            Log::info("[SendCheckinMailTool][Komu] Starting Komu message send", [
+                'username' => $user_name
+            ]);
+
+            KomuService::sendMessage($user_name, $message);
+
+            Log::info("[SendCheckinMailTool][Komu] Komu message sent successfully", [
+                'username' => $user_name
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error("[SendCheckinMailTool][Komu] Komu message send failed", [
+                'username' => $user_name ?? 'unknown',
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
         }
     }
 }

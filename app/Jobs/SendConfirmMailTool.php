@@ -39,17 +39,29 @@ class SendConfirmMailTool implements ShouldQueue
     public function handle()
     {
         try {
-          // Extract username from email
-            $user_name = explode('@', $this->it_ncc_email)[0];
-            $message   = KomuMessages::confirmToolCheckout($this->data);
-
-            Log::debug("[SendConfirmMailTool / handle] Raw email: " . $this->it_ncc_email);
-            Log::debug("[SendConfirmMailTool / handle] Raw username is extracted from email: " . $user_name);
+            // Send mail with logging
+            $this->sendConfirmEmail();
 
             // Send Komu message
-            KomuService::sendMessage($user_name, $message);
-            
-            // Send mail with logging
+            $this->sendConfirmKomuMessage();
+
+        } catch (\Exception $e) {
+            Log::error("[SendConfirmMailTool][Error] Job Failed: ", [
+              'it_ncc_email' => $this->it_ncc_email,
+              'message' => $e->getMessage(),
+              'file' => $e->getFile(),
+              'line' => $e->getLine()
+            ]);
+        }
+    }
+
+    private function sendConfirmEmail(): void
+    {
+        try {
+            Log::info("[SendConfirmMailTool][Email] Starting email send", [
+                'to' => $this->it_ncc_email
+            ]);
+
             MailService::sendMail(
                 new ConfirmMailTool($this->data), 
                 $this->it_ncc_email, 
@@ -58,8 +70,42 @@ class SendConfirmMailTool implements ShouldQueue
                 'Confirm Tool Request'
             );
             
+            Log::info("[SendConfirmMailTool][Email] Email sent successfully", [
+                'to' => $this->it_ncc_email
+            ]);
+
         } catch (\Exception $e) {
-            Log::error('SendConfirmMailTool: ' . $e->getMessage());
+            Log::error("[SendConfirmMailTool][Email] Email send failed", [
+                'to' => $this->it_ncc_email,
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
+        }
+    }
+
+    private function sendConfirmKomuMessage(): void
+    {
+        $user_name = null;
+        try {
+            $user_name = explode('@', $this->it_ncc_email)[0];
+            $message   = KomuMessages::confirmToolCheckout($this->data);
+
+            Log::info("[SendConfirmMailTool][Komu] Starting Komu message send", [
+                'username' => $user_name
+            ]);
+            
+            KomuService::sendMessage($user_name, $message);
+            
+            Log::info("[SendConfirmMailTool][Komu] Komu message sent successfully", [
+                'username' => $user_name
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error("[SendConfirmMailTool][Komu] Komu message send failed", [
+                'username' => $user_name ?? 'unknown',
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
         }
     }
 }

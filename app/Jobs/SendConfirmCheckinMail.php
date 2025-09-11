@@ -40,16 +40,29 @@ class SendConfirmCheckinMail implements ShouldQueue
     public function handle()
     {
         try {
-            $user_name = explode('@', $this->it_ncc_email)[0];
-            $message   = KomuMessages::confirmCheckinDigitalSignature($this->data);
-
-            Log::debug("[SendConfirmCheckinMail / handle] Raw email: " . $this->it_ncc_email);
-            Log::debug("[SendConfirmCheckinMail / handle] Raw username is extracted from email: " . $user_name);
+            // Send mail with logging
+            $this->sendConfirmEmail();
 
             // Send Komu message
-            KomuService::sendMessage($user_name, $message);
-            
-            // Send mail with logging
+            $this->sendConfirmKomuMessage();
+
+        } catch (\Exception $e) {
+            Log::error("[SendConfirmCheckinMail][Error] Job Failed: ", [
+              'it_ncc_email' => $this->it_ncc_email,
+              'message' => $e->getMessage(),
+              'file' => $e->getFile(),
+              'line' => $e->getLine()
+            ]);
+        }
+    }
+
+    private function sendConfirmEmail(): void
+    {
+        try {
+            Log::info("[SendConfirmCheckinMail][Email] Starting email send", [
+                'to' => $this->it_ncc_email
+            ]);
+
             MailService::sendMail(
                 new ConfirmCheckinDigitalSignature($this->data), 
                 $this->it_ncc_email, 
@@ -57,8 +70,43 @@ class SendConfirmCheckinMail implements ShouldQueue
                 'confirm_checkin',
                 'Confirm Checkin Digital Signature'
             );
+            
+            Log::info("[SendConfirmCheckinMail][Email] Email sent successfully", [
+                'to' => $this->it_ncc_email
+            ]);
+
         } catch (\Exception $e) {
-            Log::error('SendConfirmCheckinMail: ' . $e->getMessage());
+            Log::error("[SendConfirmCheckinMail][Email] Email send failed", [
+                'to' => $this->it_ncc_email,
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
+        }
+    }
+
+    private function sendConfirmKomuMessage(): void
+    {
+        $user_name = null;
+        try {
+            $user_name = explode('@', $this->it_ncc_email)[0];
+            $message   = KomuMessages::confirmCheckinDigitalSignature($this->data);
+
+            Log::info("[SendConfirmCheckinMail][Komu] Starting Komu message send", [
+                'username' => $user_name
+            ]);
+            
+            KomuService::sendMessage($user_name, $message);
+            
+            Log::info("[SendConfirmCheckinMail][Komu] Komu message sent successfully", [
+                'username' => $user_name
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error("[SendConfirmCheckinMail][Komu] Komu message send failed", [
+                'username' => $user_name ?? 'unknown',
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
         }
     }
 }

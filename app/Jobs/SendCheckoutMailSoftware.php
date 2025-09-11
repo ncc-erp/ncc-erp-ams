@@ -42,16 +42,32 @@ class SendCheckoutMailSoftware implements ShouldQueue
     public function handle()
     {
         try {
-            $user_name = explode('@', $this->user_email)[0];
-            $message = KomuMessages::softwareCheckout($this->data);
-            
-            Log::debug("[SendCheckoutMailSoftware] Username to send Komu: " . $user_name);
-            
-            // Send Komu message
-            KomuService::sendMessage($user_name, $message);
-            
             // Send mail with logging
+            $this->sendCheckoutEmail();
+
+            // Send Komu message
+            $this->sendCheckoutKomuMessage();
+
+        } catch (\Exception $e) {
+            Log::error("[SendCheckoutMailSoftware][Error] Job Failed: ", [
+              'user_email' => $this->user_email,
+              'message' => $e->getMessage(),
+              'file' => $e->getFile(),
+              'line' => $e->getLine()
+            ]);
+        }
+    }
+
+    private function sendCheckoutEmail(): void
+    {
+        try {
             $ccEmails = [Setting::first()->admin_cc_email];
+            
+            Log::info("[SendCheckoutMailSoftware][Email] Starting email send", [
+                'to' => $this->user_email,
+                'cc' => $ccEmails
+            ]);
+
             MailService::sendMail(
                 new CheckoutMailSoftware($this->data),
                 $this->user_email,
@@ -60,8 +76,42 @@ class SendCheckoutMailSoftware implements ShouldQueue
                 'Software Checkout Notification'
             );
             
+            Log::info("[SendCheckoutMailSoftware][Email] Email sent successfully", [
+                'to' => $this->user_email
+            ]);
+
         } catch (\Exception $e) {
-            Log::error('SendCheckoutMailSoftware: ' . $e->getMessage());
+            Log::error("[SendCheckoutMailSoftware][Email] Email send failed", [
+                'to' => $this->user_email,
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
+        }
+    }
+
+    private function sendCheckoutKomuMessage(): void
+    {
+        $user_name = null;
+        try {
+            $user_name = explode('@', $this->user_email)[0];
+            $message = KomuMessages::softwareCheckout($this->data);
+
+            Log::info("[SendCheckoutMailSoftware][Komu] Starting Komu message send", [
+                'username' => $user_name
+            ]);
+            
+            KomuService::sendMessage($user_name, $message);
+            
+            Log::info("[SendCheckoutMailSoftware][Komu] Komu message sent successfully", [
+                'username' => $user_name
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error("[SendCheckoutMailSoftware][Komu] Komu message send failed", [
+                'username' => $user_name ?? 'unknown',
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
         }
     }
 }
