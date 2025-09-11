@@ -19,99 +19,46 @@ use Illuminate\Support\Facades\Log;
 
 class SendCheckoutMailSoftware implements ShouldQueue
 {
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    
     protected $data;
     protected $user_email;
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    /**
-     * Create a new job instance.
-     *
-     * @return void
-     */
     public function __construct($data, $user_email)
     {
         $this->data = $data;
         $this->user_email = $user_email;
     }
 
-    /**
-     * Execute the job.
-     *
-     * @return void
-     */
     public function handle()
     {
-        try {
-            // Send mail with logging
-            $this->sendCheckoutEmail();
+        $context = ['job' => 'SendCheckoutMailSoftware', 'email' => $this->user_email];
+        
+        // Send email
+        $ccEmails = [Setting::first()->admin_cc_email];
+        $mailSuccess = MailService::sendMail(
+            new CheckoutMailSoftware($this->data),
+            $this->user_email,
+            $ccEmails,
+            'checkout_software',
+            'Software Checkout Notification'
+        );
 
-            // Send Komu message
-            $this->sendCheckoutKomuMessage();
-
-        } catch (\Exception $e) {
-            Log::error("[SendCheckoutMailSoftware][Error] Job Failed: ", [
-              'user_email' => $this->user_email,
-              'message' => $e->getMessage(),
-              'file' => $e->getFile(),
-              'line' => $e->getLine()
-            ]);
-        }
-    }
-
-    private function sendCheckoutEmail(): void
-    {
-        try {
-            $ccEmails = [Setting::first()->admin_cc_email];
-            
-            Log::info("[SendCheckoutMailSoftware][Email] Starting email send", [
-                'to' => $this->user_email,
-                'cc' => $ccEmails
-            ]);
-
-            MailService::sendMail(
-                new CheckoutMailSoftware($this->data),
-                $this->user_email,
-                $ccEmails,
-                'checkout_software',
-                'Software Checkout Notification'
-            );
-            
-            Log::info("[SendCheckoutMailSoftware][Email] Email sent successfully", [
-                'to' => $this->user_email
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error("[SendCheckoutMailSoftware][Email] Email send failed", [
-                'to' => $this->user_email,
-                'error' => $e->getMessage()
-            ]);
-            throw $e;
-        }
-    }
-
-    private function sendCheckoutKomuMessage(): void
-    {
-        $user_name = null;
-        try {
-            $user_name = explode('@', $this->user_email)[0];
-            $message = KomuMessages::softwareCheckout($this->data);
-
-            Log::info("[SendCheckoutMailSoftware][Komu] Starting Komu message send", [
-                'username' => $user_name
-            ]);
-            
-            KomuService::sendMessage($user_name, $message);
-            
-            Log::info("[SendCheckoutMailSoftware][Komu] Komu message sent successfully", [
-                'username' => $user_name
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error("[SendCheckoutMailSoftware][Komu] Komu message send failed", [
-                'username' => $user_name ?? 'unknown',
-                'error' => $e->getMessage()
-            ]);
-            throw $e;
+        // Send Komu message
+        $username = explode('@', $this->user_email)[0];
+        $message = KomuMessages::softwareCheckout($this->data);
+        $komuSuccess = KomuService::sendMessage($username, $message);
+        
+        // Final result log
+        if ($mailSuccess && $komuSuccess) {
+            Log::info("[Job] Completed successfully", $context);
+        } elseif (!$mailSuccess && !$komuSuccess) {
+            Log::error("[Job] Both email and komu failed", $context);
+        } else {
+            Log::warning("[Job] Partial success", array_merge($context, [
+                'mail_ok' => $mailSuccess,
+                'komu_ok' => $komuSuccess
+            ]));
         }
     }
 }

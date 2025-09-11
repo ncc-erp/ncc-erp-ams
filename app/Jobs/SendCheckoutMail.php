@@ -13,6 +13,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+
 class SendCheckoutMail implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -27,7 +28,7 @@ class SendCheckoutMail implements ShouldQueue
      */
     public function __construct($data, $user_email)
     {
-        $this->data       = $data;
+        $this->data = $data;
         $this->user_email = $user_email;
     }
 
@@ -38,76 +39,33 @@ class SendCheckoutMail implements ShouldQueue
      */
     public function handle()
     {
-        try {
-            // Send mail with logging
-            $this->sendCheckoutEmail();
+        $context = ['job' => 'SendCheckoutMail', 'email' => $this->user_email];
+        
+        // Send email
+        $ccEmails = [Setting::first()->admin_cc_email];
+        $mailSuccess = MailService::sendMail(
+            new CheckoutMail($this->data),
+            $this->user_email,
+            $ccEmails,
+            'checkout',
+            'Asset Checkout Notification'
+        );
 
-            // Send Komu message
-            $this->sendCheckoutKomuMessage();
-
-        } catch (\Exception $e) {
-            Log::error("[SendCheckoutMail][Error] Job Failed: ", [
-                'user_email' => $this->user_email,
-                'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine()
-            ]);
-        }
-    }
-
-    private function sendCheckoutEmail(): void
-    {
-        try {
-            $ccEmails = [Setting::first()->admin_cc_email];
-
-            Log::info("[SendCheckoutMail][Email] Starting email send", [
-                'to' => $this->user_email,
-                'cc' => $ccEmails
-            ]);
-
-            MailService::sendMail(
-                new CheckoutMail($this->data),
-                $this->user_email,
-                $ccEmails,
-                'checkout',
-                'Asset Checkout Notification'
-            );
-
-            Log::info("[SendCheckoutMail][Email] Email sent successfully", [
-                'to' => $this->user_email
-            ]);
-        } catch (\Exception $e) {
-            Log::error("[SendCheckoutMail][Email] Email send failed", [
-                'to' => $this->user_email,
-                'error' => $e->getMessage()
-            ]);
-            throw $e;
-        }
-    }
-
-    private function sendCheckoutKomuMessage(): void
-    {
-        $user_name = null;
-        try {
-            $user_name = explode('@', $this->user_email)[0];
-            $message = KomuMessages::assetCheckout($this->data);
-
-            Log::info("[SendCheckoutMail][Komu] Starting Komu message send", [
-                'username' => $user_name
-            ]);
-
-            KomuService::sendMessage($user_name, $message);
-
-            Log::info("[SendCheckoutMail][Komu] Komu message sent successfully", [
-                'username' => $user_name
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error("[SendCheckoutMail][Komu] Komu message send failed", [
-                'username' => $user_name ?? 'unknown',
-                'error' => $e->getMessage()
-            ]);
-            throw $e;
+        // Send Komu message
+        $username = explode('@', $this->user_email)[0];
+        $message = KomuMessages::assetCheckout($this->data);
+        $komuSuccess = KomuService::sendMessage($username, $message);
+        
+        // Final result log
+        if ($mailSuccess && $komuSuccess) {
+            Log::info("[Job] Completed successfully", $context);
+        } elseif (!$mailSuccess && !$komuSuccess) {
+            Log::error("[Job] Both email and komu failed", $context);
+        } else {
+            Log::warning("[Job] Partial success", array_merge($context, [
+                'mail_ok' => $mailSuccess,
+                'komu_ok' => $komuSuccess
+            ]));
         }
     }
 }

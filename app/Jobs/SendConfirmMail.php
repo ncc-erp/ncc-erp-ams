@@ -27,7 +27,7 @@ class SendConfirmMail implements ShouldQueue
      */
     public function __construct($data, $it_ncc_email)
     {
-        $this->data         = $data;
+        $this->data = $data;
         $this->it_ncc_email = $it_ncc_email;
     }
 
@@ -38,74 +38,32 @@ class SendConfirmMail implements ShouldQueue
      */
     public function handle()
     {
-        try {
-            // Send mail with logging
-            $this->sendConfirmEmail();
+        $context = ['job' => 'SendConfirmMail', 'email' => $this->it_ncc_email];
+        
+        // Send email
+        $mailSuccess = MailService::sendMail(
+            new ConfirmMail($this->data),
+            $this->it_ncc_email,
+            [],
+            'confirm_allocate',
+            'Confirm Allocate Request'
+        );
 
-            // Send Komu message
-            $this->sendConfirmKomuMessage();
-
-        } catch (\Exception $e) {
-            Log::error("[SendConfirmMail][Error] Job Failed: ", [
-              'it_ncc_email' => $this->it_ncc_email,
-              'message' => $e->getMessage(),
-              'file' => $e->getFile(),
-              'line' => $e->getLine()
-            ]);
-        }
-    }
-
-    private function sendConfirmEmail(): void
-    {
-        try {
-            Log::info("[SendConfirmMail][Email] Starting email send", [
-                'to' => $this->it_ncc_email
-            ]);
-
-            MailService::sendMail(
-                new ConfirmMail($this->data), 
-                $this->it_ncc_email, 
-                [],
-                'confirm_allocate',
-                'Confirm Allocate Request'
-            );
-            
-            Log::info("[SendConfirmMail][Email] Email sent successfully", [
-                'to' => $this->it_ncc_email
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error("[SendConfirmMail][Email] Email send failed", [
-                'to' => $this->it_ncc_email,
-                'error' => $e->getMessage()
-            ]);
-            throw $e;
-        }
-    }
-
-    private function sendConfirmKomuMessage(): void
-    {
-        $user_name = null;
-        try {
-            $user_name = explode('@', $this->it_ncc_email)[0];
-            $message   = KomuMessages::assetConfirmCheckout($this->data);
-
-            Log::info("[SendConfirmMail][Komu] Starting Komu message send", [
-                'username' => $user_name
-            ]);
-            
-            KomuService::sendMessage($user_name, $message);
-            
-            Log::info("[SendConfirmMail][Komu] Komu message sent successfully", [
-                'username' => $user_name
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error("[SendConfirmMail][Komu] Komu message send failed", [
-                'username' => $user_name ?? 'unknown',
-                'error' => $e->getMessage()
-            ]);
-            throw $e;
+        // Send Komu message
+        $username = explode('@', $this->it_ncc_email)[0];
+        $message = KomuMessages::assetConfirmCheckout($this->data);
+        $komuSuccess = KomuService::sendMessage($username, $message);
+        
+        // Final result log
+        if ($mailSuccess && $komuSuccess) {
+            Log::info("[Job] Completed successfully", $context);
+        } elseif (!$mailSuccess && !$komuSuccess) {
+            Log::error("[Job] Both email and komu failed", $context);
+        } else {
+            Log::warning("[Job] Partial success", array_merge($context, [
+                'mail_ok' => $mailSuccess,
+                'komu_ok' => $komuSuccess
+            ]));
         }
     }
 }
