@@ -1,17 +1,18 @@
 <?php
+
 namespace App\Jobs;
 
-use App\Mail\ConfirmMailTool;
-use App\Services\MailService;
 use Illuminate\Bus\Queueable;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
+use App\Services\KomuService;
+use App\Helpers\KomuMessages;
 
-class SendConfirmMailTool implements ShouldQueue
+class SendConfirmCheckoutKomu implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -36,21 +37,16 @@ class SendConfirmMailTool implements ShouldQueue
      */
     public function handle()
     {
-        $context = ['job' => 'SendConfirmMailTool', 'email' => $this->it_ncc_email];
+        $context = ['job' => 'SendConfirmCheckoutKomu', 'email' => $this->it_ncc_email];
         
-        // Send email
-        $mailSuccess = MailService::sendMail(
-            new ConfirmMailTool($this->data),
-            $this->it_ncc_email,
-            [],
-            'confirm_tool',
-            'Confirm Tool Request'
-        );
-
-        if ($mailSuccess) {
-            Log::info("[Job] Email sent successfully", $context);
+        $username = explode('@', $this->it_ncc_email)[0];
+        $message = KomuMessages::confirmCheckoutDigitalSignature($this->data);
+        $komuSuccess = KomuService::sendMessage($username, $message);
+        
+        if ($komuSuccess) {
+            Log::info("[Job] Komu sent successfully", $context);
         } else {
-            Log::error("[Job] Email failed", $context);
+            Log::error("[Job] Komu failed", $context);
         }
     }
 }

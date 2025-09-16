@@ -7,7 +7,9 @@ use App\Helpers\DateFormatter;
 use App\Helpers\Helper;
 use App\Http\Traits\ConvertsBase64ToFiles;
 use App\Jobs\SendConfirmMail;
+use App\Jobs\SendConfirmKomu;
 use App\Jobs\SendConfirmRevokeMail;
+use App\Jobs\SendConfirmRevokeKomu;
 use App\Models\Asset;
 use App\Models\AssetModel;
 use App\Models\Company;
@@ -355,6 +357,7 @@ class AssetRepository
                     $asset->assignedTo()->disassociate($this);
                     $asset->accepted = null;
                     SendConfirmRevokeMail::dispatch($dataPrepare, $it_ncc_email);
+                    SendConfirmRevokeKomu::dispatch($dataPrepare, $it_ncc_email);
                 }
 
                 //confirm checkout
@@ -363,6 +366,7 @@ class AssetRepository
                     $dataPrepare['is_confirm'] = 'đã xác nhận cấp phát';
                     $asset->status_id = config('enum.status_id.ASSIGN');
                     SendConfirmMail::dispatch($dataPrepare, $it_ncc_email);
+                    SendConfirmKomu::dispatch($dataPrepare, $it_ncc_email);
                 }
             }
         }

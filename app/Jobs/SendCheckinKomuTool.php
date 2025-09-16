@@ -8,18 +8,14 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Mail;
-use App\Models\Setting;
-use App\Mail\CheckinMail;
-use App\Services\KomuService;
-use App\Services\MailService;
-use App\Helpers\KomuMessages;
 use Illuminate\Support\Facades\Log;
+use App\Services\KomuService;
+use App\Helpers\KomuMessages;
 
-class SendCheckinMail implements ShouldQueue
+class SendCheckinKomuTool implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-    
+
     protected $data;
     protected $user_email;
 
@@ -41,22 +37,17 @@ class SendCheckinMail implements ShouldQueue
      */
     public function handle()
     {
-        $context = ['job' => 'SendCheckinMail', 'email' => $this->user_email];
-        
-        // Send email
-        $ccEmails = [Setting::first()->admin_cc_email];
-        $mailSuccess = MailService::sendMail(
-            new CheckinMail($this->data),
-            $this->user_email,
-            $ccEmails,
-            'checkin',
-            'Asset Checkin Notification'
-        );
+        $context = ['job' => 'SendCheckinKomuTool', 'email' => $this->user_email];
 
-        if ($mailSuccess) {
-            Log::info("[Job] Email sent successfully", $context);
+        // Send Komu message
+        $username = explode('@', $this->user_email)[0];
+        $message = KomuMessages::toolCheckin($this->data);
+        $komuSuccess = KomuService::sendMessage($username, $message);
+
+        if ($komuSuccess) {
+            Log::info("[Job] Komu sent successfully", $context);
         } else {
-            Log::error("[Job] Email failed", $context);
+            Log::error("[Job] Komu failed", $context);
         }
     }
 }

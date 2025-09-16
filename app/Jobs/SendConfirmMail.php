@@ -1,8 +1,6 @@
 <?php
 namespace App\Jobs;
 
-use App\Helpers\KomuMessages;
-use App\Services\KomuService;
 use App\Mail\ConfirmMail;
 use App\Services\MailService;
 use Illuminate\Bus\Queueable;
@@ -49,21 +47,10 @@ class SendConfirmMail implements ShouldQueue
             'Confirm Allocate Request'
         );
 
-        // Send Komu message
-        $username = explode('@', $this->it_ncc_email)[0];
-        $message = KomuMessages::assetConfirmCheckout($this->data);
-        $komuSuccess = KomuService::sendMessage($username, $message);
-        
-        // Final result log
-        if ($mailSuccess && $komuSuccess) {
-            Log::info("[Job] Completed successfully", $context);
-        } elseif (!$mailSuccess && !$komuSuccess) {
-            Log::error("[Job] Both email and komu failed", $context);
+        if ($mailSuccess) {
+            Log::info("[Job] Email sent successfully", $context);
         } else {
-            Log::warning("[Job] Partial success", array_merge($context, [
-                'mail_ok' => $mailSuccess,
-                'komu_ok' => $komuSuccess
-            ]));
+            Log::error("[Job] Email failed", $context);
         }
     }
 }

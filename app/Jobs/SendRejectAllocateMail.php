@@ -10,8 +10,6 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Mail;
-use App\Helpers\KomuMessages;
-use App\Services\KomuService;
 
 class SendRejectAllocateMail implements ShouldQueue
 {
@@ -49,21 +47,10 @@ class SendRejectAllocateMail implements ShouldQueue
             'Reject Allocate Request'
         );
 
-        // Send Komu message
-        $username = explode('@', $this->it_ncc_email)[0];
-        $message = KomuMessages::assetRejectAllocate($this->data);
-        $komuSuccess = KomuService::sendMessage($username, $message);
-        
-        // Final result log
-        if ($mailSuccess && $komuSuccess) {
-            Log::info("[Job] Completed successfully", $context);
-        } elseif (!$mailSuccess && !$komuSuccess) {
-            Log::error("[Job] Both email and komu failed", $context);
+        if ($mailSuccess) {
+            Log::info("[Job] Email sent successfully", $context);
         } else {
-            Log::warning("[Job] Partial success", array_merge($context, [
-                'mail_ok' => $mailSuccess,
-                'komu_ok' => $komuSuccess
-            ]));
+            Log::error("[Job] Email failed", $context);
         }
     }
 }

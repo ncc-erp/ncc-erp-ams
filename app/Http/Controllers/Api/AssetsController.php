@@ -37,14 +37,20 @@ use TCPDF;
 use Validator;
 use Route;
 use App\Jobs\SendCheckoutMail;
+use App\Jobs\SendCheckoutKomu;
 use App\Jobs\SendConfirmMail;
+use App\Jobs\SendConfirmKomu;
 use App\Jobs\SendConfirmRevokeMail;
+use App\Jobs\SendConfirmRevokeKomu;
 use App\Models\AssetHistory;
 use App\Models\AssetHistoryDetail;
 use App\Jobs\SendCheckinMail;
+use App\Jobs\SendCheckinKomu;
 use App\Http\Requests\AssetCheckinRequest;
 use App\Jobs\SendRejectAllocateMail;
+use App\Jobs\SendRejectAllocateKomu;
 use App\Jobs\SendRejectRevokeMail;
+use App\Jobs\SendRejectRevokeKomu;
 use App\Models\Category;
 use App\Models\Webhook;
 use Illuminate\Support\Facades\Http;
@@ -1269,6 +1275,7 @@ class AssetsController extends Controller
                         }
 
                         SendConfirmRevokeMail::dispatch($data, $it_ncc_email);
+                        SendConfirmRevokeKomu::dispatch($data, $it_ncc_email);
                     } else {
                         $asset->increment('checkout_counter', 1);
                         $data['is_confirm'] = 'đã xác nhận cấp phát';
@@ -1282,6 +1289,7 @@ class AssetsController extends Controller
                         
                         // Send Mail
                         SendConfirmMail::dispatch($data, $it_ncc_email);
+                        SendConfirmKomu::dispatch($data, $it_ncc_email);
                     }
                 } elseif ($asset->assigned_status === config('enum.assigned_status.REJECT')) {
                     $data['asset_count'] = 1;
@@ -1298,6 +1306,7 @@ class AssetsController extends Controller
                         }
 
                         SendRejectRevokeMail::dispatch($data, $it_ncc_email);
+                        SendRejectRevokeKomu::dispatch($data, $it_ncc_email);
                     } else {
                         $data['is_confirm'] = 'đã từ chối nhận';
                         $asset->status_id = config('enum.status_id.READY_TO_DEPLOY');
@@ -1318,6 +1327,7 @@ class AssetsController extends Controller
 
                         // Send Mail
                         SendRejectAllocateMail::dispatch($data, $it_ncc_email);
+                        SendRejectAllocateKomu::dispatch($data, $it_ncc_email);
                     }
                 }
             }
@@ -1423,6 +1433,7 @@ class AssetsController extends Controller
 
                             if ($id === end($asset_ids)) {
                                 SendConfirmRevokeMail::dispatch($data, $it_ncc_email);
+                                SendConfirmRevokeKomu::dispatch($data, $it_ncc_email);
                             }
                         } else {
                             $data['is_confirm'] = 'đã xác nhận cấp phát';
@@ -1430,6 +1441,7 @@ class AssetsController extends Controller
 
                             if ($id === end($asset_ids)) {
                                 SendConfirmMail::dispatch($data, $it_ncc_email);
+                                SendConfirmKomu::dispatch($data, $it_ncc_email);
                             }
                         }
                     } elseif ($asset->assigned_status === config('enum.assigned_status.REJECT')) {
@@ -1442,6 +1454,7 @@ class AssetsController extends Controller
 
                             if ($id === end($asset_ids)) {
                                 SendRejectRevokeMail::dispatch($data, $it_ncc_email);
+                                SendRejectRevokeKomu::dispatch($data, $it_ncc_email);
                             }
                         } else {
                             $data['is_confirm'] = 'đã từ chối nhận';
@@ -1457,6 +1470,7 @@ class AssetsController extends Controller
 
                             if ($id === end($asset_ids)) {
                                 SendRejectAllocateMail::dispatch($data, $it_ncc_email);
+                                SendRejectAllocateKomu::dispatch($data, $it_ncc_email);
                             }
                         }
                     }
@@ -1670,6 +1684,7 @@ class AssetsController extends Controller
             'link' => config('client.my_assets.link'),
         ];
         SendCheckoutMail::dispatch($data, $user_email);
+        SendCheckoutKomu::dispatch($data, $user_email);
         return response()->json(Helper::formatStandardApiResponse('success', ['asset' => e($asset_tag)], trans('admin/hardware/message.checkout.success')));
     }
 
@@ -1734,6 +1749,7 @@ class AssetsController extends Controller
             }
             $data = $this->setDataUser($userId, $asset_name, $countAssets);
             SendCheckinMail::dispatch($data, $data['user_email']);
+            SendCheckinKomu::dispatch($data, $data['user_email']);
         }
         return response()->json(Helper::formatStandardApiResponse('success', ['asset' => e($asset->asset_tag)], trans('admin/hardware/message.checkin.success')));
     }
@@ -1774,6 +1790,7 @@ class AssetsController extends Controller
             }
 
             SendCheckinMail::dispatch($data, $data['user_email']);
+            SendCheckinKomu::dispatch($data, $data['user_email']);
             return response()->json(Helper::formatStandardApiResponse('success', ['asset' => e($asset->asset_tag)], trans('admin/hardware/message.checkin.success')));
         }
 
@@ -1893,6 +1910,7 @@ class AssetsController extends Controller
             }
 
             SendCheckoutMail::dispatch($data, $user_email);
+            SendCheckoutKomu::dispatch($data, $user_email);
 
             return response()->json(Helper::formatStandardApiResponse('success', ['asset' => e($asset->asset_tag)], trans('admin/hardware/message.checkout.success')));
         }

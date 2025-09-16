@@ -49,21 +49,10 @@ class SendConfirmCheckoutMail implements ShouldQueue
             'Confirm Checkout Digital Signature'
         );
 
-        // Send Komu message
-        $username = explode('@', $this->it_ncc_email)[0];
-        $message = KomuMessages::confirmCheckoutDigitalSignature($this->data);
-        $komuSuccess = KomuService::sendMessage($username, $message);
-        
-        // Final result log
-        if ($mailSuccess && $komuSuccess) {
-            Log::info("[Job] Completed successfully", $context);
-        } elseif (!$mailSuccess && !$komuSuccess) {
-            Log::error("[Job] Both email and komu failed", $context);
+        if ($mailSuccess) {
+            Log::info("[Job] Email sent successfully", $context);
         } else {
-            Log::warning("[Job] Partial success", array_merge($context, [
-                'mail_ok' => $mailSuccess,
-                'komu_ok' => $komuSuccess
-            ]));
+            Log::error("[Job] Email failed", $context);
         }
     }
 }

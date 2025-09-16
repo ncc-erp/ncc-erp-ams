@@ -1,21 +1,19 @@
 <?php
 namespace App\Jobs;
 
-use App\Mail\CheckoutMail;
-use App\Models\Setting;
-use App\Services\MailService;
+use App\Helpers\KomuMessages;
+use App\Services\KomuService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 
-class SendCheckoutMail implements ShouldQueue
+class SendCheckinKomuDigitalSignature implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-
+    
     protected $data;
     protected $user_email;
 
@@ -37,22 +35,17 @@ class SendCheckoutMail implements ShouldQueue
      */
     public function handle()
     {
-        $context = ['job' => 'SendCheckoutMail', 'email' => $this->user_email];
+        $context = ['job' => 'SendCheckinKomuDigitalSignature', 'email' => $this->user_email];
         
-        // Send email
-        $ccEmails = [Setting::first()->admin_cc_email];
-        $mailSuccess = MailService::sendMail(
-            new CheckoutMail($this->data),
-            $this->user_email,
-            $ccEmails,
-            'checkout',
-            'Asset Checkout Notification'
-        );
-
-        if ($mailSuccess) {
-            Log::info("[Job] Email sent successfully", $context);
+        // Send Komu message
+        $username = explode('@', $this->user_email)[0];
+        $message = KomuMessages::toolCheckinDigitalSignature($this->data);
+        $komuSuccess = KomuService::sendMessage($username, $message);
+        
+        if ($komuSuccess) {
+            Log::info("[Job] Komu sent successfully", $context);
         } else {
-            Log::error("[Job] Email failed", $context);
+            Log::error("[Job] Komu failed", $context);
         }
     }
 }

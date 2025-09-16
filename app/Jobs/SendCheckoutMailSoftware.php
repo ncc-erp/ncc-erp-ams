@@ -10,11 +10,8 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Mail;
 use App\Models\Setting;
-use App\Mail\CheckoutMail;
 use App\Mail\CheckoutMailSoftware;
-use App\Services\KomuService;
 use App\Services\MailService;
-use App\Helpers\KomuMessages;
 use Illuminate\Support\Facades\Log;
 
 class SendCheckoutMailSoftware implements ShouldQueue
@@ -44,21 +41,10 @@ class SendCheckoutMailSoftware implements ShouldQueue
             'Software Checkout Notification'
         );
 
-        // Send Komu message
-        $username = explode('@', $this->user_email)[0];
-        $message = KomuMessages::softwareCheckout($this->data);
-        $komuSuccess = KomuService::sendMessage($username, $message);
-        
-        // Final result log
-        if ($mailSuccess && $komuSuccess) {
-            Log::info("[Job] Completed successfully", $context);
-        } elseif (!$mailSuccess && !$komuSuccess) {
-            Log::error("[Job] Both email and komu failed", $context);
+        if ($mailSuccess) {
+            Log::info("[Job] Email sent successfully", $context);
         } else {
-            Log::warning("[Job] Partial success", array_merge($context, [
-                'mail_ok' => $mailSuccess,
-                'komu_ok' => $komuSuccess
-            ]));
+            Log::error("[Job] Email failed", $context);
         }
     }
 }
