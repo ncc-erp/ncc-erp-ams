@@ -30,9 +30,9 @@ class KomuService
         // Fix: Replace $username="it" with ADMIN_USERNAME from env or default to "thiet.nguyenba"
         $resolvedUsername = self::resolveUsername($username);
         $user = Auth::user();
-        $komuApiUrl = env('KOMU_API_URL');
-        $komuSecretKey = env('KOMU_SECRET_KEY');
-        $enableTesting = env('ENABLE_TESTING');
+        $komuApiUrl = config('komu.komu_api_url');
+        $komuSecretKey = config('komu.komu_secret_key');
+        $enableTesting = config('komu.enable_testing');
 
         $requestData = [
             'username' => $resolvedUsername,
