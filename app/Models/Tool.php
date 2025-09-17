@@ -282,21 +282,22 @@ class Tool extends Model
             $leftJoin->on('tools_category.id', '=', 'tools.category_id');
         });
 
-        $query = $query->leftJoin('suppliers', function ($leftJoin) {
-            $leftJoin->on('suppliers.id', '=', 'tools.supplier_id');
+        $query = $query->leftJoin('suppliers as search_suppliers', function ($leftJoin) {
+            $leftJoin->on('search_suppliers.id', '=', 'tools.supplier_id');
         });
 
-        $query = $query->leftJoin('users', function ($leftJoin) {
-            $leftJoin->on('users.id', '=', 'tools.assigned_to');
+        $query = $query->leftJoin('users as search_users', function ($leftJoin) {
+            $leftJoin->on('search_users.id', '=', 'tools.assigned_to');
         });
 
         foreach ($terms as $term) {
-            $query = $query
-                ->where('tools_category.name', 'LIKE', '%' . $term . '%')
-                ->orwhere('suppliers.name', 'LIKE', '%' . $term . '%')
-                ->orwhere('users.username', 'LIKE', '%' . $term . '%')
-                ->orwhere('tools.name', 'LIKE', '%' . $term . '%')
-                ->orwhere('tools.id', '=', $term);
+            $query = $query->where(function($q) use ($term) {
+                $q->where('tools_category.name', 'LIKE', '%' . $term . '%')
+                  ->orWhere('search_suppliers.name', 'LIKE', '%' . $term . '%')
+                  ->orWhere('search_users.username', 'LIKE', '%' . $term . '%')
+                  ->orWhere('tools.name', 'LIKE', '%' . $term . '%')
+                  ->orWhere('tools.id', '=', $term);
+            });
         }
         return $query;
     }

@@ -65,8 +65,8 @@ class ToolRepository
     {
         $user_id = Auth::id();
 
-        $tools = Tool::select('tools.*')->join('users', 'tools.assigned_to', 'users.id')
-            ->where('users.id', $user_id)
+        $tools = Tool::select('tools.*')->join('users AS assigned_users', 'tools.assigned_to', '=', 'assigned_users.id')
+            ->where('assigned_users.id', '=', $user_id)
             ->with('user', 'supplier', 'assignedUser', 'location', 'category', 'tokenStatus');
         $tools = $this->filters($tools, $request);
 
@@ -79,7 +79,7 @@ class ToolRepository
             'manufacturer_id',
             'notes',
             'purchase_date',
-            'assinged_to',
+            'assigned_to',
             'checkout_at',
             'version'
         ];
