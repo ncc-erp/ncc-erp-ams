@@ -26,7 +26,7 @@ return [
                 'api' => env('L5_SWAGGER_ROUTE_API', 'api/documentation'),
 
                 /*
-                 * Route to serve the geneated Swagger JSON file
+                 * Route to serve the generated Swagger JSON file
                  */
                 'docs' => env('L5_SWAGGER_ROUTE_DOCS', 'docs'),
 
@@ -77,6 +77,9 @@ return [
                  */
                 'annotations' => [
                     base_path('app/Http/Controllers/Api'),
+                    base_path('app/Http/Controllers/Assets'),
+                    base_path('app/Http/Transformers'),
+                    base_path('app/Http/Requests'),
                     base_path('app/Swagger'),
                 ],
             ],
@@ -207,6 +210,12 @@ return [
                 /*
                  * Examples of Security schemes
                  */
+                'bearerAuth' => [
+                    'type' => 'http',
+                    'scheme' => 'bearer',
+                    'bearerFormat' => 'JWT',
+                    'description' => 'Enter Bearer token in format (Bearer <token>)'
+                ],
                 /*
                 'api_key_security_example' => [ // Unique name of security
                     'type' => 'apiKey', // The type of the security scheme. Valid values are "basic", "apiKey" or "oauth2".
@@ -255,6 +264,7 @@ return [
                  * Examples of Securities
                  */
                 [
+                    'bearerAuth' => [],
                     /*
                     'oauth2_security_example' => [
                         'read',

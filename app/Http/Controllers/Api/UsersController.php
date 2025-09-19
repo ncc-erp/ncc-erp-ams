@@ -12,26 +12,116 @@ use App\Http\Transformers\DatatablesTransformer;
 use App\Http\Transformers\LicensesTransformer;
 use App\Http\Transformers\SelectlistTransformer;
 use App\Http\Transformers\UsersTransformer;
+use App\Models\Accessory;
 use App\Models\Asset;
 use App\Models\Company;
+use App\Models\Consumable;
 use App\Models\License;
 use App\Models\User;
-use Auth;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use GuzzleHttp\Client;
 
 class UsersController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * @OA\Schema(
+     *     schema="GoogleProfileRequest",
+     *     type="object",
+     *     required={"profile_obj", "client_secret"},
+     *     @OA\Property(
+     *         property="profile_obj",
+     *         type="object",
+     *         required={"email", "googleId"},
+     *         @OA\Property(property="email", type="string", format="email", example="user@ncc.asia"),
+     *         @OA\Property(property="googleId", type="string", example="1234567890123456789"),
+     *         @OA\Property(property="name", type="string", example="John Doe"),
+     *         @OA\Property(property="givenName", type="string", example="John"),
+     *         @OA\Property(property="familyName", type="string", example="Doe"),
+     *         @OA\Property(property="imageUrl", type="string", format="uri", example="https://lh3.googleusercontent.com/...")
+     *     ),
+     *     @OA\Property(
+     *         property="client_secret",
+     *         type="object",
+     *         required={"access_token"},
+     *         @OA\Property(property="access_token", type="string", example="ya29.a0ARrdaM..."),
+     *         @OA\Property(property="token_type", type="string", example="Bearer"),
+     *         @OA\Property(property="expires_in", type="integer", example=3599),
+     *         @OA\Property(property="scope", type="string", example="openid email profile")
+     *     )
+     * )
      *
-     * @author [A. Gianotto] [<snipe@snipe.net>]
-     * @since [v4.0]
+     * @OA\Schema(
+     *     schema="BasicLoginRequest",
+     *     type="object",
+     *     required={"username", "password"},
+     *     @OA\Property(property="username", type="string", example="nccadmin"),
+     *     @OA\Property(property="password", type="string", format="password", example="123456a@")
+     * )
      *
-     * @return \Illuminate\Http\Response
+     * @OA\Schema(
+     *     schema="AuthenticationResponse",
+     *     type="object",
+     *     @OA\Property(property="token_type", type="string", example="Bearer"),
+     *     @OA\Property(property="access_token", type="string", example="eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9...")
+     * )
+     *
+     * @OA\Schema(
+     *     schema="UnauthorizedResponse",
+     *     type="object",
+     *     @OA\Property(property="message", type="string", example="Unauthorized")
+     * )
+     *
+     * @OA\Schema(
+     *     schema="ValidationErrorResponse",
+     *     type="object",
+     *     @OA\Property(property="message", type="string", example="The given data was invalid."),
+     *     @OA\Property(
+     *         property="errors",
+     *         type="object",
+     *         @OA\Property(
+     *             property="field_name",
+     *             type="array",
+     *             @OA\Items(type="string", example="The field name is required.")
+     *         )
+     *     )
+     * )
+     *
+     * @OA\Schema(
+     *     schema="ErrorResponse",
+     *     type="object", 
+     *     @OA\Property(property="message", type="string", example="User not found")
+     * )
+     *
+     * @OA\Schema(
+     *     schema="MezonOAuthRequest", 
+     *     type="object",
+     *     required={"code", "state"},
+     *     @OA\Property(property="code", type="string", example="auth_code_from_mezon"),
+     *     @OA\Property(property="state", type="string", example="base64_encoded_state_string")
+     * )
+     *
+     * @OA\Schema(
+     *     schema="MezonHashLoginRequest",
+     *     type="object", 
+     *     required={"dataCheck", "hashKey", "userEmail", "userName"},
+     *     @OA\Property(property="dataCheck", type="string", example="user_data_string"),
+     *     @OA\Property(property="hashKey", type="string", example="hmac_hash_verification_code"),
+     *     @OA\Property(property="userEmail", type="string", format="email", example="john.doe@ncc.asia"),
+     *     @OA\Property(property="userName", type="string", example="john.doe")
+     * )
+     *
+     * @OA\Schema(
+     *     schema="MezonAuthUrlResponse",
+     *     type="object",
+     *     @OA\Property(property="url", type="string", format="uri", example="https://chat.ncc.asia/oauth2/auth?client_id=ncc_ams&redirect_uri=https://ams.ncc.asia/auth/callback&response_type=code&scope=openid%20offline&state=abcdef123456")
+     * )
      */
+    
     public function index(Request $request)
     {
         $this->authorize('view', User::class);
@@ -227,6 +317,59 @@ class UsersController extends Controller
      * @since [v4.0.16]
      * @see \App\Http\Transformers\SelectlistTransformer
      */
+    /**
+     * @OA\Get(
+     *     path="/api/v1/users/selectlist",
+     *     tags={"Users"},
+     *     summary="Get a list of users for dropdown menus",
+     *     description="Returns a paginated list of users formatted for select2 dropdown menus",
+     *     operationId="getUsersSelectList",
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="search",
+     *         in="query",
+     *         description="Search term for filtering results",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="limit",
+     *         in="query",
+     *         description="Number of results to return per page",
+     *         required=false,
+     *         @OA\Schema(type="integer", default=50)
+     *     ),
+     *     @OA\Parameter(
+     *         name="page",
+     *         in="query",
+     *         description="Page number for pagination",
+     *         required=false,
+     *         @OA\Schema(type="integer", default=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="total", type="integer", example=50),
+     *             @OA\Property(
+     *                 property="rows", 
+     *                 type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="text", type="string", example="Admin User")
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *         )
+     *     )
+     * )
+     */
     public function selectlist(Request $request)
     {
         $users = User::select(
@@ -289,6 +432,64 @@ class UsersController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
+    /**
+     * @OA\Post(
+     *     path="/api/v1/users",
+     *     tags={"Users"},
+     *     summary="Create a new user",
+     *     description="Creates a new user and returns their details",
+     *     operationId="createUser",
+     *     security={{"bearerAuth": {}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"first_name", "last_name", "username", "password", "password_confirmation"},
+     *             @OA\Property(property="first_name", type="string", example="John"),
+     *             @OA\Property(property="last_name", type="string", example="Doe"),
+     *             @OA\Property(property="username", type="string", example="johndoe"),
+     *             @OA\Property(property="password", type="string", format="password", example="password123"),
+     *             @OA\Property(property="password_confirmation", type="string", format="password", example="password123"),
+     *             @OA\Property(property="email", type="string", format="email", example="john.doe@example.com"),
+     *             @OA\Property(property="employee_num", type="string", example="EMP002"),
+     *             @OA\Property(property="company_id", type="integer", example=1),
+     *             @OA\Property(property="location_id", type="integer", example=1),
+     *             @OA\Property(property="department_id", type="integer", example=1),
+     *             @OA\Property(property="manager_id", type="integer", example=1),
+     *             @OA\Property(property="notes", type="string", example="Some notes about this user"),
+     *             @OA\Property(property="activated", type="boolean", example=true),
+     *             @OA\Property(property="permissions", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="User created successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="success"),
+     *             @OA\Property(property="messages", type="string", example="User created successfully"),
+     *             @OA\Property(property="payload", type="object", ref="#/components/schemas/User")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="The given data was invalid."),
+     *             @OA\Property(
+     *                 property="errors",
+     *                 type="object",
+     *                 @OA\Property(property="username", type="array", @OA\Items(type="string", example="The username field is required."))
+     *             )
+     *         )
+     *     )
+     * )
+     */
     public function store(SaveUserRequest $request)
     {
         $this->authorize('create', User::class);
@@ -344,6 +545,60 @@ class UsersController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
+    /**
+     * @OA\Get(
+     *     path="/api/v1/users/{id}",
+     *     tags={"Users"},
+     *     summary="Get specific user details",
+     *     description="Returns detailed information about a specific user",
+     *     operationId="getUser",
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="ID of user to get",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="id", type="integer", example=1),
+     *             @OA\Property(property="username", type="string", example="admin"),
+     *             @OA\Property(property="first_name", type="string", example="Admin"),
+     *             @OA\Property(property="last_name", type="string", example="User"),
+     *             @OA\Property(property="email", type="string", format="email", example="admin@example.com"),
+     *             @OA\Property(property="employee_num", type="string", example="EMP001"),
+     *             @OA\Property(property="company", type="object"),
+     *             @OA\Property(property="department", type="object"),
+     *             @OA\Property(property="location", type="object"),
+     *             @OA\Property(property="manager", type="object"),
+     *             @OA\Property(property="groups", type="array", @OA\Items(type="object")),
+     *             @OA\Property(property="assets_count", type="integer", example=5),
+     *             @OA\Property(property="licenses_count", type="integer", example=3),
+     *             @OA\Property(property="accessories_count", type="integer", example=2),
+     *             @OA\Property(property="consumables_count", type="integer", example=4),
+     *             @OA\Property(property="created_at", type="string", format="date-time"),
+     *             @OA\Property(property="updated_at", type="string", format="date-time")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="User not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="User not found")
+     *         )
+     *     )
+     * )
+     */
     public function show($id)
     {
         $this->authorize('view', User::class);
@@ -361,6 +616,76 @@ class UsersController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @param  int  $id
      * @return \Illuminate\Http\Response
+     * 
+     * @OA\Put(
+     *     path="/api/v1/users/{id}",
+     *     tags={"Users"},
+     *     summary="Update a user",
+     *     description="Updates an existing user and returns their updated details",
+     *     operationId="updateUser",
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="ID of user to update",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="first_name", type="string", example="John"),
+     *             @OA\Property(property="last_name", type="string", example="Doe"),
+     *             @OA\Property(property="username", type="string", example="johndoe"),
+     *             @OA\Property(property="password", type="string", format="password", example="newpassword123"),
+     *             @OA\Property(property="password_confirmation", type="string", format="password", example="newpassword123"),
+     *             @OA\Property(property="email", type="string", format="email", example="john.doe@example.com"),
+     *             @OA\Property(property="employee_num", type="string", example="EMP002"),
+     *             @OA\Property(property="company_id", type="integer", example=1),
+     *             @OA\Property(property="location_id", type="integer", example=1),
+     *             @OA\Property(property="department_id", type="integer", example=1),
+     *             @OA\Property(property="manager_id", type="integer", example=1),
+     *             @OA\Property(property="notes", type="string", example="Some notes about this user"),
+     *             @OA\Property(property="activated", type="boolean", example=true),
+     *             @OA\Property(property="permissions", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="User updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="success"),
+     *             @OA\Property(property="messages", type="string", example="User updated successfully"),
+     *             @OA\Property(property="payload", type="object", ref="#/components/schemas/User")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="User not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="User not found")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="The given data was invalid."),
+     *             @OA\Property(
+     *                 property="errors",
+     *                 type="object",
+     *                 @OA\Property(property="username", type="array", @OA\Items(type="string", example="The username has already been taken."))
+     *             )
+     *         )
+     *     )
+     * )
      */
     public function update(SaveUserRequest $request, $id)
     {
@@ -462,6 +787,52 @@ class UsersController extends Controller
      * @since [v4.0]
      * @param  int  $id
      * @return \Illuminate\Http\Response
+     * 
+     * @OA\Delete(
+     *     path="/api/v1/users/{id}",
+     *     tags={"Users"},
+     *     summary="Delete a user",
+     *     description="Deletes a specific user",
+     *     operationId="deleteUser",
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="ID of user to delete",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="User deleted successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="success"),
+     *             @OA\Property(property="messages", type="string", example="User deleted successfully")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="User cannot be deleted",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="error"),
+     *             @OA\Property(property="messages", type="string", example="This user still has assets assigned to them")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="User not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="User not found")
+     *         )
+     *     )
+     * )
      */
     public function destroy($id)
     {
@@ -509,6 +880,62 @@ class UsersController extends Controller
      * @since [v3.0]
      * @param $userId
      * @return string JSON
+     * 
+     * @OA\Get(
+     *     path="/api/v1/users/{user}/assets",
+     *     tags={"Users"},
+     *     summary="List assets assigned to a user",
+     *     description="Returns a list of assets assigned to a specified user",
+     *     operationId="getUserAssets",
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="user",
+     *         in="path",
+     *         description="ID of user to get assets for",
+     *         required=true,
+     *         @OA\Schema(type="integer", format="int64")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="total", type="integer", example=2),
+     *             @OA\Property(
+     *                 property="rows",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="MacBook Pro 15"),
+     *                     @OA\Property(property="asset_tag", type="string", example="NCC001"),
+     *                     @OA\Property(property="serial", type="string", example="C02XXXXHTD57"),
+     *                     @OA\Property(property="model", type="object"),
+     *                     @OA\Property(property="status_label", type="object"),
+     *                     @OA\Property(property="assigned_to", type="object"),
+     *                     @OA\Property(property="created_at", type="object"),
+     *                     @OA\Property(property="updated_at", type="object")
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Forbidden",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="This action is unauthorized.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="User not found"
+     *     )
+     * )
      */
     public function assets(Request $request, $id)
     {
@@ -527,6 +954,60 @@ class UsersController extends Controller
      * @since [v3.0]
      * @param $userId
      * @return string JSON
+     * 
+     * @OA\Get(
+     *     path="/api/v1/users/{user}/consumables",
+     *     tags={"Users"},
+     *     summary="List consumables assigned to a user",
+     *     description="Returns a list of consumables assigned to a specified user",
+     *     operationId="getUserConsumables",
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="user",
+     *         in="path",
+     *         description="ID of user to get consumables for",
+     *         required=true,
+     *         @OA\Schema(type="integer", format="int64")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="total", type="integer", example=1),
+     *             @OA\Property(
+     *                 property="rows",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="Printer Paper"),
+     *                     @OA\Property(property="category", type="object"),
+     *                     @OA\Property(property="location", type="object"),
+     *                     @OA\Property(property="qty", type="integer", example=50),
+     *                     @OA\Property(property="created_at", type="object"),
+     *                     @OA\Property(property="updated_at", type="object")
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Forbidden",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="This action is unauthorized.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="User not found"
+     *     )
+     * )
      */
     public function consumables(Request $request, $id)
     {
@@ -545,6 +1026,62 @@ class UsersController extends Controller
      * @param $userId
      * @return string JSON
      */
+    /**
+     * @OA\Get(
+     *     path="/api/v1/users/{user}/accessories",
+     *     tags={"Users"},
+     *     summary="List accessories assigned to a user",
+     *     description="Returns a list of accessories assigned to a specified user",
+     *     operationId="getUserAccessories",
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="user",
+     *         in="path",
+     *         description="ID of user to get accessories for",
+     *         required=true,
+     *         @OA\Schema(type="integer", format="int64")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="total", type="integer", example=1),
+     *             @OA\Property(
+     *                 property="rows",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="Logitech MX Keys"),
+     *                     @OA\Property(property="category", type="object"),
+     *                     @OA\Property(property="manufacturer", type="object"),
+     *                     @OA\Property(property="company", type="object"),
+     *                     @OA\Property(property="model_number", type="string", example="MX-123"),
+     *                     @OA\Property(property="created_at", type="object"),
+     *                     @OA\Property(property="updated_at", type="object")
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Forbidden",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="This action is unauthorized.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="User not found"
+     *     )
+     * )
+     */
     public function accessories($id)
     {
         $this->authorize('view', User::class);
@@ -562,6 +1099,61 @@ class UsersController extends Controller
      * @since [v5.0]
      * @param $userId
      * @return string JSON
+     * 
+     * @OA\Get(
+     *     path="/api/v1/users/{user}/licenses",
+     *     tags={"Users"},
+     *     summary="List licenses assigned to a user",
+     *     description="Returns a list of licenses assigned to a specified user",
+     *     operationId="getUserLicenses",
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="user",
+     *         in="path",
+     *         description="ID of user to get licenses for",
+     *         required=true,
+     *         @OA\Schema(type="integer", format="int64")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="total", type="integer", example=1),
+     *             @OA\Property(
+     *                 property="rows",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="Adobe Creative Cloud"),
+     *                     @OA\Property(property="product_key", type="string", example="XXXX-XXXX-XXXX-XXXX"),
+     *                     @OA\Property(property="expiration_date", type="object"),
+     *                     @OA\Property(property="license_email", type="string", example="user@ncc.asia"),
+     *                     @OA\Property(property="license_name", type="string", example="NCC User"),
+     *                     @OA\Property(property="created_at", type="object"),
+     *                     @OA\Property(property="updated_at", type="object")
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Forbidden",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="This action is unauthorized.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="User not found"
+     *     )
+     * )
      */
     public function licenses($id)
     {
@@ -580,6 +1172,59 @@ class UsersController extends Controller
      * @since [v3.0]
      * @param $userId
      * @return string JSON
+     * 
+     * @OA\Post(
+     *     path="/api/v1/users/two_factor_reset",
+     *     tags={"Users"},
+     *     summary="Reset a user's two-factor authentication",
+     *     description="Resets a user's two-factor authentication enrollment status and secret",
+     *     operationId="postTwoFactorReset",
+     *     security={{"bearerAuth": {}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"id"},
+     *             @OA\Property(
+     *                 property="id",
+     *                 type="integer",
+     *                 description="ID of the user to reset 2FA for",
+     *                 example=1
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Two-factor authentication successfully reset",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Two-factor authentication has been reset for this user.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Forbidden",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="This action is unauthorized.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Server error",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="message",
+     *                 type="string",
+     *                 example="There was an error resetting two-factor authentication."
+     *             )
+     *         )
+     *     )
+     * )
      */
     public function postTwoFactorReset(Request $request)
     {
@@ -598,8 +1243,6 @@ class UsersController extends Controller
             }
         }
         return response()->json(['message' => 'No ID provided'], 500);
-
-
     }
 
     /**
@@ -609,6 +1252,36 @@ class UsersController extends Controller
      * @since [v4.4.2]
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
+     * 
+     * @OA\Get(
+     *     path="/api/v1/users/me",
+     *     tags={"Users"},
+     *     summary="Get current authenticated user information",
+     *     description="Returns detailed information about the currently authenticated user",
+     *     operationId="getCurrentUser",
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="id", type="integer", example=1),
+     *             @OA\Property(property="username", type="string", example="admin"),
+     *             @OA\Property(property="first_name", type="string", example="Admin"),
+     *             @OA\Property(property="last_name", type="string", example="User"),
+     *             @OA\Property(property="email", type="string", format="email", example="admin@example.com"),
+     *             @OA\Property(property="avatar", type="string", example="https://example.com/avatars/admin.jpg"),
+     *             @OA\Property(property="permissions", type="object"),
+     *             @OA\Property(property="role", type="string", example="admin")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized - User not authenticated",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *         )
+     *     )
+     * )
      */
     public function getCurrentUserInfo(Request $request)
     {
@@ -628,6 +1301,54 @@ class UsersController extends Controller
      * @param int $userId
      * @since [v6.0.0]
      * @return JsonResponse
+     * 
+     * @OA\Post(
+     *     path="/api/v1/users/{user_id}/restore",
+     *     tags={"Users"},
+     *     summary="Restore a deleted user",
+     *     description="Restores a previously soft-deleted user",
+     *     operationId="restoreUser",
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="user_id",
+     *         in="path",
+     *         description="ID of user to restore",
+     *         required=true,
+     *         @OA\Schema(type="integer", format="int64")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="User restored successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="success"),
+     *             @OA\Property(property="payload", type="null"),
+     *             @OA\Property(property="messages", type="string", example="User was successfully restored."),
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Forbidden",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="This action is unauthorized.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="error"),
+     *             @OA\Property(property="messages", type="string", example="User does not exist."),
+     *             @OA\Property(property="payload", type="null")
+     *         )
+     *     )
+     * )
      */
     public function restore($userId = null)
     {
@@ -645,6 +1366,13 @@ class UsersController extends Controller
         return response()->json(Helper::formatStandardApiResponse('error', null, trans('admin/users/message.user_not_found', compact('id'))), 200);
     }
 
+    /**
+     * Authenticate user with Google OAuth (Deprecated)
+     *
+     * @author [A. Gianotto] [<snipe@snipe.net>]
+     * @since [v4.0]
+     * @deprecated This method is deprecated and no longer used. Use loginGoogleV2 instead.
+     */
     public function loginGoogle(){
         if(Helper::checkValidEmail(request()->profile_obj['email'])){
             $user = [
@@ -675,6 +1403,48 @@ class UsersController extends Controller
         }
     }
 
+    /**
+     * Authenticate user with Google OAuth (Version 2)
+     *
+     * @author [A. Gianotto] [<snipe@snipe.net>]
+     * @since [v4.0]
+     */
+    /**
+     * @OA\Post(
+     *     path="/api/v1/auth/google",
+     *     tags={"Authentication"},
+     *     summary="Authenticate with Google OAuth (Enhanced)",
+     *     description="Enhanced Google authentication with improved user matching and validation. Finds existing users by username extracted from email.",
+     *     operationId="loginWithGoogleV2",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         description="Google profile information",
+     *         @OA\JsonContent(ref="#/components/schemas/GoogleProfileRequest")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful authentication",
+     *         @OA\JsonContent(ref="#/components/schemas/AuthenticationResponse")
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Bad request - User not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="User not found")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized - Invalid email domain",
+     *         @OA\JsonContent(ref="#/components/schemas/UnauthorizedResponse")
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *         @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse")
+     *     )
+     * )
+     */
     public function loginGoogleV2(){
         $username = explode('@', request()->profile_obj['email'])[0];//todo check email
         $found = User::where('username', $username)->first();
@@ -717,7 +1487,46 @@ class UsersController extends Controller
         }
     }
 
-
+    /**
+     * Authenticate user with username and password
+     *
+     * @author [A. Gianotto] [<snipe@snipe.net>]
+     * @since [v4.0]
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    /**
+     * @OA\Post(
+     *     path="/api/v1/auth/login",
+     *     tags={"Authentication"},
+     *     summary="Authenticate with username and password",
+     *     description="Authenticates a user using traditional username/password credentials.",
+     *     operationId="basicLogin",
+     *     security={},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         description="Login credentials",
+     *         @OA\JsonContent(ref="#/components/schemas/BasicLoginRequest")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful authentication",
+     *         @OA\JsonContent(ref="#/components/schemas/AuthenticationResponse")
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Invalid credentials",
+     *         @OA\JsonContent(
+     *            @OA\Property(property="message", type="string", example="Login information is incorrect.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *         @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse")
+     *     )
+     * )
+     */
     public function login(Request $request)
     {
         $request->validate([
@@ -747,6 +1556,36 @@ class UsersController extends Controller
             "access_token" => $token,
         ]);
     }
+
+    /**
+     * Get Mezon OAuth2 authentication URL
+     *
+     * @author [A. Gianotto] [<snipe@snipe.net>]
+     * @since [v4.0]
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    /**
+     * @OA\Post(
+     *     path="/api/v1/auth/mezon-auth-url",
+     *     tags={"Authentication"},
+     *     summary="Get Mezon OAuth2 authentication URL",
+     *     description="Returns the URL to begin OAuth2 authentication with Mezon platform. The URL includes client_id, redirect_uri, response_type, scope, and state parameters.",
+     *     operationId="getMezonAuthUrl",
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successfully generated authentication URL",
+     *         @OA\JsonContent(ref="#/components/schemas/MezonAuthUrlResponse")
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Server configuration error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Missing Mezon configuration")
+     *         )
+     *     )
+     * )
+     */
     public function mezonAuthUrl(Request $request)
     {
         $clientId = env('MEZON_CLIENT_ID');
@@ -762,6 +1601,56 @@ class UsersController extends Controller
 
     }
 
+    /**
+     * Complete Mezon OAuth2 authentication flow
+     *
+     * @author [A. Gianotto] [<snipe@snipe.net>]
+     * @since [v4.0]
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    /**
+     * @OA\Post(
+     *     path="/api/v1/auth/mezon-login",
+     *     tags={"Authentication"},
+     *     summary="Complete Mezon OAuth2 authentication",
+     *     description="Process the authorization code returned from Mezon OAuth2 and authenticate the user. Supports both existing users with mezon_id and new user creation for valid email domains.",
+     *     operationId="mezonLogin",
+     *     security={},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         description="OAuth2 authentication data from Mezon callback",
+     *         @OA\JsonContent(ref="#/components/schemas/MezonOAuthRequest")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful authentication",
+     *         @OA\JsonContent(ref="#/components/schemas/AuthenticationResponse")
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Authentication failed",
+     *         @OA\JsonContent(
+     *             oneOf={
+     *                 @OA\Schema(
+     *                     @OA\Property(property="message", type="string", example="Not ncc.asia email or not found mezon id")
+     *                 ),
+     *                 @OA\Schema(
+     *                     @OA\Property(property="message", type="string", example="Unauthorized")
+     *                 ),
+     *                 @OA\Schema(
+     *                     @OA\Property(property="message", type="string", example="Authentication failed with Mezon")
+     *                 )
+     *             }
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *         @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse")
+     *     )
+     * )
+     */
     public function mezonLogin(Request $request)
     {
         
@@ -907,6 +1796,77 @@ class UsersController extends Controller
         return base64_encode(random_bytes(32));
     }
 
+    /**
+     * Authenticate user with Mezon using hash verification
+     *
+     * @author [A. Gianotto] [<snipe@snipe.net>]
+     * @since [v4.0]
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    /**
+     * @OA\Post(
+     *     path="/api/v1/auth/mezon-login-by-hash",
+     *     tags={"Authentication"},
+     *     summary="Authenticate with Mezon using hash verification",
+     *     description="Authenticate a user through Mezon using hash-based verification. Validates the hash using HMAC-SHA256 with the configured app token and creates or updates user accounts as needed.",
+     *     operationId="mezonLoginByHash",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         description="Mezon hash authentication data",
+     *         @OA\JsonContent(ref="#/components/schemas/MezonHashLoginRequest")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful authentication",
+     *         @OA\JsonContent(ref="#/components/schemas/AuthenticationResponse")
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Bad request - Various authentication failures",
+     *         @OA\JsonContent(
+     *             oneOf={
+     *                 @OA\Schema(
+     *                     @OA\Property(property="status", type="string", example="error"),
+     *                     @OA\Property(property="messages", type="string", example="Invalid email address"),
+     *                     @OA\Property(property="payload", type="null")
+     *                 ),
+     *                 @OA\Schema(
+     *                     @OA\Property(property="status", type="string", example="error"),
+     *                     @OA\Property(property="messages", type="string", example="Authentication failed - Invalid hash key"),
+     *                     @OA\Property(property="payload", type="null")
+     *                 ),
+     *                 @OA\Schema(
+     *                     @OA\Property(property="status", type="string", example="error"),
+     *                     @OA\Property(property="messages", type="string", example="The user is disabled"),
+     *                     @OA\Property(property="payload", type="null")
+     *                 )
+     *             }
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Authentication error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Hash verification failed")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *         @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse")
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Server configuration error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="error"),
+     *             @OA\Property(property="messages", type="string", example="Server configuration error: App token not set"),
+     *             @OA\Property(property="payload", type="null")
+     *         )
+     *     )
+     * )
+     */
     public function mezonLoginByHash(Request $request)
     {
         $request->validate([
@@ -1000,16 +1960,59 @@ class UsersController extends Controller
         }
     }
 
+    /**
+     * @OA\Get(
+     *     path="/api/v1/users/list-user-type",
+     *     tags={"Users"},
+     *     summary="Get list of all user types",
+     *     description="Returns a list of all distinct user types in the system",
+     *     operationId="getListUserType",
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(ref="#/components/schemas/DatatablesResponse")
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *         )
+     *     )
+     * )
+     */
     public function getListUserType()
     {
         $list = User::select('users.user_type as name')->distinct()->get();
         return (new DatatablesTransformer)->transformDatatables($list);
     }
 
+    /**
+     * @OA\Get(
+     *     path="/api/v1/users/list-user-position",
+     *     tags={"Users"},
+     *     summary="Get list of all job positions",
+     *     description="Returns a list of all distinct job position codes in the system",
+     *     operationId="getListJobPosition",
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(ref="#/components/schemas/DatatablesResponse")
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthorized",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *         )
+     *     )
+     * )
+     */
     public function getListJobPosition()
     {
         $list = User::select('users.job_position_code as name')->distinct()->get();
         return (new DatatablesTransformer)->transformDatatables($list);
     }
-
 }
