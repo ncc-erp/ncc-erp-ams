@@ -1409,42 +1409,6 @@ class UsersController extends Controller
      * @author [A. Gianotto] [<snipe@snipe.net>]
      * @since [v4.0]
      */
-    /**
-     * @OA\Post(
-     *     path="/api/v1/auth/google",
-     *     tags={"Authentication"},
-     *     summary="Authenticate with Google OAuth (Enhanced)",
-     *     description="Enhanced Google authentication with improved user matching and validation. Finds existing users by username extracted from email.",
-     *     operationId="loginWithGoogleV2",
-     *     @OA\RequestBody(
-     *         required=true,
-     *         description="Google profile information",
-     *         @OA\JsonContent(ref="#/components/schemas/GoogleProfileRequest")
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Successful authentication",
-     *         @OA\JsonContent(ref="#/components/schemas/AuthenticationResponse")
-     *     ),
-     *     @OA\Response(
-     *         response=400,
-     *         description="Bad request - User not found",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="User not found")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="Unauthorized - Invalid email domain",
-     *         @OA\JsonContent(ref="#/components/schemas/UnauthorizedResponse")
-     *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Validation error",
-     *         @OA\JsonContent(ref="#/components/schemas/ValidationErrorResponse")
-     *     )
-     * )
-     */
     public function loginGoogleV2(){
         $username = explode('@', request()->profile_obj['email'])[0];//todo check email
         $found = User::where('username', $username)->first();
@@ -1572,6 +1536,7 @@ class UsersController extends Controller
      *     summary="Get Mezon OAuth2 authentication URL",
      *     description="Returns the URL to begin OAuth2 authentication with Mezon platform. The URL includes client_id, redirect_uri, response_type, scope, and state parameters.",
      *     operationId="getMezonAuthUrl",
+     *     security={},
      *     @OA\Response(
      *         response=200,
      *         description="Successfully generated authentication URL",

@@ -48,6 +48,50 @@ class AssetCheckinController extends Controller
      * @return Redirect
      * @throws \Illuminate\Auth\Access\AuthorizationException
      * @since [v1.0]
+     * 
+     * @OA\Post(
+     *     path="/api/v1/hardware/{asset_id}/checkin",
+     *     tags={"Assets"},
+     *     summary="Check-in tài sản vào kho",
+     *     description="Trả tài sản về kho từ người dùng, tài sản khác hoặc địa điểm",
+     *     operationId="checkinAsset",
+     *     @OA\Parameter(
+     *         name="asset_id",
+     *         in="path",
+     *         required=true,
+     *         description="ID của tài sản cần check-in",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="backto",
+     *         in="query",
+     *         required=false,
+     *         description="Quay lại trang 'user' hoặc mặc định",
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         description="Thông tin check-in tài sản",
+     *         @OA\JsonContent(ref="#/components/schemas/AssetCheckinRequest")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="success"),
+     *             @OA\Property(property="messages", type="string", example="Tài sản đã được check-in thành công")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Tài sản không tồn tại"
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Không có quyền check-in tài sản này"
+     *     ),
+     *     security={{"bearerAuth": {}}}
+     * )
      */
     public function store(AssetCheckinRequest $request, $assetId = null, $backto = null)
     {

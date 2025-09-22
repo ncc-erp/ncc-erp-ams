@@ -125,7 +125,7 @@ class UsersTransformer
      * @OA\Schema(
      *     schema="UsersResponse",
      *     type="object", 
-     *     @OA\Property(property="total", type="integer", example=150),
+     *     @OA\Property(property="total", type="integer", example=100),
      *     @OA\Property(
      *         property="rows",
      *         type="array",
