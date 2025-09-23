@@ -221,6 +221,11 @@ class SyncListUserFromHRMController extends Controller
         
         // Create new location when not exists
         $newLocation = $this->createNewLocation($branchCode);
+        
+        if (!$newLocation || !$newLocation->id) {
+            throw new Exception("Failed to create location for branch code: $branchCode");
+        }
+        
         $locations->push($newLocation);
         
         return $newLocation->id;
