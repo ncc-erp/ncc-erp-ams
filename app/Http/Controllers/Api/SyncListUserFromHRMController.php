@@ -33,10 +33,16 @@ class SyncListUserFromHRMController extends Controller
             $hrmUsers = $this->fetchUsersFromHRM();
             $locations = $this->getLocationsCollection();
             $syncStats = $this->initializeSyncStats();
+            $createdEmails = [];
+            $updatedEmails = [];
+            $skipEmails = [];
 
             foreach ($hrmUsers as $hrmUser) {
-                $this->processUser($hrmUser, $locations, $syncStats);
+                $this->processUser($hrmUser, $locations, $syncStats, $createdEmails, $updatedEmails, $skipEmails);
             }
+            \Log::info('HRM sync created_emails', ['created_emails' => $createdEmails]);
+            \Log::info('HRM sync updated_emails', ['updated_emails' => $updatedEmails]);
+            \Log::info('HRM sync skip_emails', ['skip_emails' => $skipEmails]);
 
             return $this->successResponse($syncStats);
 
@@ -91,20 +97,34 @@ class SyncListUserFromHRMController extends Controller
     }
 
     //  Process a single user from HRM
-    private function processUser(array $hrmUser, Collection &$locations, array &$syncStats): void
+    private function processUser(array $hrmUser, Collection &$locations, array &$syncStats, array &$createdEmails, array &$updatedEmails, array &$skipEmails): void
     {
         $syncStats['processed']++;
 
-        if (!$this->isValidHrmUser($hrmUser) || !$this->isValidEmail($hrmUser['email'])) {
+        if (!$this->isValidHrmUser($hrmUser) || !$this->isValidEmail($hrmUser['email'] ?? '')) {
             $syncStats['skipped']++;
+            // collect skip email (if available) for final log
+            if (!empty($hrmUser['email'])) {
+                $skipEmails[] = $hrmUser['email'];
+            }
             return;
         }
 
         $username = $this->extractUsername($hrmUser['email']);
         $user = $this->findOrCreateUser($username, $syncStats);
         
+        $isNew = !$user->exists;
+
         $this->updateUserData($user, $hrmUser, $locations);
         $user->save();
+
+        if ($isNew) {
+            // collect only email for final single log
+            $createdEmails[] = $user->email;
+        } else {
+            // collect email for updated list (keeps existing behavior of always saving)
+            $updatedEmails[] = $user->email;
+        }
     }
 
     //  Validate HRM user data
@@ -201,6 +221,11 @@ class SyncListUserFromHRMController extends Controller
         
         // Create new location when not exists
         $newLocation = $this->createNewLocation($branchCode);
+        
+        if (!$newLocation || !$newLocation->id) {
+            throw new Exception("Failed to create location for branch code: $branchCode");
+        }
+        
         $locations->push($newLocation);
         
         return $newLocation->id;
