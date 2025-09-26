@@ -188,7 +188,10 @@ class SyncListUserFromHRMController extends Controller
         $user->email = $hrmUser['email'];
         $user->job_position_code = $hrmUser['jobPositionCode'] ?? null;
         $user->user_type = $hrmUser['userTypeName'] ?? null;
-        $user->mezon_id = $hrmUser['mezonId'] ?? null;
+
+        if (array_key_exists('mezonUserId', $hrmUser) && $hrmUser['mezonUserId'] !== null) {
+            $user->mezon_id = (string) $hrmUser['mezonUserId'];
+        }
 
         if (isset($hrmUser['branchCode'])) {
             $user->location_id = $this->getOrCreateLocationId($locations, $hrmUser['branchCode']);
@@ -214,21 +217,21 @@ class SyncListUserFromHRMController extends Controller
 
         $findLocation = Location::where('branch_code', $branchCode)->first();
 
-        
+
         if ($findLocation) {
             return $findLocation->id;
         }
-        
+
         // Create new location when not exists
-        $newLocation = $this->createNewLocation($branchCode);
-        
-        if (!$newLocation || !$newLocation->id) {
-            throw new Exception("Failed to create location for branch code: $branchCode");
-        }
-        
-        $locations->push($newLocation);
-        
-        return $newLocation->id;
+                $newLocation = $this->createNewLocation($branchCode);
+
+                if (!$newLocation || !$newLocation->id) {
+                    throw new Exception("Failed to create location for branch code: $branchCode");
+                }
+
+                $locations->push($newLocation);
+
+                return $newLocation->id;
     }
 
     //  Create new location
