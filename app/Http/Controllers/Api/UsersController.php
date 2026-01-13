@@ -910,95 +910,162 @@ class UsersController extends Controller
     public function mezonLoginByHash(Request $request)
     {
         $request->validate([
-            'dataCheck' => 'required|string',
-            'hashKey' => 'required|string',
-            'userEmail' => 'required|string|email',
-            'userName' => 'required|string',
+            'hashData' => 'required|string',
         ]);
 
-        $dataCheck = $request->input('dataCheck');
-        $hashKey = $request->input('hashKey');
-        $userEmail = $request->input('userEmail');
-        $userName = $request->input('userName');
+        // DEBUG 1: Log raw hashData
+        $rawHashData = $request->input('hashData');
+        \Log::info('=== MEZON DEBUG START ===');
+        //log raw data in multiple lines 
+        \Log::info('1. Raw hashData from request', ['hashData' => $rawHashData]);
 
-        if (!Helper::checkValidEmail($userEmail)) {
-            return response()->json(
-                Helper::formatStandardApiResponse('error', null, 'Invalid email address'),
-                400
-            );
-        }
+        // DEBUG 2: Log decoded data
+        $decodedData = base64_decode($rawHashData);
+        \Log::info('2. Base64 decoded data', ['decodedData' => $decodedData]);
+        
+        $params = explode('&', $decodedData);
+        \Log::info('3. Exploded params', ['params' => $params, 'count' => count($params)]);
+        
+        $data = [];
+        $receivedHash = '';
 
-        $appToken = env('MEZON_APP_TOKEN');
-        if (!$appToken) {
-            return response()->json(
-                Helper::formatStandardApiResponse('error', null, 'Server configuration error: App token not set'),
-                500
-            );
-        }
+        foreach ($params as $index => $param) {
+            \Log::info("4.{$index}. Processing param", ['param' => $param]);
+            
+            $parts = explode('=', $param, 2);
+            if (count($parts) === 2) {
+                $key = $parts[0];
+                $value = $parts[1];
 
-        try
-        {
-            $secretKey = hash_hmac('sha256', "WebAppData", $appToken, true);
-            $computedHash = bin2hex(hash_hmac('sha256', $dataCheck, $secretKey, true));
+                \Log::info("4.{$index}.a. Key-Value pair", [
+                    'key' => $key, 
+                    'raw_value' => $value,
+                    'urldecoded_value' => urldecode($value)
+                ]);
 
-            if ($computedHash !== $hashKey) {
-                return response()->json(
-                    Helper::formatStandardApiResponse('error', null, 'Authentication failed - Invalid hash key'),
-                    400
-                );
-            }
-
-            $user = User::where('username', $userName)->first();
-            if ($user && $user->activated !== true) {
-                return response()->json(
-                    Helper::formatStandardApiResponse('error', null, 'The user is disabled'),
-                    400
-                );
-            }
-            if (!$user) {
-                $firstName = '';
-                $lastName = '';
-                if (strpos($userName, '.') !== false) {
-                    [$lastName, $firstName] = explode('.', $userName);
-                } else {
-                    $firstName = $userName;
+                if ($key === 'hash') {
+                    $receivedHash = $value;
+                    \Log::info("4.{$index}.b. RECEIVED HASH found", ['hash' => $receivedHash]);
+                    continue;
+                }
+                if ($key === 'signature') {
+                    \Log::info("4.{$index}.c. Signature skipped");
+                    continue;
                 }
 
-                $user = User::updateOrCreate(
-                    ['username' => $userName],
-                    [
-                        'email' => $userEmail,
-                        'username' => $userName,
-                        'first_name' => $firstName,
-                        'last_name' => $lastName,
-                        'password' => Helper::generateEncyrptedPassword(),
-                        'activated' => 1,
-                        'permissions' => '{"superuser":"1","admin":"0","import":"0","reports.view":"0","assets.view":"0","assets.create":"0","assets.edit":"0","assets.delete":"0","assets.checkin":"0","assets.checkout":"0","assets.audit":"0","assets.view.requestable":"0","accessories.view":"0","accessories.create":"0","accessories.edit":"0","accessories.delete":"0","accessories.checkout":"0","accessories.checkin":"0","consumables.view":"0","consumables.create":"0","consumables.edit":"0","consumables.delete":"0","consumables.checkout":"0","licenses.view":"0","licenses.create":"0","licenses.edit":"0","licenses.delete":"0","licenses.checkout":"0","licenses.keys":"0","licenses.files":"0","components.view":"0","components.create":"0","components.edit":"0","components.delete":"0","components.checkout":"0","components.checkin":"0","kits.view":"0","kits.create":"0","kits.edit":"0","kits.delete":"0","kits.checkout":"0","users.view":"0","users.create":"0","users.edit":"0","users.delete":"0","models.view":"0","models.create":"0","models.edit":"0","models.delete":"0","categories.view":"0","categories.create":"0","categories.edit":"0","categories.delete":"0","departments.view":"0","departments.create":"0","departments.edit":"0","departments.delete":"0","statuslabels.view":"0","statuslabels.create":"0","statuslabels.edit":"0","statuslabels.delete":"0","customfields.view":"0","customfields.create":"0","customfields.edit":"0","customfields.delete":"0","suppliers.view":"0","suppliers.create":"0","suppliers.edit":"0","suppliers.delete":"0","manufacturers.view":"0","manufacturers.create":"0","manufacturers.edit":"0","manufacturers.delete":"0","depreciations.view":"0","depreciations.create":"0","depreciations.edit":"0","depreciations.delete":"0","locations.view":"0","locations.create":"0","locations.edit":"0","locations.delete":"0","companies.view":"0","companies.create":"0","companies.edit":"0","companies.delete":"0","self.two_factor":"0","self.api":"0","self.edit_location":"0","self.checkout_assets":"0"}',
-                    ]
-                );
+                $data[$key] = urldecode($value);
+            }
+        }
 
+        // DEBUG 5: Log data before sorting
+        \Log::info('5. Data array BEFORE ksort', ['data' => $data]);
+
+        ksort($data);
+
+        // DEBUG 6: Log data after sorting
+        \Log::info('6. Data array AFTER ksort', ['data' => $data]);
+
+        $dataCheckArr = [];
+        foreach ($data as $key => $value) {
+            $dataCheckArr[] = $key . '=' . $value;
+        }
+        
+        // DEBUG 7: Log dataCheckArr
+        \Log::info('7. DataCheck array', ['dataCheckArr' => $dataCheckArr]);
+        
+        $dataCheckString = implode("\n", $dataCheckArr); 
+
+        // DEBUG 8: Log final check string with special chars visible
+        \Log::info('8. Final dataCheckString', [
+            'str' => $dataCheckString,
+            'length' => strlen($dataCheckString),
+            'hex' => bin2hex($dataCheckString), // Show hex representation
+            'base64' => base64_encode($dataCheckString) // Show base64 for easy comparison
+        ]);
+
+        // DEBUG 9: Log secret and intermediate steps
+        $appSecret = env('MEZON_APP_TOKEN');
+        \Log::info('9. App secret', [
+            'secret' => $appSecret,
+            'length' => strlen($appSecret)
+        ]);
+        
+        $step1Md5 = hex2bin(md5($appSecret));
+        \Log::info('10. Step 1 - MD5 of secret', ['md5' => $step1Md5]);
+        
+        $step2SecretKey = hash_hmac('sha256', 'WebAppData', $step1Md5, true);
+        \Log::info('11. Step 2 - HMAC secret key', [
+            'raw_binary_length' => strlen($step2SecretKey),
+            'hex' => bin2hex($step2SecretKey),
+            'base64' => base64_encode($step2SecretKey)
+        ]);
+        
+        $computedHash = hex2bin(hash_hmac('sha256', $dataCheckString, $step2SecretKey));
+        \Log::info('12. Step 3 - Computed hash', ['hash' => $computedHash]);
+
+        // DEBUG 10: Final comparison
+        \Log::info('13. HASH COMPARISON', [
+            'computed_hash' => $computedHash,
+            'received_hash' => $receivedHash,
+            'are_equal' => hash_equals($computedHash, $receivedHash),
+            'computed_length' => strlen($computedHash),
+            'received_length' => strlen($receivedHash)
+        ]);
+        \Log::info('=== MEZON DEBUG END ===');
+
+        if (!hash_equals($computedHash, $receivedHash)) {
+            \Log::error('Hash mismatch', [
+                'computed' => $computedHash,
+                'received' => $receivedHash
+            ]);
+            return response()->json(['message' => 'Authentication failed'], 401);
+        }
+        
+        try {
+            if (!isset($data['user'])) {
+                throw new \Exception("User data not found");
             }
 
-            $permissions = $user->permissions ? json_decode($user->permissions, true) : [];
-            $scopes = [];
-            foreach ($permissions as $key => $value) {
-                if ($value === "1" || $value === 1) {
-                    $scopes[] = $key;
-                }
+            $userJsonString = urldecode($data['user']); 
+            $userData = json_decode($userJsonString, true);
+            
+            \Log::info('Mezon user data', ['userData' => $userData]);
+
+            if (!$userData || !isset($userData['username'])) {
+                throw new \Exception("Invalid user JSON");
             }
 
-            $token = $user->createToken('mezon-hash-login', $scopes)->accessToken;
+            $userName = $userData['username'];
+            $firstName = $userData['display_name'] ?? $userName;
+            $userEmail = $userName . '@ncc.asia';
+            
+            $user = User::firstOrCreate(
+                ['username' => $userName],
+                [
+                    'email' => $userEmail,
+                    'first_name' => $firstName,
+                    'password' => bcrypt(\Illuminate\Support\Str::random(16)),
+                    'activated' => 1,
+                ]
+            );
+
+            if (!$user->activated) {
+                return response()->json(['message' => 'User is disabled'], 403);
+            }
+
+            $token = $user->createToken('mezon-login')->accessToken;
 
             return response()->json([
                 "token_type" => "Bearer",
                 "access_token" => $token,
             ]);
+
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => $e->getMessage(),
-            ], 401);
+            \Log::error('Mezon login error: ' . $e->getMessage());
+            return response()->json(['message' => 'Login error'], 500);
         }
     }
+    
 
     public function getListUserType()
     {
