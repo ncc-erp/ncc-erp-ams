@@ -7,6 +7,8 @@ modules:
             depends: Laravel5
             timeout: 10
         - Asserts
+        - Laravel5:
+            part: ORM
     config:
         - Laravel5:
             environment_file: .env.tests
