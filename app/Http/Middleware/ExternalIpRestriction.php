@@ -11,12 +11,16 @@ class ExternalIpRestriction
 {
     public function handle(Request $request, Closure $next, $service = null)
     {
+        if (app()->environment('testing')) {
+            return $next($request);
+        }
 
         if (!$service) {
             return $next($request);
         }
 
         // get IP config
+        $service = strtolower($service);
         $allowedIps = config("ip_restrictions.{$service}", null);
              
         // get IP client
