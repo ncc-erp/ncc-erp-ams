@@ -912,77 +912,77 @@ class UsersController extends Controller
         $request->validate([
             'hashData' => 'required|string',
         ]);
-    
-        $hashData = $request->input('hashData');
-        $decodedData = base64_decode($hashData);
-    
+
+        $rawHashData = $request->input('hashData');
+
+        $decodedData = base64_decode($rawHashData);
+
         $delimiter = '&hash=';
-        $hashPosition = strpos($decodedData, $delimiter);
-    
-        if ($hashPosition === false) {
-            return response()->json(['message' => 'Invalid hash data format'], 400);
-        }
-    
-        $dataCheckString = substr($decodedData, 0, $hashPosition);
-        $receivedHash = substr($decodedData, $hashPosition + strlen($delimiter));
-    
-        $appSecret = env('MEZON_APP_TOKEN');
-        $step1Md5 = md5($appSecret);
-        $step2SecretKey = hash_hmac('sha256', $step1Md5, 'WebAppData', true);
-        $computedHash = hash_hmac('sha256', $step2SecretKey, $dataCheckString);
-    
-        if (!hash_equals($computedHash, $receivedHash)) {
-            \Log::error('Mezon hash mismatch', [
-                'computed' => $computedHash,
-                'received' => $receivedHash,
-                'dataCheckString' => $dataCheckString,
-                'decodedData' => $decodedData
-            ]);
+        $hashPos = strpos($decodedData, $delimiter);
+        if ($hashPos === false) {
             return response()->json(['message' => 'Authentication failed'], 401);
         }
-    
+
+        $queryData    = substr($decodedData, 0, $hashPos);
+        $receivedHash = substr($decodedData, $hashPos + strlen($delimiter));
+
+        $params = [];
+        parse_str($queryData, $params);
+
+        $authDate = isset($params['auth_date']) ? (int) $params['auth_date'] : 0;
+        $now      = time();
+        if ($authDate === 0 || ($now - $authDate) > 300) {
+            return response()->json(['message' => 'Authentication expired'], 401);
+        }
+
+        $appSecret = env('MEZON_APP_TOKEN');
+        
+        $step1Md5 = md5($appSecret);
+        $secretKey = hash_hmac('sha256', 'WebAppData', $step1Md5, true);
+        $computedHash = hash_hmac('sha256', $queryData, $secretKey);
+
+        if (!hash_equals($computedHash, $receivedHash)) {
+            return response()->json(['message' => 'Authentication failed'], 401);
+        }
+        
         try {
-            parse_str($dataCheckString, $params);
-            
             if (!isset($params['user'])) {
                 throw new \Exception("User data not found");
             }
-    
-            $userData = json_decode($params['user'], true);
-            
+
+            $userJsonString = $params['user'];
+            $userData = json_decode($userJsonString, true);
+
             if (!$userData || !isset($userData['username'])) {
                 throw new \Exception("Invalid user JSON");
             }
-    
+
             $userName = $userData['username'];
             $firstName = $userData['display_name'] ?? $userName;
             $userEmail = $userName . '@ncc.asia';
-    
+
             $user = User::firstOrCreate(
                 ['username' => $userName],
                 [
                     'email' => $userEmail,
                     'first_name' => $firstName,
-                    'last_name' => '',
                     'password' => bcrypt(\Illuminate\Support\Str::random(16)),
                     'activated' => 1,
                 ]
             );
-    
+
             if (!$user->activated) {
                 return response()->json(['message' => 'User is disabled'], 403);
             }
-    
+
             $token = $user->createToken('mezon-login')->accessToken;
-    
+
             return response()->json([
                 "token_type" => "Bearer",
                 "access_token" => $token,
             ]);
-    
         } catch (\Exception $e) {
-            \Log::error('Mezon login error: ' . $e->getMessage());
-            return response()->json(['message' => 'Login error: ' . $e->getMessage()], 500);
+            return response()->json(['message' => 'Login error'], 500);
         }
     }
     

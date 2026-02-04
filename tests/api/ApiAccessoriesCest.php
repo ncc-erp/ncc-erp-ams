@@ -253,14 +253,14 @@ class ApiAccessoriesCest
     public function checkoutAccessory(ApiTester $I)
     {
         $I->wantTo('checkout an accessory');
+        
         $accessory = Accessory::factory()->appleUsbKeyboard()->create([
-            'name' => $this->faker->name(),
+            'name' => $this->faker->name(), 
             'company_id' => Company::factory()->create()->id,
             'location_id' => Location::factory()->create()->id,
         ]);
         $user = User::factory()->create();
 
-        //checkout success
         $I->sendGET("/accessories/{$accessory->id}/checkout", [
             'assigned_to' => $user->id,
             'category_id' => 'Keyboardss',
@@ -271,7 +271,11 @@ class ApiAccessoriesCest
         $response = json_decode($I->grabResponse());
         $I->seeResponseIsJson();
         $I->seeResponseCodeIs(200);
-        $I->assertEquals($accessory->name, $response->payload->accessory);
+
+        $actualAccessoryName = html_entity_decode($response->payload->accessory, ENT_QUOTES);
+        
+        $I->assertEquals($accessory->name, $actualAccessoryName);
+        
         $I->assertEquals(trans('admin/accessories/message.checkout.success'), $response->messages);
     }
 
