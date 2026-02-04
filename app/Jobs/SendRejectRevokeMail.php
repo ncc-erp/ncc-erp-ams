@@ -1,9 +1,7 @@
 <?php
 namespace App\Jobs;
 
-use App\Helpers\KomuMessages;
 use App\Mail\RejectRevokeMail;
-use App\Services\KomuService;
 use App\Services\MailService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -27,7 +25,7 @@ class SendRejectRevokeMail implements ShouldQueue
      */
     public function __construct($data, $it_ncc_email)
     {
-        $this->data         = $data;
+        $this->data = $data;
         $this->it_ncc_email = $it_ncc_email;
     }
 
@@ -38,28 +36,21 @@ class SendRejectRevokeMail implements ShouldQueue
      */
     public function handle()
     {
-        try {
-            $user_name = explode('@', $this->it_ncc_email)[0];
+        $context = ['job' => 'SendRejectRevokeMail', 'email' => $this->it_ncc_email];
+        
+        // Send email
+        $mailSuccess = MailService::sendMail(
+            new RejectRevokeMail($this->data),
+            $this->it_ncc_email,
+            [],
+            'reject_revoke',
+            'Reject Revoke Request'
+        );
 
-            Log::debug("[SendRejectRevokeMail / handle] Raw email: " . $this->it_ncc_email);
-            Log::debug("[SendRejectRevokeMail / handle] Raw username is extracted from email: " . $user_name);
-
-            $message   = KomuMessages::rejectRevoke($this->data);
-
-            // Send Komu message
-            KomuService::sendMessage($user_name, $message);
-            
-            // Send mail with logging
-            MailService::sendMail(
-                new RejectRevokeMail($this->data), 
-                $this->it_ncc_email, 
-                [],
-                'reject_revoke',
-                'Reject Revoke Request'
-            );
-            
-        } catch (\Exception $e) {
-            Log::error('SendRejectRevokeMail: ' . $e->getMessage());
+        if ($mailSuccess) {
+            Log::info("[Job] Email sent successfully", $context);
+        } else {
+            Log::error("[Job] Email failed", $context);
         }
     }
 }

@@ -10,17 +10,16 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Mail;
-use App\Services\KomuService;
-use App\Helpers\KomuMessages;
 use App\Services\MailService;
 use Illuminate\Support\Facades\Log;
 
 class SendConfirmCheckinMail implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    
     protected $data;
     protected $it_ncc_email;
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    
     /**
      * Create a new job instance.
      *
@@ -39,26 +38,21 @@ class SendConfirmCheckinMail implements ShouldQueue
      */
     public function handle()
     {
-        try {
-            $user_name = explode('@', $this->it_ncc_email)[0];
-            $message   = KomuMessages::confirmCheckinDigitalSignature($this->data);
+        $context = ['job' => 'SendConfirmCheckinMail', 'email' => $this->it_ncc_email];
+        
+        // Send email
+        $mailSuccess = MailService::sendMail(
+            new ConfirmCheckinDigitalSignature($this->data),
+            $this->it_ncc_email,
+            [],
+            'confirm_checkin',
+            'Confirm Checkin Digital Signature'
+        );
 
-            Log::debug("[SendConfirmCheckinMail / handle] Raw email: " . $this->it_ncc_email);
-            Log::debug("[SendConfirmCheckinMail / handle] Raw username is extracted from email: " . $user_name);
-
-            // Send Komu message
-            KomuService::sendMessage($user_name, $message);
-            
-            // Send mail with logging
-            MailService::sendMail(
-                new ConfirmCheckinDigitalSignature($this->data), 
-                $this->it_ncc_email, 
-                [],
-                'confirm_checkin',
-                'Confirm Checkin Digital Signature'
-            );
-        } catch (\Exception $e) {
-            Log::error('SendConfirmCheckinMail: ' . $e->getMessage());
+        if ($mailSuccess) {
+            Log::info("[Job] Email sent successfully", $context);
+        } else {
+            Log::error("[Job] Email failed", $context);
         }
     }
 }

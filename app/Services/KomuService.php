@@ -12,49 +12,43 @@ use Illuminate\Support\Facades\Config;
 
 class KomuService
 {
-    protected static function resolveUsername(string $username): string {
-      $originalUsername = $username;
-      $transformedUsername = $username;
-
-      if (strtolower($username) === "it") {
-        $transformedUsername = Config::get('admin.it_admin_username');
-        Log::debug("[KomuService / resolveUsername] Replaced 'it' with admin username: " . $transformedUsername);
-      } else {
-        Log::debug("[KomuService / resolveUsername] No replacement needed for username: " . $transformedUsername);
-      }
-
-      return $transformedUsername;
+    protected static function resolveUsername(string $username): string 
+    {
+        if (strtolower($username) === "it") {
+            return Config::get('admin.it_admin_username');
+        }
+        return $username;
     }
 
-    public static function sendMessage(string $username, string $message): void
+    public static function sendMessage(string $username, string $message): bool
     {
         if (empty($username)) {
-            return;
+            Log::warning("[KomuService] Empty username provided, skipping message send");
+            return false;
         }
 
         // Fix: Replace $username="it" with ADMIN_USERNAME from env or default to "thiet.nguyenba"
-        $username = self::resolveUsername($username);
-        
-        Log::debug("[KomuService / sendMessage] Sending message to username: " . $username);
-
+        $resolvedUsername = self::resolveUsername($username);
         $user = Auth::user();
-
-        $komuApiUrl = env('KOMU_API_URL');
-        $komuSecretKey = env('KOMU_SECRET_KEY');
-        $enableTesting = env('ENABLE_TESTING');
+        $komuApiUrl = config('komu.komu_api_url');
+        $komuSecretKey = config('komu.komu_secret_key');
+        $enableTesting = config('komu.enable_testing');
 
         $requestData = [
-            'username' => $username,
+            'username' => $resolvedUsername,
             'message' => $message
         ];
 
-        Log::debug('Komu API response', [
-            'requestData' => $requestData
-        ]);
-
         $responseBody = null;
+        $success = false;
 
         try {
+            Log::info("[KomuService] Sending message", [
+                'to' => $resolvedUsername,
+                'message' => $message,
+                'url' => $komuApiUrl . 'sendMessageToUser'
+            ]);
+
             if (!$enableTesting) {
                 $response = Http::withHeaders([
                     'X-Secret-Key' => $komuSecretKey,
@@ -63,36 +57,44 @@ class KomuService
                 ->post($komuApiUrl . 'sendMessageToUser', $requestData);
 
                 $responseBody = $response->body();
-                Log::debug('Komu API response', [
-                    'response' => $responseBody
-                ]);
+                
+                if (!$response->successful()) {
+                    throw new Exception("API error: {$response->status()} - {$responseBody}");
+                }
+                $success = true;
+            } else {
+                $success = true; // Testing mode
+                $responseBody = 'Testing mode - message not sent';
             }
 
+            // Log success
             KomuMessageLog::create([
-                'send_to' => $username,
+                'send_to' => $resolvedUsername,
                 'message' => $message,
-                'system_response' => $responseBody ?? 'Testing mode - mail not sent',
+                'system_response' => $responseBody,
                 'status' => 1,
-                'creator_id' => $user->id,
+                'creator_id' => $user->id ?? null,
                 'company_id' => $user->company_id ?? null,
             ]);
 
         } catch (Exception $ex) {
+            // Log error
             KomuMessageLog::create([
-                'send_to' => $username,
+                'send_to' => $resolvedUsername,
                 'message' => $message,
                 'system_response' => $ex->getMessage(),
                 'status' => 0,
-                'creator_id' => $user->id,
+                'creator_id' => $user->id ?? null,
                 'company_id' => $user->company_id ?? null,
             ]);
 
-            Log::error('Komu send message failed', [
-                'username' => $username,
-                'message' => $message,
+            Log::error("[KomuService] Message send failed", [
+                'username' => $resolvedUsername,
                 'error' => $ex->getMessage()
             ]);
         }
+
+        return $success;
     }
 
     public static function sendBatchMessagesWithRateLimit(array $messages, int $batchSize = 5, int $delayBetween = 1): void

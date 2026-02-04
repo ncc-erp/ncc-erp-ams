@@ -7,8 +7,11 @@ use App\Repositories\ToolRepository;
 use App\Models\Setting;
 use Carbon\Carbon;
 use App\Jobs\SendCheckinMailTool;
+use App\Jobs\SendCheckinKomuTool;
 use App\Jobs\SendCheckoutMailTool;
+use App\Jobs\SendCheckoutKomuTool;
 use App\Jobs\SendConfirmMailTool;
+use App\Jobs\SendConfirmKomuTool;
 use App\Repositories\UserRepository;
 use Illuminate\Http\Response;
 
@@ -169,27 +172,32 @@ class ToolService
         ];
         $it_ncc_email = Setting::first()->admin_cc_email;
         $mail_class = null;
+        $komu_class = null;
         $mail_sent = null;
         switch ($type) {
             case config("enum.mail_type.CHECKIN"):
                 $mail_sent = $user->email;
                 $mail_class = SendCheckinMailTool::class;
+                $komu_class = SendCheckinKomuTool::class;
                 break;
             case config("enum.mail_type.CHECKOUT"):
                 $mail_sent = $user->email;
                 $mail_class = SendCheckoutMailTool::class;
+                $komu_class = SendCheckoutKomuTool::class;
                 break;
             case config('enum.update_type.ACCEPT_CHECKIN'):
                 $data["is_confirm"] = 'đã xác nhận thu hồi';
                 $data["subject"] = 'Mail xác nhận thu hồi tool';
                 $mail_sent = $it_ncc_email;
                 $mail_class = SendConfirmMailTool::class;
+                $komu_class = SendConfirmKomuTool::class;
                 break;
             case config('enum.update_type.ACCEPT_CHECKOUT'):
                 $data["is_confirm"] = 'đã xác nhận cấp phát';
                 $data["subject"] = 'Mail xác nhận cấp phát tool';
                 $mail_sent = $it_ncc_email;
                 $mail_class = SendConfirmMailTool::class;
+                $komu_class = SendConfirmKomuTool::class;
                 break;
             case config('enum.update_type.REJECT_CHECKIN'):
                 $data['is_confirm'] = 'đã từ chối thu hồi';
@@ -197,6 +205,7 @@ class ToolService
                 $data['reason'] = 'Lý do: ' . $request_reason;
                 $mail_sent = $it_ncc_email;
                 $mail_class = SendConfirmMailTool::class;
+                $komu_class = SendConfirmKomuTool::class;
                 break;
             case config("enum.update_type.REJECT_CHECKOUT"):
                 $data['is_confirm'] = 'đã từ chối nhận';
@@ -204,9 +213,16 @@ class ToolService
                 $data['reason'] = 'Lý do: ' . $request_reason;
                 $mail_sent = $it_ncc_email;
                 $mail_class = SendConfirmMailTool::class;
+                $komu_class = SendConfirmKomuTool::class;
                 break;
         }
 
-        $mail_class::dispatch($data, $mail_sent);
+        if ($mail_class) {
+            $mail_class::dispatch($data, $mail_sent);
+        }
+
+        if ($komu_class) {
+            $komu_class::dispatch($data, $mail_sent);
+        }
     }
 }

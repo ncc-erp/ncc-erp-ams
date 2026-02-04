@@ -4,7 +4,9 @@ namespace App\Services;
 
 use App\Exceptions\AssetException;
 use App\Helpers\Helper;
+use App\Jobs\SendCheckinKomu;
 use App\Jobs\SendCheckinMail;
+use App\Jobs\SendCheckoutKomu;
 use App\Jobs\SendCheckoutMail;
 use App\Repositories\AssetHistoryDetailRepository;
 use App\Repositories\AssetHistoryRepository;
@@ -156,6 +158,7 @@ class ClientAssetService
             if ($countSuccess == count($assets)) {
                 $dataUser = $this->setDataUser($userId, $asset_name, $countAssets);
                 SendCheckinMail::dispatch($dataUser, $dataUser['user_email']);
+                SendCheckinKomu::dispatch($dataUser, $dataUser['user_email']);
                 $status = "success";
             }
 
@@ -233,6 +236,7 @@ class ClientAssetService
             $status = "success";
             $dataUser = $this->setDataUser($data['assigned_user'], $asset->name, count($assets), true);
             SendCheckoutMail::dispatch($dataUser, $dataUser['user_email']);
+            SendCheckoutKomu::dispatch($dataUser, $dataUser['user_email']);
         }
 
         if ($status === 'error') {

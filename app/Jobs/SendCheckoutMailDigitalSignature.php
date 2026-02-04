@@ -16,49 +16,35 @@ use Illuminate\Support\Facades\Mail;
 
 class SendCheckoutMailDigitalSignature implements ShouldQueue
 {
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    
     protected $data;
     protected $user_email;
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    /**
-     * Create a new job instance.
-     *
-     * @return void
-     */
     public function __construct($data, $user_email)
     {
-        $this->data       = $data;
+        $this->data = $data;
         $this->user_email = $user_email;
     }
 
-    /**
-     * Execute the job.
-     *
-     * @return void
-     */
     public function handle()
     {
-        try {
-            $user_name = explode('@', $this->user_email)[0];
-            $message   = KomuMessages::toolCheckoutDigitalSignature($this->data);
+        $context = ['job' => 'SendCheckoutMailDigitalSignature', 'email' => $this->user_email];
+        
+        // Send email
+        $ccEmails = [Setting::first()->admin_cc_email];
+        $mailSuccess = MailService::sendMail(
+            new CheckoutMailDigitalSignature($this->data),
+            $this->user_email,
+            $ccEmails,
+            'checkout_digital_signature',
+            'Digital Signature Checkout Notification'
+        );
 
-            Log::debug("[SendCheckoutMailDigitalSignature] Username to send Komu: " . $user_name);
-
-            // Send Komu message
-            KomuService::sendMessage($user_name, $message);
-            
-            // Send mail with logging
-            $ccEmails = [Setting::first()->admin_cc_email];
-            MailService::sendMail(
-                new CheckoutMailDigitalSignature($this->data), 
-                $this->user_email, 
-                $ccEmails,
-                'checkout_digital_signature',
-                'Digital Signature Checkout Notification'
-            );
-            
-        } catch (\Exception $e) {
-            Log::error('SendCheckoutMailDigitalSignature: ' . $e->getMessage());
+        if ($mailSuccess) {
+            Log::info("[Job] Email sent successfully", $context);
+        } else {
+            Log::error("[Job] Email failed", $context);
         }
     }
 }

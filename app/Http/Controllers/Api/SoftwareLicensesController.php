@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Transformers\SoftwareLicensesTransformer;
 use App\Jobs\SendCheckoutMail;
 use App\Jobs\SendCheckoutMailSoftware;
+use App\Jobs\SendCheckoutKomuSoftware;
 use App\Models\Company;
 use App\Models\LicensesUsers;
 use App\Models\Software;
@@ -438,6 +439,7 @@ class SoftwareLicensesController extends Controller
             'link' => config('client.my_assets.link'),
         ];
         SendCheckoutMailSoftware::dispatch($data, $user_email);
+        SendCheckoutKomuSoftware::dispatch($data, $user_email);
     }
 
     /**

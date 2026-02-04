@@ -4,11 +4,17 @@ namespace App\Services;
 
 use App\Exceptions\SystemException;
 use App\Jobs\SendCheckinMailDigitalSignature;
+use App\Jobs\SendCheckinKomuDigitalSignature;
 use App\Jobs\SendCheckoutMailDigitalSignature;
+use App\Jobs\SendCheckoutKomuDigitalSignature;
 use App\Jobs\SendConfirmCheckinMail;
+use App\Jobs\SendConfirmCheckinKomu;
 use App\Jobs\SendConfirmCheckoutMail;
+use App\Jobs\SendConfirmCheckoutKomu;
 use App\Jobs\SendRejectCheckinMail;
+use App\Jobs\SendRejectCheckinKomu;
 use App\Jobs\SendRejectCheckoutMail;
+use App\Jobs\SendRejectCheckoutKomu;
 use App\Models\Setting;
 use App\Repositories\DigitalSignatureRepository;
 use App\Repositories\UserRepository;
@@ -174,40 +180,53 @@ class DigitalSignatureService
         ];
         $it_ncc_email = Setting::first()->admin_cc_email;
         $mail_class = null;
+        $komu_class = null;
         $mail_sent = null;
         switch ($type) {
             case config("enum.mail_type.CHECKIN"):
                 $mail_sent = $user->email;
                 $mail_class = SendCheckinMailDigitalSignature::class;
+                $komu_class = SendCheckinKomuDigitalSignature::class;
                 break;
             case config("enum.mail_type.CHECKOUT"):
                 $mail_sent = $user->email;
                 $mail_class = SendCheckoutMailDigitalSignature::class;
+                $komu_class = SendCheckoutKomuDigitalSignature::class;
                 break;
             case config('enum.update_type.ACCEPT_CHECKIN'):
                 $data['is_confirm'] = 'đã xác nhận thu hồi';
                 $mail_sent = $it_ncc_email;
                 $mail_class = SendConfirmCheckinMail::class;
+                $komu_class = SendConfirmCheckinKomu::class;
                 break;
             case config('enum.update_type.ACCEPT_CHECKOUT'):
                 $data['is_confirm'] = 'đã xác nhận cấp phát';
                 $mail_sent = $it_ncc_email;
                 $mail_class = SendConfirmCheckoutMail::class;
+                $komu_class = SendConfirmCheckoutKomu::class;
                 break;
             case config('enum.update_type.REJECT_CHECKIN'):
                 $data['is_confirm'] = 'đã từ chối thu hồi';
                 $data['reason'] = 'Lý do: ' . $request_reason;
                 $mail_sent = $it_ncc_email;
                 $mail_class = SendRejectCheckinMail::class;
+                $komu_class = SendRejectCheckinKomu::class;
                 break;
             case config("enum.update_type.REJECT_CHECKOUT"):
                 $data['is_confirm'] = 'đã từ chối nhận';
                 $data['reason'] = 'Lý do: ' . $request_reason;
                 $mail_sent = $it_ncc_email;
                 $mail_class = SendRejectCheckoutMail::class;
+                $komu_class = SendRejectCheckoutKomu::class;
                 break;
         }
 
-        $mail_class::dispatch($data, $mail_sent);
+        if ($mail_class) {
+            $mail_class::dispatch($data, $mail_sent);
+        }
+
+        if ($komu_class) {
+            $komu_class::dispatch($data, $mail_sent);
+        }
     }
 }

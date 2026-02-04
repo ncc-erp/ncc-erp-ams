@@ -1,8 +1,6 @@
 <?php
 namespace App\Jobs;
 
-use App\Helpers\KomuMessages;
-use App\Services\KomuService;
 use App\Mail\ConfirmMail;
 use App\Services\MailService;
 use Illuminate\Bus\Queueable;
@@ -27,7 +25,7 @@ class SendConfirmMail implements ShouldQueue
      */
     public function __construct($data, $it_ncc_email)
     {
-        $this->data         = $data;
+        $this->data = $data;
         $this->it_ncc_email = $it_ncc_email;
     }
 
@@ -38,26 +36,21 @@ class SendConfirmMail implements ShouldQueue
      */
     public function handle()
     {
-        try {
-            $user_name = explode('@', $this->it_ncc_email)[0];
-            $message   = KomuMessages::assetConfirmCheckout($this->data);
+        $context = ['job' => 'SendConfirmMail', 'email' => $this->it_ncc_email];
+        
+        // Send email
+        $mailSuccess = MailService::sendMail(
+            new ConfirmMail($this->data),
+            $this->it_ncc_email,
+            [],
+            'confirm_allocate',
+            'Confirm Allocate Request'
+        );
 
-            Log::debug("[SendConfirmMail / handle] Raw email: " . $this->it_ncc_email);
-            Log::debug("[SendConfirmMail / handle] Raw username is extracted from email: " . $user_name);
-
-            KomuService::sendMessage($user_name, $message);
-
-            // Send mail with logging
-            MailService::sendMail(
-                new ConfirmMail($this->data), 
-                $this->it_ncc_email, 
-                [],
-                'confirm_allocate',
-                'Confirm Allocate Request'
-            );
-            
-        } catch (\Exception $e) {
-            Log::error('SendConfirmMail: ' . $e->getMessage());
+        if ($mailSuccess) {
+            Log::info("[Job] Email sent successfully", $context);
+        } else {
+            Log::error("[Job] Email failed", $context);
         }
     }
 }

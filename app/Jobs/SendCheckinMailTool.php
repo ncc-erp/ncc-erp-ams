@@ -13,6 +13,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+
 class SendCheckinMailTool implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -27,7 +28,7 @@ class SendCheckinMailTool implements ShouldQueue
      */
     public function __construct($data, $user_email)
     {
-        $this->data       = $data;
+        $this->data = $data;
         $this->user_email = $user_email;
     }
 
@@ -38,28 +39,22 @@ class SendCheckinMailTool implements ShouldQueue
      */
     public function handle()
     {
-        try {
-            $user_name = explode('@', $this->user_email)[0];
-            $message   = KomuMessages::toolCheckin($this->data);
+        $context = ['job' => 'SendCheckinMailTool', 'email' => $this->user_email];
+        
+        // Send email
+        $ccEmails = [Setting::first()->admin_cc_email];
+        $mailSuccess = MailService::sendMail(
+            new CheckinMailTool($this->data),
+            $this->user_email,
+            $ccEmails,
+            'checkin_tool',
+            'Tool Checkin Notification'
+        );
 
-            Log::debug("[SendCheckinMailTool] Sending tool check-in notification to: $user_name");
-            // Log::debug("Check-in message is sent: $message");
-
-            // Send Komu message
-            KomuService::sendMessage($user_name, $message);
-            
-            // Send mail with logging
-            $ccEmails = [Setting::first()->admin_cc_email];
-            MailService::sendMail(
-                new CheckinMailTool($this->data), 
-                $this->user_email, 
-                $ccEmails,
-                'checkin_tool',
-                'Tool Checkin Notification'
-            );
-            
-        } catch (\Exception $e) {
-            \Log::error('SendCheckinMailTool: ' . $e->getMessage());
+        if ($mailSuccess) {
+            Log::info("[Job] Email sent successfully", $context);
+        } else {
+            Log::error("[Job] Email failed", $context);
         }
     }
 }

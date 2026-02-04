@@ -1,9 +1,7 @@
 <?php
 namespace App\Jobs;
 
-use App\Helpers\KomuMessages;
 use App\Mail\RejectCheckinDigitalSignature;
-use App\Services\KomuService;
 use App\Services\MailService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -28,7 +26,7 @@ class SendRejectCheckinMail implements ShouldQueue
      */
     public function __construct($data, $it_ncc_email)
     {
-        $this->data         = $data;
+        $this->data = $data;
         $this->it_ncc_email = $it_ncc_email;
     }
 
@@ -39,27 +37,21 @@ class SendRejectCheckinMail implements ShouldQueue
      */
     public function handle()
     {
-        try {
-            $user_name = explode('@', $this->it_ncc_email)[0];
-            $message   = KomuMessages::rejectCheckinDigitalSignature($this->data);
+        $context = ['job' => 'SendRejectCheckinMail', 'email' => $this->it_ncc_email];
+        
+        // Send email
+        $mailSuccess = MailService::sendMail(
+            new RejectCheckinDigitalSignature($this->data),
+            $this->it_ncc_email,
+            [],
+            'reject_checkin',
+            'Reject Checkin Digital Signature'
+        );
 
-            Log::debug("[SendRejectCheckinMail / handle] Raw email: " . $this->it_ncc_email);
-            Log::debug("[SendRejectCheckinMail / handle] Raw username is extracted from email: " . $user_name);
-
-            // Send Komu message
-            KomuService::sendMessage($user_name, $message);
-            
-            // Send mail with logging
-            MailService::sendMail(
-                new RejectCheckinDigitalSignature($this->data), 
-                $this->it_ncc_email, 
-                [],
-                'reject_checkin',
-                'Reject Checkin Digital Signature'
-            );
-            
-        } catch (\Exception $e) {
-            Log::error('SendRejectCheckinMail: ' . $e->getMessage());
+        if ($mailSuccess) {
+            Log::info("[Job] Email sent successfully", $context);
+        } else {
+            Log::error("[Job] Email failed", $context);
         }
     }
 }

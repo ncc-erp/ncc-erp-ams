@@ -1,9 +1,7 @@
 <?php
 namespace App\Jobs;
 
-use App\Helpers\KomuMessages;
 use App\Mail\ConfirmRevokeMail;
-use App\Services\KomuService;
 use App\Services\MailService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Support\Facades\Log;
@@ -27,7 +25,7 @@ class SendConfirmRevokeMail implements ShouldQueue
      */
     public function __construct($data, $it_ncc_email)
     {
-        $this->data         = $data;
+        $this->data = $data;
         $this->it_ncc_email = $it_ncc_email;
     }
 
@@ -38,27 +36,21 @@ class SendConfirmRevokeMail implements ShouldQueue
      */
     public function handle()
     {
-        try {
-            $user_name = explode('@', $this->it_ncc_email)[0];
-            $message   = KomuMessages::assetConfirmRevoke($this->data);
+        $context = ['job' => 'SendConfirmRevokeMail', 'email' => $this->it_ncc_email];
+        
+        // Send email
+        $mailSuccess = MailService::sendMail(
+            new ConfirmRevokeMail($this->data),
+            $this->it_ncc_email,
+            [],
+            'confirm_revoke',
+            'Confirm Revoke Request'
+        );
 
-            Log::debug("[SendConfirmRevokeMail / handle] Raw email: " . $this->it_ncc_email);
-            Log::debug("[SendConfirmRevokeMail / handle] Raw username is extracted from email: " . $user_name);
-
-            // Send Komu message
-            KomuService::sendMessage($user_name, $message);
-            
-            // Send mail with logging
-            MailService::sendMail(
-                new ConfirmRevokeMail($this->data), 
-                $this->it_ncc_email, 
-                [],
-                'confirm_revoke',
-                'Confirm Revoke Request'
-            );
-            
-        } catch (\Exception $e) {
-            Log::error('SendConfirmRevokeMail: ' . $e->getMessage());
+        if ($mailSuccess) {
+            Log::info("[Job] Email sent successfully", $context);
+        } else {
+            Log::error("[Job] Email failed", $context);
         }
     }
 }

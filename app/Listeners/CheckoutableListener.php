@@ -26,6 +26,8 @@ use App\Notifications\CheckoutLicenseNotification;
 use App\Notifications\CheckoutLicenseSeatNotification;
 use App\Notifications\CheckoutToolNotification;
 use Illuminate\Support\Facades\Notification;
+use Exception;
+use Illuminate\Support\Facades\Log;
 
 class CheckoutableListener
 {
@@ -41,21 +43,30 @@ class CheckoutableListener
             return;
         }
 
-        /**
-         * Make a checkout acceptance and attach it in the notification
-         */
-        $acceptance = $this->getCheckoutAcceptance($event);       
+        try {
+            /**
+             * Make a checkout acceptance and attach it in the notification
+             */
+            $acceptance = $this->getCheckoutAcceptance($event);       
 
-        if (! $event->checkedOutTo->locale) {
-            Notification::locale(Setting::getSettings()->locale)->send(
-                $this->getNotifiables($event), 
-                $this->getCheckoutNotification($event, $acceptance)
-            );
-        } else {
-            Notification::send(
-                $this->getNotifiables($event), 
-                $this->getCheckoutNotification($event, $acceptance)
-            );
+            if (! $event->checkedOutTo->locale) {
+                Notification::locale(Setting::getSettings()->locale)->send(
+                    $this->getNotifiables($event), 
+                    $this->getCheckoutNotification($event, $acceptance)
+                );
+            } else {
+                Notification::send(
+                    $this->getNotifiables($event), 
+                    $this->getCheckoutNotification($event, $acceptance)
+                );
+            }
+        } catch (Exception $e) {
+            Log::error('[CheckoutableListener] Checkout notification failed: ' . $e->getMessage(), [
+                'checkoutable_id' => $event->checkoutable->id ?? null,
+                'checkoutable_type' => get_class($event->checkoutable),
+                'checked_out_to' => $event->checkedOutTo->id ?? null,
+                'error' => $e->getMessage()
+            ]);
         }
     }
 
@@ -64,43 +75,53 @@ class CheckoutableListener
      */    
     public function onCheckedIn($event)
     {
-        \Log::debug('checkin fired');
+        Log::debug('checkin fired');
 
         /**
          * When the item wasn't checked out to a user, we can't send notifications
          */
         if (! $event->checkedOutTo instanceof User) {
-            \Log::debug('checked out to not a user');
+            Log::debug('checked out to not a user');
 
             return;
         }
 
-        /**
-         * Send the appropriate notification
-         */
-        $acceptances = CheckoutAcceptance::where('checkoutable_id', $event->checkoutable->id)
-                                        ->where('assigned_to_id', $event->checkedOutTo->id)
-                                        ->get();
+        try {
+            /**
+             * Send the appropriate notification
+             */
+            $acceptances = CheckoutAcceptance::where('checkoutable_id', $event->checkoutable->id)
+                                            ->where('assigned_to_id', $event->checkedOutTo->id)
+                                            ->get();
 
-        foreach($acceptances as $acceptance){
-            if($acceptance->isPending()){
-                $acceptance->delete();
+            foreach($acceptances as $acceptance){
+                if($acceptance->isPending()){
+                    $acceptance->delete();
+                }
             }
-        }
-        \Log::debug('checked out to a user');
-        if (! $event->checkedOutTo->locale) {
-            \Log::debug('Use default settings locale');
-            Notification::locale(Setting::getSettings()->locale)->send(
-                $this->getNotifiables($event),
-                $this->getCheckinNotification($event)
-            );
-        } else {
-            \Log::debug('Use user locale? I do not think this works as expected yet');
-            // \Log::debug(print_r($this->getNotifiables($event), true));
-            Notification::send(
-                $this->getNotifiables($event),
-                $this->getCheckinNotification($event)
-            );
+            
+            Log::debug('checked out to a user');
+            if (! $event->checkedOutTo->locale) {
+                Log::debug('Use default settings locale');
+                Notification::locale(Setting::getSettings()->locale)->send(
+                    $this->getNotifiables($event),
+                    $this->getCheckinNotification($event)
+                );
+            } else {
+                Log::debug('Use user locale? I do not think this works as expected yet');
+                // \Log::debug(print_r($this->getNotifiables($event), true));
+                Notification::send(
+                    $this->getNotifiables($event),
+                    $this->getCheckinNotification($event)
+                );
+            }
+        } catch (Exception $e) {
+            Log::error('[CheckoutableListener] Checkin notification failed: ' . $e->getMessage(), [
+                'checkoutable_id' => $event->checkoutable->id ?? null,
+                'checkoutable_type' => get_class($event->checkoutable),
+                'checked_out_to' => $event->checkedOutTo->id ?? null,
+                'error' => $e->getMessage()
+            ]);
         }
     }      
 
@@ -176,7 +197,7 @@ class CheckoutableListener
                 break;
         }
 
-        \Log::debug('Notification class: '.$notificationClass);
+        Log::debug('Notification class: '.$notificationClass);
 
         return new $notificationClass($event->checkoutable, $event->checkedOutTo, $event->checkedInBy, $event->note);  
     }
