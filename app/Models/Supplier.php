@@ -205,4 +205,14 @@ class Supplier extends SnipeModel
 
         return $url;
     }
+
+    public function scopeTextSearch($query, $searchTerm)
+    {
+        $fields = ['name', 'address', 'email', 'phone', 'contact'];
+        return $query->where(function ($q) use ($fields, $searchTerm) {
+            foreach ($fields as $field) {
+                $q->orWhere($field, 'LIKE', '%' . $searchTerm . '%');
+            }
+        });
+    }
 }

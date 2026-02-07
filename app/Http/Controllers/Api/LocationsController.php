@@ -67,6 +67,11 @@ class LocationsController extends Controller
             $locations->whereIn('id', $manager_locations);
         }
 
+        if ($request->filled('filter')) {
+            $filters = json_decode($request->input('filter'), true);
+            $locations = Location::applyFilters($locations, $filters);
+        }
+
         if ($request->filled('search')) {
             $locations = $locations->TextSearch($request->input('search'));
         }
@@ -100,6 +105,41 @@ class LocationsController extends Controller
         $locations = $locations->skip($offset)->take($limit)->get();
 
         return (new LocationsTransformer)->transformLocations($locations, $total);
+    }
+    public function getTotalDetail(Request $request)
+    {
+        $this->authorize('view', Location::class);
+
+        $locationQuery = Location::select(['id', 'name', 'deleted_at'])
+            ->withCount([
+                'assets as assets_count',
+                'users as users_count',
+                'rtd_tools as tools_count',
+                'rtd_accessories as accessories_count',
+                'rtd_consumables as consumables_count',
+                'rtd_digital_signatures as digital_signatures_count',
+            ])
+            ->whereNull('deleted_at');
+
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $locationQuery->where('name', 'like', '%' . $search . '%');
+        }
+
+        $locations = $locationQuery->get();
+
+        $result = [
+            ['name' => 'Assets', 'total' => $locations->sum('assets_count')],
+            ['name' => 'Users', 'total' => $locations->sum('users_count')],
+            ['name' => 'Consumables', 'total' => $locations->sum('consumables_count')],
+            ['name' => 'Accessories', 'total' => $locations->sum('accessories_count')],
+            ['name' => 'Tools', 'total' => $locations->sum('tools_count')],
+            ['name' => 'Digital Signatures', 'total' => $locations->sum('digital_signatures_count')],
+        ];
+
+        return response()->json(
+            Helper::formatStandardApiResponse('success', $result, null)
+        );
     }
 
 

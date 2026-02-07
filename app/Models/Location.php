@@ -239,4 +239,35 @@ class Location extends SnipeModel
     {
         return $query->leftJoin('users as location_user', 'locations.manager_id', '=', 'location_user.id')->orderBy('location_user.first_name', $order)->orderBy('location_user.last_name', $order);
     }
+
+    public static function applyFilters($query, $filters)
+    {
+        $instance = new static;
+
+        $localFields = $instance->getSearchableAttributes();
+        $relationFields = $instance->getSearchableRelations();
+
+        foreach ((array) $filters as $key => $value) {
+            if (empty($value)) continue;
+
+            // Local field
+            if (in_array($key, $localFields)) {
+                $query->where($key, 'LIKE', '%' . $value . '%');
+                continue;
+            }
+
+            // Relation.field
+            if (str_contains($key, '.')) {
+                [$relation, $field] = explode('.', $key);
+
+                if (isset($relationFields[$relation]) && in_array($field, $relationFields[$relation])) {
+                    $query->whereHas($relation, function ($q) use ($field, $value) {
+                        $q->where($field, 'LIKE', '%' . $value . '%');
+                    });
+                }
+            }
+        }
+
+        return $query;
+    }
 }

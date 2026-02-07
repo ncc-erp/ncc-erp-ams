@@ -54,6 +54,10 @@ class SuppliersController extends Controller
             'digital_signatures as digital_signatures_count'
         );
 
+        if ($request->filled('filter')) {
+            $filters = json_decode($request->input('filter'), true);
+            $suppliers = $this->applyFilters($suppliers, $filters);
+        }
 
         if ($request->filled('search')) {
             $suppliers = $suppliers->TextSearch($request->input('search'));
@@ -74,6 +78,41 @@ class SuppliersController extends Controller
         $suppliers = $suppliers->skip($offset)->take($limit)->get();
 
         return (new SuppliersTransformer)->transformSuppliers($suppliers, $total);
+    }
+    public function getTotalDetail(Request $request)
+    {
+        $this->authorize('view', Supplier::class);
+
+        $supplierQuery = Supplier::select(['id', 'name', 'deleted_at'])
+            ->withCount([
+                'assets as assets_count',
+                'licenses as licenses_count',
+                'accessories as accessories_count',
+                'consumables as consumables_count',
+                'tools as tools_count',
+                'digital_signatures as digital_signatures_count',
+            ])
+            ->whereNull('deleted_at');
+
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $supplierQuery->where('name', 'like', '%' . $search . '%');
+        }
+
+        $suppliers = $supplierQuery->get();
+
+        $result = [
+            ['name' => 'Assets', 'total' => $suppliers->sum('assets_count')],
+            ['name' => 'Licenses', 'total' => $suppliers->sum('licenses_count')],
+            ['name' => 'Accessories', 'total' => $suppliers->sum('accessories_count')],
+            ['name' => 'Consumables', 'total' => $suppliers->sum('consumables_count')],
+            ['name' => 'Tools', 'total' => $suppliers->sum('tools_count')],
+            ['name' => 'Digital Signatures', 'total' => $suppliers->sum('digital_signatures_count')],
+        ];
+
+        return response()->json(
+            Helper::formatStandardApiResponse('success', $result, null)
+        );
     }
 
 
@@ -188,8 +227,13 @@ class SuppliersController extends Controller
             'image',
         ]);
 
+        if ($request->filled('filter')) {
+            $filters = json_decode($request->input('filter'), true);
+            $suppliers = $this->applyFilters($suppliers, $filters);
+        }
+
         if ($request->filled('search')) {
-            $suppliers = $suppliers->where('suppliers.name', 'LIKE', '%' . $request->get('search') . '%');
+            $suppliers = $suppliers->TextSearch($request->input('search'));
         }
 
         $suppliers = $suppliers->orderBy('name', 'ASC')->paginate(50);
@@ -203,5 +247,17 @@ class SuppliersController extends Controller
         }
 
         return (new SelectlistTransformer)->transformSelectlist($suppliers);
+    }
+
+    private const FILTERABLE_FIELDS = ['name', 'address', 'email', 'phone', 'contact'];
+
+    private function applyFilters($query, $filters)
+    {
+        foreach ((array)$filters as $field => $value) {
+            if (in_array($field, self::FILTERABLE_FIELDS) && !empty($value)) {
+                $query->where($field, 'LIKE', '%' . $value . '%');
+            }
+        }
+        return $query;
     }
 }
