@@ -816,8 +816,42 @@ class Helper
 
         return $string;
     }
-    public static function formatStandardApiResponse($status, $payload = null, $messages = null)
 
+    /**
+     * @OA\Schema(
+     *     schema="StandardApiResponse",
+     *     type="object",
+     *     description="Standard API response format used throughout the application",
+     *     
+     *     @OA\Property(
+     *         property="status",
+     *         type="string",
+     *         description="Response status indicator",
+     *         example="success"
+     *     ),
+     *     
+     *     @OA\Property(
+     *         property="messages",
+     *         oneOf={
+     *             @OA\Schema(type="null"),
+     *             @OA\Schema(type="string"),
+     *             @OA\Schema(
+     *                 type="array",
+     *                 @OA\Items(type="string")
+     *             )
+     *         },
+     *         description="Response messages, can be null, string, or array of strings",
+     *         example={"Operation completed successfully"}
+     *     ),
+     *     
+     *     @OA\Property(
+     *         property="payload",
+     *         description="Response data payload, can be any type or null",
+     *         example={"user_id": 1, "username": "nccadmin"}
+     *     )
+     * )
+     */
+    public static function formatStandardApiResponse($status, $payload = null, $messages = null)
     {
         $array['status'] = $status;
         $array['messages'] = $messages;
