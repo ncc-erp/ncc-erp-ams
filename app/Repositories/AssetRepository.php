@@ -155,12 +155,12 @@ class AssetRepository
 
         if (Arr::exists($data, 'from')) {
             $from = Carbon::createFromFormat('Y-m-d', $data['from'])->startOfDay()->toDateTimeString();
-            $assets = $assets->where('created_at', '>=', $from);
+            $assets = $assets->where('assets.created_at', '>=', $from);
         }
 
         if (Arr::exists($data, 'to')) {
             $to = Carbon::createFromFormat('Y-m-d', $data['to'])->endOfDay()->toDateTimeString();
-            $assets = $assets->where('created_at', '<=', $to);
+            $assets = $assets->where('assets.created_at', '<=', $to);
         }
 
         if (Arr::exists($data, 'rtd_location_id')) {
