@@ -1,0 +1,27 @@
+# Advisories that are still allowed after the Laravel 8 patch round (T12).
+#
+# Format:
+#   <package>              every severity of this package is allowed
+#   <package>:<severity>   only advisories of severity <severity> or lower
+#
+# Every package that is listed here has to be closed by a later task of the
+# upgrade, the reasons are documented in docs/upgrade/REPORT.md.
+
+# The advisories of laravel/framework are only closed by the major upgrade of
+# the framework itself (T20 - T39). They cannot be patched inside the 8.x line.
+laravel/framework:critical
+
+# The version of aws/aws-sdk-php that fixes its advisory requires PHP 8.1, the
+# runtime is raised in T19.
+aws/aws-sdk-php:high
+
+# Closed by the switch to flysystem 3 (T24).
+league/flysystem:low
+
+# Closed by an update of firebase/php-jwt, which is blocked by the requirement
+# of laravel/passport 10 (T10).
+firebase/php-jwt:low
+
+# Dev dependencies.
+symfony/*:low
+phpunit/phpunit:any

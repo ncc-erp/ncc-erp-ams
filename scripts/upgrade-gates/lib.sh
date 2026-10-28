@@ -345,19 +345,30 @@ assert_advisories_subset() {
 }
 
 assert_no_critical_advisories() {
-    local json count
+    # assert_no_critical_advisories [package...]
+    #
+    # Packages that are passed as arguments are allowed to have a critical
+    # advisory, every other critical advisory fails the check.  The exceptions
+    # have to be documented in docs/upgrade/REPORT.md.
+    local json count allowed
+    allowed="$*"
     json="$(audit_json)"
     count="$(php -r '
         $data = json_decode(file_get_contents($argv[1]), true);
+        $allowed = array_slice($argv, 2);
         $n = 0;
-        foreach (($data["advisories"] ?? []) as $items) {
+        $packages = [];
+        foreach (($data["advisories"] ?? []) as $package => $items) {
             foreach ($items as $item) {
-                if (($item["severity"] ?? "") === "critical") { $n++; }
+                if (($item["severity"] ?? "") === "critical" && ! in_array($package, $allowed, true)) {
+                    $n++;
+                    $packages[] = $package;
+                }
             }
         }
-        echo $n;
-    ' "$json")"
-    if [ "${count:-1}" = "0" ]; then
+        echo $n.($packages ? " (".implode(", ", array_unique($packages)).")" : "");
+    ' "$json" $allowed)"
+    if [ "${count%% *}" = "0" ]; then
         gate_record PASS "assert_no_critical_advisories"
         return 0
     fi
