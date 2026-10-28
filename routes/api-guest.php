@@ -29,8 +29,8 @@ Route::group(['prefix' => 'v1', 'middleware' => ['throttle:'.config('app.api_thr
 
     Route::post('auth/login',
     [
-            Api\UsersController::class,
-            'login'
+        Api\UsersController::class,
+        'login'
     ]
 );
     Route::post('auth/mezon-auth-url',

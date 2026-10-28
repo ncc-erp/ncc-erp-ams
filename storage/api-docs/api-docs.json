@@ -1,0 +1,3037 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "NCC-ERP-AMS API Documentation",
+        "description": "API Documentation for NCC-ERP-AMS System",
+        "contact": {
+            "name": "NCC Admin",
+            "url": "https://ncc.asia",
+            "email": "it@ncc.asia"
+        },
+        "license": {
+            "name": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+        },
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/api/v1/users/selectlist": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Get a list of users for dropdown menus",
+                "description": "Returns a paginated list of users formatted for select2 dropdown menus",
+                "operationId": "getUsersSelectList",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search term for filtering results",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Number of results to return per page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 50
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number for pagination",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "total": {
+                                            "type": "integer",
+                                            "example": 50
+                                        },
+                                        "rows": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "text": {
+                                                        "type": "string",
+                                                        "example": "Admin User"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/users": {
+            "post": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Create a new user",
+                "description": "Creates a new user and returns their details",
+                "operationId": "createUser",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "first_name",
+                                    "last_name",
+                                    "username",
+                                    "password",
+                                    "password_confirmation"
+                                ],
+                                "properties": {
+                                    "first_name": {
+                                        "type": "string",
+                                        "example": "John"
+                                    },
+                                    "last_name": {
+                                        "type": "string",
+                                        "example": "Doe"
+                                    },
+                                    "username": {
+                                        "type": "string",
+                                        "example": "johndoe"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "password123"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "password123"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "john.doe@example.com"
+                                    },
+                                    "employee_num": {
+                                        "type": "string",
+                                        "example": "EMP002"
+                                    },
+                                    "company_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "location_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "department_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "manager_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "notes": {
+                                        "type": "string",
+                                        "example": "Some notes about this user"
+                                    },
+                                    "activated": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "permissions": {
+                                        "type": "object"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "User created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "messages": {
+                                            "type": "string",
+                                            "example": "User created successfully"
+                                        },
+                                        "payload": {
+                                            "$ref": "#/components/schemas/User"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "username": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The username field is required."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/users/{id}": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Get specific user details",
+                "description": "Returns detailed information about a specific user",
+                "operationId": "getUser",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID of user to get",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "username": {
+                                            "type": "string",
+                                            "example": "admin"
+                                        },
+                                        "first_name": {
+                                            "type": "string",
+                                            "example": "Admin"
+                                        },
+                                        "last_name": {
+                                            "type": "string",
+                                            "example": "User"
+                                        },
+                                        "email": {
+                                            "type": "string",
+                                            "format": "email",
+                                            "example": "admin@example.com"
+                                        },
+                                        "employee_num": {
+                                            "type": "string",
+                                            "example": "EMP001"
+                                        },
+                                        "company": {
+                                            "type": "object"
+                                        },
+                                        "department": {
+                                            "type": "object"
+                                        },
+                                        "location": {
+                                            "type": "object"
+                                        },
+                                        "manager": {
+                                            "type": "object"
+                                        },
+                                        "groups": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        },
+                                        "assets_count": {
+                                            "type": "integer",
+                                            "example": 5
+                                        },
+                                        "licenses_count": {
+                                            "type": "integer",
+                                            "example": 3
+                                        },
+                                        "accessories_count": {
+                                            "type": "integer",
+                                            "example": 2
+                                        },
+                                        "consumables_count": {
+                                            "type": "integer",
+                                            "example": 4
+                                        },
+                                        "created_at": {
+                                            "type": "string",
+                                            "format": "date-time"
+                                        },
+                                        "updated_at": {
+                                            "type": "string",
+                                            "format": "date-time"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "User not found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Update a user",
+                "description": "Updates an existing user and returns their updated details",
+                "operationId": "updateUser",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID of user to update",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "first_name": {
+                                        "type": "string",
+                                        "example": "John"
+                                    },
+                                    "last_name": {
+                                        "type": "string",
+                                        "example": "Doe"
+                                    },
+                                    "username": {
+                                        "type": "string",
+                                        "example": "johndoe"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "newpassword123"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "newpassword123"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "john.doe@example.com"
+                                    },
+                                    "employee_num": {
+                                        "type": "string",
+                                        "example": "EMP002"
+                                    },
+                                    "company_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "location_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "department_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "manager_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "notes": {
+                                        "type": "string",
+                                        "example": "Some notes about this user"
+                                    },
+                                    "activated": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "permissions": {
+                                        "type": "object"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "User updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "messages": {
+                                            "type": "string",
+                                            "example": "User updated successfully"
+                                        },
+                                        "payload": {
+                                            "$ref": "#/components/schemas/User"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "User not found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "username": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The username has already been taken."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Delete a user",
+                "description": "Deletes a specific user",
+                "operationId": "deleteUser",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID of user to delete",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "messages": {
+                                            "type": "string",
+                                            "example": "User deleted successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "User cannot be deleted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "error"
+                                        },
+                                        "messages": {
+                                            "type": "string",
+                                            "example": "This user still has assets assigned to them"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "User not found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/users/{user}/assets": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "List assets assigned to a user",
+                "description": "Returns a list of assets assigned to a specified user",
+                "operationId": "getUserAssets",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "description": "ID of user to get assets for",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "total": {
+                                            "type": "integer",
+                                            "example": 2
+                                        },
+                                        "rows": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "MacBook Pro 15"
+                                                    },
+                                                    "asset_tag": {
+                                                        "type": "string",
+                                                        "example": "NCC001"
+                                                    },
+                                                    "serial": {
+                                                        "type": "string",
+                                                        "example": "C02XXXXHTD57"
+                                                    },
+                                                    "model": {
+                                                        "type": "object"
+                                                    },
+                                                    "status_label": {
+                                                        "type": "object"
+                                                    },
+                                                    "assigned_to": {
+                                                        "type": "object"
+                                                    },
+                                                    "created_at": {
+                                                        "type": "object"
+                                                    },
+                                                    "updated_at": {
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "This action is unauthorized."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/users/{user}/consumables": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "List consumables assigned to a user",
+                "description": "Returns a list of consumables assigned to a specified user",
+                "operationId": "getUserConsumables",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "description": "ID of user to get consumables for",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "total": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "rows": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Printer Paper"
+                                                    },
+                                                    "category": {
+                                                        "type": "object"
+                                                    },
+                                                    "location": {
+                                                        "type": "object"
+                                                    },
+                                                    "qty": {
+                                                        "type": "integer",
+                                                        "example": 50
+                                                    },
+                                                    "created_at": {
+                                                        "type": "object"
+                                                    },
+                                                    "updated_at": {
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "This action is unauthorized."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/users/{user}/accessories": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "List accessories assigned to a user",
+                "description": "Returns a list of accessories assigned to a specified user",
+                "operationId": "getUserAccessories",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "description": "ID of user to get accessories for",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "total": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "rows": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Logitech MX Keys"
+                                                    },
+                                                    "category": {
+                                                        "type": "object"
+                                                    },
+                                                    "manufacturer": {
+                                                        "type": "object"
+                                                    },
+                                                    "company": {
+                                                        "type": "object"
+                                                    },
+                                                    "model_number": {
+                                                        "type": "string",
+                                                        "example": "MX-123"
+                                                    },
+                                                    "created_at": {
+                                                        "type": "object"
+                                                    },
+                                                    "updated_at": {
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "This action is unauthorized."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/users/{user}/licenses": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "List licenses assigned to a user",
+                "description": "Returns a list of licenses assigned to a specified user",
+                "operationId": "getUserLicenses",
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "description": "ID of user to get licenses for",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "total": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "rows": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Adobe Creative Cloud"
+                                                    },
+                                                    "product_key": {
+                                                        "type": "string",
+                                                        "example": "XXXX-XXXX-XXXX-XXXX"
+                                                    },
+                                                    "expiration_date": {
+                                                        "type": "object"
+                                                    },
+                                                    "license_email": {
+                                                        "type": "string",
+                                                        "example": "user@ncc.asia"
+                                                    },
+                                                    "license_name": {
+                                                        "type": "string",
+                                                        "example": "NCC User"
+                                                    },
+                                                    "created_at": {
+                                                        "type": "object"
+                                                    },
+                                                    "updated_at": {
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "This action is unauthorized."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/users/two_factor_reset": {
+            "post": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Reset a user's two-factor authentication",
+                "description": "Resets a user's two-factor authentication enrollment status and secret",
+                "operationId": "postTwoFactorReset",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "id"
+                                ],
+                                "properties": {
+                                    "id": {
+                                        "description": "ID of the user to reset 2FA for",
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Two-factor authentication successfully reset",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Two-factor authentication has been reset for this user."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "This action is unauthorized."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "There was an error resetting two-factor authentication."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/users/me": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Get current authenticated user information",
+                "description": "Returns detailed information about the currently authenticated user",
+                "operationId": "getCurrentUser",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "username": {
+                                            "type": "string",
+                                            "example": "admin"
+                                        },
+                                        "first_name": {
+                                            "type": "string",
+                                            "example": "Admin"
+                                        },
+                                        "last_name": {
+                                            "type": "string",
+                                            "example": "User"
+                                        },
+                                        "email": {
+                                            "type": "string",
+                                            "format": "email",
+                                            "example": "admin@example.com"
+                                        },
+                                        "avatar": {
+                                            "type": "string",
+                                            "example": "https://example.com/avatars/admin.jpg"
+                                        },
+                                        "permissions": {
+                                            "type": "object"
+                                        },
+                                        "role": {
+                                            "type": "string",
+                                            "example": "admin"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - User not authenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/users/{user_id}/restore": {
+            "post": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Restore a deleted user",
+                "description": "Restores a previously soft-deleted user",
+                "operationId": "restoreUser",
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "path",
+                        "description": "ID of user to restore",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User restored successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "payload": {
+                                            "type": "null"
+                                        },
+                                        "messages": {
+                                            "type": "string",
+                                            "example": "User was successfully restored."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "This action is unauthorized."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "error"
+                                        },
+                                        "messages": {
+                                            "type": "string",
+                                            "example": "User does not exist."
+                                        },
+                                        "payload": {
+                                            "type": "null"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/auth/login": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Authenticate with username and password",
+                "description": "Authenticates a user using traditional username/password credentials.",
+                "operationId": "basicLogin",
+                "requestBody": {
+                    "description": "Login credentials",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/BasicLoginRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful authentication",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AuthenticationResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid credentials",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Login information is incorrect."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": []
+            }
+        },
+        "/api/v1/auth/mezon-auth-url": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Get Mezon OAuth2 authentication URL",
+                "description": "Returns the URL to begin OAuth2 authentication with Mezon platform. The URL includes client_id, redirect_uri, response_type, scope, and state parameters.",
+                "operationId": "getMezonAuthUrl",
+                "responses": {
+                    "200": {
+                        "description": "Successfully generated authentication URL",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MezonAuthUrlResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server configuration error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Missing Mezon configuration"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": []
+            }
+        },
+        "/api/v1/auth/mezon-login": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Complete Mezon OAuth2 authentication",
+                "description": "Process the authorization code returned from Mezon OAuth2 and authenticate the user. Supports both existing users with mezon_id and new user creation for valid email domains.",
+                "operationId": "mezonLogin",
+                "requestBody": {
+                    "description": "OAuth2 authentication data from Mezon callback",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MezonOAuthRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful authentication",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AuthenticationResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication failed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "oneOf": [
+                                        {
+                                            "properties": {
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Not ncc.asia email or not found mezon id"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        {
+                                            "properties": {
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Unauthorized"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        {
+                                            "properties": {
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Authentication failed with Mezon"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": []
+            }
+        },
+        "/api/v1/auth/mezon-login-by-hash": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Authenticate with Mezon using hash verification",
+                "description": "Authenticate a user through Mezon using hash-based verification. Validates the hash using HMAC-SHA256 with the configured app token and creates or updates user accounts as needed.",
+                "operationId": "mezonLoginByHash",
+                "requestBody": {
+                    "description": "Mezon hash authentication data",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MezonHashLoginRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful authentication",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AuthenticationResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - Various authentication failures",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "oneOf": [
+                                        {
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "error"
+                                                },
+                                                "messages": {
+                                                    "type": "string",
+                                                    "example": "Invalid email address"
+                                                },
+                                                "payload": {
+                                                    "type": "null"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        {
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "error"
+                                                },
+                                                "messages": {
+                                                    "type": "string",
+                                                    "example": "Authentication failed - Invalid hash key"
+                                                },
+                                                "payload": {
+                                                    "type": "null"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        {
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "error"
+                                                },
+                                                "messages": {
+                                                    "type": "string",
+                                                    "example": "The user is disabled"
+                                                },
+                                                "payload": {
+                                                    "type": "null"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Hash verification failed"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server configuration error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "error"
+                                        },
+                                        "messages": {
+                                            "type": "string",
+                                            "example": "Server configuration error: App token not set"
+                                        },
+                                        "payload": {
+                                            "type": "null"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/users/list-user-type": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Get list of all user types",
+                "description": "Returns a list of all distinct user types in the system",
+                "operationId": "getListUserType",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DatatablesResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/users/list-user-position": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Get list of all job positions",
+                "description": "Returns a list of all distinct job position codes in the system",
+                "operationId": "getListJobPosition",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DatatablesResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/webhooks": {
+            "get": {
+                "tags": [
+                    "Webhook"
+                ],
+                "summary": "Get list of webhooks",
+                "description": "Returns list of registered webhooks",
+                "operationId": "getWebhooks",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search term to filter results by name or URL",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "webhook_id",
+                        "in": "query",
+                        "description": "Limit results to a specific webhook ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "description": "Offset to start results from",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Number of results to return",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Column to sort results by",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "id",
+                                "name",
+                                "url",
+                                "created_at",
+                                "updated_at",
+                                "type"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "order",
+                        "in": "query",
+                        "description": "Sort order",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "deleted",
+                        "in": "query",
+                        "description": "Include deleted webhooks",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "true",
+                                "false"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WebhooksResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Webhook"
+                ],
+                "summary": "Create a new webhook",
+                "description": "Creates a new webhook and returns the newly created webhook",
+                "operationId": "createWebhook",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "url",
+                                    "type"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Asset Created Hook"
+                                    },
+                                    "url": {
+                                        "type": "string",
+                                        "example": "https://example.com/webhook/asset-created"
+                                    },
+                                    "type": {
+                                        "description": "Array of webhook event types this webhook subscribes to",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "example": "CHECKOUT_ASSET"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Webhook created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "messages": {
+                                            "type": "string",
+                                            "example": "Webhook was created successfully"
+                                        },
+                                        "payload": {
+                                            "$ref": "#/components/schemas/Webhook"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/webhooks/{webhook}": {
+            "get": {
+                "tags": [
+                    "Webhook"
+                ],
+                "summary": "Get a single webhook",
+                "description": "Returns a single webhook",
+                "operationId": "getWebhookById",
+                "parameters": [
+                    {
+                        "name": "webhook",
+                        "in": "path",
+                        "description": "ID of webhook to return",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Webhook"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Webhook not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Webhook"
+                ],
+                "summary": "Update a webhook",
+                "description": "Updates an existing webhook",
+                "operationId": "updateWebhook",
+                "parameters": [
+                    {
+                        "name": "webhook",
+                        "in": "path",
+                        "description": "ID of webhook to update",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Asset Updated Hook"
+                                    },
+                                    "url": {
+                                        "type": "string",
+                                        "example": "https://example.com/webhook/asset-updated"
+                                    },
+                                    "type": {
+                                        "description": "Array of webhook event types this webhook subscribes to",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "example": "CHECKOUT_ASSET"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Webhook updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "messages": {
+                                            "type": "string",
+                                            "example": "Webhook was updated successfully"
+                                        },
+                                        "payload": {
+                                            "$ref": "#/components/schemas/Webhook"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Webhook not found"
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Webhook"
+                ],
+                "summary": "Delete a webhook",
+                "description": "Deletes an existing webhook",
+                "operationId": "deleteWebhook",
+                "parameters": [
+                    {
+                        "name": "webhook",
+                        "in": "path",
+                        "description": "ID of webhook to delete",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Webhook deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "messages": {
+                                            "type": "string",
+                                            "example": "Webhook was deleted successfully"
+                                        },
+                                        "payload": {
+                                            "type": "null"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Webhook not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/hardware/{asset_id}/checkin": {
+            "post": {
+                "tags": [
+                    "Assets"
+                ],
+                "summary": "Check-in tài sản vào kho",
+                "description": "Trả tài sản về kho từ người dùng, tài sản khác hoặc địa điểm",
+                "operationId": "checkinAsset",
+                "parameters": [
+                    {
+                        "name": "asset_id",
+                        "in": "path",
+                        "description": "ID của tài sản cần check-in",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "backto",
+                        "in": "query",
+                        "description": "Quay lại trang 'user' hoặc mặc định",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "Thông tin check-in tài sản",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AssetCheckinRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "messages": {
+                                            "type": "string",
+                                            "example": "Tài sản đã được check-in thành công"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Tài sản không tồn tại"
+                    },
+                    "403": {
+                        "description": "Không có quyền check-in tài sản này"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "GoogleProfileRequest": {
+                "required": [
+                    "profile_obj",
+                    "client_secret"
+                ],
+                "properties": {
+                    "profile_obj": {
+                        "required": [
+                            "email",
+                            "googleId"
+                        ],
+                        "properties": {
+                            "email": {
+                                "type": "string",
+                                "format": "email",
+                                "example": "user@ncc.asia"
+                            },
+                            "googleId": {
+                                "type": "string",
+                                "example": "1234567890123456789"
+                            },
+                            "name": {
+                                "type": "string",
+                                "example": "John Doe"
+                            },
+                            "givenName": {
+                                "type": "string",
+                                "example": "John"
+                            },
+                            "familyName": {
+                                "type": "string",
+                                "example": "Doe"
+                            },
+                            "imageUrl": {
+                                "type": "string",
+                                "format": "uri",
+                                "example": "https://lh3.googleusercontent.com/..."
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "client_secret": {
+                        "required": [
+                            "access_token"
+                        ],
+                        "properties": {
+                            "access_token": {
+                                "type": "string",
+                                "example": "ya29.a0ARrdaM..."
+                            },
+                            "token_type": {
+                                "type": "string",
+                                "example": "Bearer"
+                            },
+                            "expires_in": {
+                                "type": "integer",
+                                "example": 3599
+                            },
+                            "scope": {
+                                "type": "string",
+                                "example": "openid email profile"
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "BasicLoginRequest": {
+                "required": [
+                    "username",
+                    "password"
+                ],
+                "properties": {
+                    "username": {
+                        "type": "string",
+                        "example": "nccadmin"
+                    },
+                    "password": {
+                        "type": "string",
+                        "format": "password",
+                        "example": "123456a@"
+                    }
+                },
+                "type": "object"
+            },
+            "AuthenticationResponse": {
+                "properties": {
+                    "token_type": {
+                        "type": "string",
+                        "example": "Bearer"
+                    },
+                    "access_token": {
+                        "type": "string",
+                        "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9..."
+                    }
+                },
+                "type": "object"
+            },
+            "UnauthorizedResponse": {
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "example": "Unauthorized"
+                    }
+                },
+                "type": "object"
+            },
+            "ValidationErrorResponse": {
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "example": "The given data was invalid."
+                    },
+                    "errors": {
+                        "properties": {
+                            "field_name": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string",
+                                    "example": "The field name is required."
+                                }
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "ErrorResponse": {
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "example": "User not found"
+                    }
+                },
+                "type": "object"
+            },
+            "MezonOAuthRequest": {
+                "required": [
+                    "code",
+                    "state"
+                ],
+                "properties": {
+                    "code": {
+                        "type": "string",
+                        "example": "auth_code_from_mezon"
+                    },
+                    "state": {
+                        "type": "string",
+                        "example": "base64_encoded_state_string"
+                    }
+                },
+                "type": "object"
+            },
+            "MezonHashLoginRequest": {
+                "required": [
+                    "dataCheck",
+                    "hashKey",
+                    "userEmail",
+                    "userName"
+                ],
+                "properties": {
+                    "dataCheck": {
+                        "type": "string",
+                        "example": "user_data_string"
+                    },
+                    "hashKey": {
+                        "type": "string",
+                        "example": "hmac_hash_verification_code"
+                    },
+                    "userEmail": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "john.doe@ncc.asia"
+                    },
+                    "userName": {
+                        "type": "string",
+                        "example": "john.doe"
+                    }
+                },
+                "type": "object"
+            },
+            "MezonAuthUrlResponse": {
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "format": "uri",
+                        "example": "https://chat.ncc.asia/oauth2/auth?client_id=ncc_ams&redirect_uri=https://ams.ncc.asia/auth/callback&response_type=code&scope=openid%20offline&state=abcdef123456"
+                    }
+                },
+                "type": "object"
+            },
+            "AssetCheckinRequest": {
+                "title": "Asset Checkin Request",
+                "description": "Dữ liệu yêu cầu để thực hiện check-in tài sản",
+                "properties": {
+                    "name": {
+                        "description": "Tên mới cho tài sản (tùy chọn)",
+                        "type": "string",
+                        "example": "MacBook Pro 2021"
+                    },
+                    "status_id": {
+                        "description": "ID trạng thái mới cho tài sản",
+                        "type": "integer",
+                        "example": 2
+                    },
+                    "location_id": {
+                        "description": "ID địa điểm mới cho tài sản",
+                        "type": "integer",
+                        "example": 5
+                    },
+                    "checkin_at": {
+                        "description": "Ngày check-in (Y-m-d)",
+                        "type": "string",
+                        "format": "date",
+                        "example": "2023-10-25"
+                    },
+                    "note": {
+                        "description": "Ghi chú khi check-in tài sản",
+                        "type": "string",
+                        "example": "Thiết bị đã được trả lại trong tình trạng tốt"
+                    }
+                },
+                "type": "object"
+            },
+            "DatatablesResponse": {
+                "description": "Standard Datatables response format",
+                "properties": {
+                    "total": {
+                        "description": "Total number of items",
+                        "type": "integer",
+                        "example": 100
+                    },
+                    "rows": {
+                        "description": "Array of data items",
+                        "type": "array",
+                        "items": {
+                            "description": "Individual data item",
+                            "type": "object"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "Manager": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 2
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "IT NCC Admin"
+                    }
+                },
+                "type": "object"
+            },
+            "Department": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "IT Department"
+                    }
+                },
+                "type": "object"
+            },
+            "Location": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Head Office"
+                    }
+                },
+                "type": "object"
+            },
+            "Company": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "NCC Soft"
+                    }
+                },
+                "type": "object"
+            },
+            "DateObject": {
+                "properties": {
+                    "date": {
+                        "type": "string",
+                        "example": "2024-01-15 10:30:00"
+                    },
+                    "formatted": {
+                        "type": "string",
+                        "example": "Jan 15, 2024 10:30 AM"
+                    }
+                },
+                "type": "object"
+            },
+            "GroupItem": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Administrators"
+                    }
+                },
+                "type": "object"
+            },
+            "Groups": {
+                "properties": {
+                    "total": {
+                        "type": "integer",
+                        "example": 2
+                    },
+                    "rows": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/GroupItem"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "AvailableActions": {
+                "properties": {
+                    "update": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "delete": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "clone": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "restore": {
+                        "type": "boolean",
+                        "example": false
+                    }
+                },
+                "type": "object"
+            },
+            "User": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "avatar": {
+                        "type": "string",
+                        "example": "https://..."
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "NCC Admin"
+                    },
+                    "mezon_id": {
+                        "type": "string",
+                        "example": "12345",
+                        "nullable": true
+                    },
+                    "first_name": {
+                        "type": "string",
+                        "example": "NCC"
+                    },
+                    "last_name": {
+                        "type": "string",
+                        "example": "Admin"
+                    },
+                    "username": {
+                        "type": "string",
+                        "example": "nccadmin"
+                    },
+                    "remote": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "locale": {
+                        "type": "string",
+                        "example": "en_US",
+                        "nullable": true
+                    },
+                    "employee_num": {
+                        "type": "string",
+                        "example": "EMP001"
+                    },
+                    "manager": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/Manager"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "jobtitle": {
+                        "type": "string",
+                        "example": "Developer",
+                        "nullable": true
+                    },
+                    "phone": {
+                        "type": "string",
+                        "example": "+1234567890",
+                        "nullable": true
+                    },
+                    "website": {
+                        "type": "string",
+                        "example": "https://...",
+                        "nullable": true
+                    },
+                    "address": {
+                        "type": "string",
+                        "example": "123 Main St",
+                        "nullable": true
+                    },
+                    "city": {
+                        "type": "string",
+                        "example": "New York",
+                        "nullable": true
+                    },
+                    "state": {
+                        "type": "string",
+                        "example": "NY",
+                        "nullable": true
+                    },
+                    "country": {
+                        "type": "string",
+                        "example": "US",
+                        "nullable": true
+                    },
+                    "zip": {
+                        "type": "string",
+                        "example": "10001",
+                        "nullable": true
+                    },
+                    "social_id": {
+                        "type": "string",
+                        "example": "12345",
+                        "nullable": true
+                    },
+                    "access_token_social": {
+                        "type": "string",
+                        "example": "token123",
+                        "nullable": true
+                    },
+                    "platform": {
+                        "type": "string",
+                        "example": "google",
+                        "nullable": true
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "nccadmin@ncc.asia"
+                    },
+                    "department": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/Department"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "location": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/Location"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "notes": {
+                        "type": "string",
+                        "example": "Some notes about the user"
+                    },
+                    "permissions": {
+                        "description": "User permissions object",
+                        "type": "object"
+                    },
+                    "manager_location": {
+                        "description": "JSON decoded manager location data",
+                        "type": "object"
+                    },
+                    "activated": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "ldap_import": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "two_factor_activated": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "two_factor_enrolled": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "assets_count": {
+                        "type": "integer",
+                        "example": 5
+                    },
+                    "licenses_count": {
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "accessories_count": {
+                        "type": "integer",
+                        "example": 2
+                    },
+                    "consumables_count": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "company": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/Company"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "created_at": {
+                        "$ref": "#/components/schemas/DateObject"
+                    },
+                    "updated_at": {
+                        "$ref": "#/components/schemas/DateObject"
+                    },
+                    "last_login": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/DateObject"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "deleted_at": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/DateObject"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "user_type": {
+                        "type": "string",
+                        "example": "employee",
+                        "nullable": true
+                    },
+                    "job_position_code": {
+                        "type": "string",
+                        "example": "DEV001",
+                        "nullable": true
+                    },
+                    "available_actions": {
+                        "$ref": "#/components/schemas/AvailableActions"
+                    },
+                    "groups": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/Groups"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "type": "object"
+            },
+            "UsersResponse": {
+                "properties": {
+                    "total": {
+                        "type": "integer",
+                        "example": 100
+                    },
+                    "rows": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/User"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "AvailableWebhookActions": {
+                "properties": {
+                    "update": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "restore": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "delete": {
+                        "type": "boolean",
+                        "example": true
+                    }
+                },
+                "type": "object"
+            },
+            "Webhook": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Asset Checkout Webhook"
+                    },
+                    "url": {
+                        "type": "string",
+                        "example": "https://webhook.mezon.ai/webhooks/1957415919202340864/MTc1NTQ5MDYyODk0..."
+                    },
+                    "created_at": {
+                        "$ref": "#/components/schemas/DateObject"
+                    },
+                    "updated_at": {
+                        "$ref": "#/components/schemas/DateObject"
+                    },
+                    "type": {
+                        "description": "Array of webhook event types this webhook subscribes to",
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "example": "CHECKOUT_TOOL"
+                        }
+                    },
+                    "available_actions": {
+                        "$ref": "#/components/schemas/AvailableWebhookActions"
+                    }
+                },
+                "type": "object"
+            },
+            "WebhooksResponse": {
+                "description": "Webhooks response format",
+                "properties": {
+                    "total": {
+                        "description": "Total number of webhooks",
+                        "type": "integer",
+                        "example": 10
+                    },
+                    "rows": {
+                        "description": "Array of webhook items",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Webhook"
+                        }
+                    }
+                },
+                "type": "object"
+            }
+        },
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT",
+                "description": "Enter Bearer token in format (Bearer <token>)"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Users",
+            "description": "Users"
+        },
+        {
+            "name": "Authentication",
+            "description": "Authentication"
+        },
+        {
+            "name": "Webhook",
+            "description": "Webhook"
+        },
+        {
+            "name": "Assets",
+            "description": "Assets"
+        }
+    ],
+    "security": [
+        {
+            "bearerAuth": []
+        }
+    ]
+}
