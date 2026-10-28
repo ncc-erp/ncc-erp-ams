@@ -67,3 +67,5 @@ storage/ldap_client_tls.cert
 storage/ldap_client_tls.key
 backup_db.sh
 rollback_db.sh
+# the gate result logs of the upgrade suite are part of the deliverable
+!docs/upgrade/gate-results/*.log

@@ -1,0 +1,29 @@
+Upgrade gate run
+task:   T01
+when:   2026-10-28T08:52:08Z
+php:    8.0.30
+branch: chore/upgrade-php-laravel
+commit: dba581ec8
+
+
+== Common gate ==
+PASS  common: gate files are not locked yet (no checksums.sha256)
+PASS  common: composer validate
+PASS  common: composer install
+PASS  common: php -l on app/ config/ routes/ database/
+PASS  common: php artisan migrate:fresh --force
+PASS  common: the default settings are seeded
+PASS  common: the passport keys are present
+PASS  common: php artisan --version
+PASS  common: php artisan route:list
+PASS  common: php artisan config:cache
+PASS  common: php artisan view:cache
+PASS  common: full PHPUnit suite is green
+
+== Gate T01 ==
+
+== T01 - branch and baseline audit ==
+PASS  branch is chore/upgrade-php-laravel
+PASS  assert_json docs/upgrade/audit-before.json
+
+=== T01: PASS (14 asserts) ===
