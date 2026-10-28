@@ -209,7 +209,7 @@ Sau đó agent chạy lại gate để đánh dấu xong.
   đảm nhiệm (`assert_no_advisory` từng package ở T08–T39, `composer audit` exit 0 ở T40).
   **Nhớ gỡ lại setting này ở T43** khi không còn advisory nào.
 
-- [ ] **T08 – Vá Livewire (RCE)**
+- [x] **T08 – Vá Livewire (RCE)**
   `composer require livewire/livewire:^2.12.7`.
   **Gate:**
   - `assert_min_version livewire/livewire 2.12.7`, `assert_no_advisory livewire/livewire`
