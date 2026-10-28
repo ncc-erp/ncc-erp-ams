@@ -1,0 +1,64 @@
+# Test stack used by the PHP/Laravel upgrade gate suite.
+#
+#   docker compose -f docker-compose.test.yml run --rm app scripts/upgrade-gates/run.sh T07
+#
+# The `app` service runs the PHP runtime pinned in scripts/upgrade-gates/.php-version.
+services:
+  app:
+    build:
+      context: ./scripts/upgrade-gates
+      dockerfile: Dockerfile.test
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html
+      - vendor:/var/www/html/vendor
+      - storage:/var/www/html/storage
+    environment:
+      HOME: /tmp
+      COMPOSER_HOME: /tmp/.composer
+      COMPOSER_CACHE_DIR: /tmp/.composer/cache
+      COMPOSER_ALLOW_SUPERUSER: "1"
+      APP_ENV: testing
+      APP_DEBUG: "true"
+      APP_KEY: "base64:glJpcM7BYwWiBggp3SQ/+NlRkqsBQMaGEOjemXqJzOU="
+      APP_URL: "http://localhost"
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: "3306"
+      DB_DATABASE: ams_test
+      DB_USERNAME: ams
+      DB_PASSWORD: ams
+      CACHE_DRIVER: array
+      CACHE_STORE: array
+      SESSION_DRIVER: array
+      QUEUE_DRIVER: sync
+      QUEUE_CONNECTION: sync
+      MAIL_DRIVER: log
+      MAIL_MAILER: log
+      FILESYSTEM_DISK: local
+      IMAGE_LIB: gd
+      ENABLE_TESTING: "true"
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  mysql:
+    image: mysql:8.0
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ams_test
+      MYSQL_USER: ams
+      MYSQL_PASSWORD: ams
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "root", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    volumes:
+      - mysql:/var/lib/mysql
+
+volumes:
+  vendor:
+  storage:
+  mysql:

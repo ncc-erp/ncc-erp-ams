@@ -107,7 +107,7 @@ Sau đó agent chạy lại gate để đánh dấu xong.
   - `git rev-parse --abbrev-ref HEAD` = `chore/upgrade-php-laravel`
   - `assert_json docs/upgrade/audit-before.json`
 
-- [ ] **T02 – Xây dựng hệ thống gate test**
+- [x] **T02 – Xây dựng hệ thống gate test**
   Tạo toàn bộ cấu trúc ở phần **Gate test**: `docker-compose.test.yml` (PHP lấy từ `.php-version`, khởi đầu `8.0`, đủ extension: pdo_mysql, mbstring, gd, zip, bcmath, ldap, intl, xml, curl, fileinfo, exif), `run.sh`, `lib.sh`, `common.sh`, `partial.txt`, và **gate riêng cho cả 43 task**, viết đúng theo mục "Gate" của từng task trong file này. Mỗi gate in rõ assert nào fail.
   Cấu hình PHPUnit dùng MySQL container (`DB_HOST=mysql`, `DB_DATABASE=ams_test`), thêm testsuite `Upgrade` trỏ tới `tests/Feature/Upgrade`.
   Gate của các task sau chưa pass là bình thường. Chỉ cần `run.sh T02` pass.
@@ -118,6 +118,22 @@ Sau đó agent chạy lại gate để đánh dấu xong.
   - Self-test: `lib.sh` có test tự kiểm tra (`run.sh --selftest`) cho mỗi hàm assert, cả trường hợp PASS và FAIL
   - Gate chung chạy được trên code hiện tại. Nếu test cũ trong repo đã fail sẵn từ trước, liệt kê chúng trong `scripts/upgrade-gates/known-failures.txt` để runner bỏ qua. Danh sách này chỉ được phép **giảm** dần ở các task sau.
   - `require_approval T02`
+
+  **Ghi chú (đã duyệt trong `docs/upgrade/approvals/T02.md`):**
+  - `php artisan about` chỉ tồn tại từ Laravel 9. Trên Laravel 8 gate chung dùng
+    `php artisan --version` (cùng mục đích: kiểm tra console kernel boot được),
+    tự động chuyển lại `about` khi lên Laravel 9 (xem `scripts/upgrade-gates/common.sh`).
+  - Gate chung phải thêm 2 bước nữa mới chạy được trên code hiện tại:
+    seed `SettingsSeeder` và sinh `passport:keys`. Lý do: mọi lệnh artisan đều
+    đọc cấu hình từ bảng `settings` và Passport không boot được khi thiếu
+    `storage/oauth-*.key`.
+  - `scripts/upgrade-gates/known-failures.txt` cố tình **không** nằm trong
+    `checksums.sha256` (giống `.php-version`): danh sách này chỉ được phép giảm
+    dần, nếu khoá chặt thì không thể rút gọn khi các task sau sửa được test cũ.
+  - Container test không mount `/var/run/docker.sock` (không cần thiết, tránh
+    mở quyền điều khiển host). Vì vậy T42 build image production trên host qua
+    `scripts/upgrade-gates/build-production-image.sh` và ghi bằng chứng vào
+    `docs/upgrade/gate-results/T42-build.log` để gate kiểm tra.
 
 - [ ] **T03 – Ghi nhận môi trường prod**
   Tạo `docs/upgrade/environment.md`, liệt kê các mục cần người dùng cung cấp: PHP version, extension, web server, MySQL version trên server `ams-prod`, cách cài `vendor` hiện tại. Workflow `.github/workflows/deploy-prod.yml` hiện không chạy `composer install`. Chưa có thông tin thì để TODO và báo người dùng, không chặn task sau.

@@ -1,0 +1,10 @@
+# Tests that already fail before the upgrade started.
+#
+# The common gate runs the whole PHPUnit suite.  Every failure that is listed
+# here is ignored, every other failure fails the gate.
+#
+# Format:
+#   Tests\Unit\SomeTest::testSomething   a single test
+#   Tests\Unit\SomeTest                  every test of that class
+#
+# This list may only shrink, it must never grow.

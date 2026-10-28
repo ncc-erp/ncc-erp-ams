@@ -1,0 +1,20 @@
+# Tasks that are allowed to be marked as done with `run.sh Txx --no-common`.
+#
+# These are the tasks that upgrade to a new major version but do not fix every
+# breaking change yet, so the shared gate cannot pass until the task that
+# closes the major version (T27, T30, T37) has been done.
+#
+# The tasks that close a major version (T27, T30, T37) always have to run the
+# full gate suite.
+T20
+T21
+T22
+T23
+T24
+T25
+T26
+T28
+T29
+T34
+T35
+T36

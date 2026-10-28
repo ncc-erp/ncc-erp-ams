@@ -1,0 +1,79 @@
+# Test image for the PHP/Laravel upgrade gate suite.
+#
+# The image ships several PHP runtimes side by side. `scripts/upgrade-gates/.php-version`
+# is the single source of truth for which runtime is active: the entrypoint symlinks
+# `php` (and friends) to the requested version before the gate runner starts.
+FROM debian:bookworm-slim
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    LANG=C.UTF-8 \
+    COMPOSER_ALLOW_SUPERUSER=1 \
+    COMPOSER_HOME=/tmp/.composer \
+    COMPOSER_CACHE_DIR=/tmp/.composer/cache
+
+RUN apt-get update && apt-get install -qqy --no-install-recommends \
+        ca-certificates \
+        curl \
+        gnupg \
+        git \
+        unzip \
+        zip \
+        procps \
+        python3 \
+        python3-yaml \
+        nodejs \
+        npm \
+        default-mysql-client \
+        mariadb-client \
+    && curl -sSLo /tmp/debsuryorg-archive-keyring.deb \
+        https://packages.sury.org/debsuryorg-archive-keyring.deb \
+    && dpkg -i /tmp/debsuryorg-archive-keyring.deb \
+    && echo "deb [signed-by=/usr/share/keyrings/deb.sury.org-php.gpg] https://packages.sury.org/php/ bookworm main" \
+        > /etc/apt/sources.list.d/php.list \
+    && apt-get update && rm -rf /var/lib/apt/lists/*
+
+# Every runtime gets the extension set the gate suite needs:
+# pdo_mysql, mbstring, gd, zip, bcmath, ldap, intl, xml (dom/simplexml),
+# curl, fileinfo + exif (both ship inside phpX.Y-common).
+RUN apt-get update \
+    && for V in 8.0 8.1 8.2 8.3; do \
+        apt-get install -qqy --no-install-recommends \
+            php$V-cli \
+            php$V-fpm \
+            php$V-common \
+            php$V-mysql \
+            php$V-mbstring \
+            php$V-gd \
+            php$V-zip \
+            php$V-bcmath \
+            php$V-ldap \
+            php$V-intl \
+            php$V-xml \
+            php$V-curl; \
+    done \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN curl -sS https://getcomposer.org/installer -o /tmp/composer-setup.php \
+    && php8.3 /tmp/composer-setup.php --install-dir=/usr/local/bin --filename=composer \
+    && rm -f /tmp/composer-setup.php \
+    && composer --version
+
+# The docker client is only needed by the T42 gate, which builds the
+# production image from inside the test container.
+RUN mkdir -p /usr/local/lib/docker/cli-plugins \
+    && curl -fsSL https://download.docker.com/linux/static/stable/x86_64/docker-27.3.1.tgz -o /tmp/docker.tgz \
+    && tar -xzf /tmp/docker.tgz -C /tmp \
+    && mv /tmp/docker/docker /usr/local/bin/docker \
+    && rm -rf /tmp/docker /tmp/docker.tgz \
+    && curl -fsSL https://github.com/docker/compose/releases/download/v2.29.7/docker-compose-linux-x86_64 \
+        -o /usr/local/lib/docker/cli-plugins/docker-compose \
+    && chmod +x /usr/local/lib/docker/cli-plugins/docker-compose \
+    && docker --version
+
+COPY entrypoint.sh /usr/local/bin/upgrade-gates-entrypoint
+RUN chmod +x /usr/local/bin/upgrade-gates-entrypoint
+
+WORKDIR /var/www/html
+
+ENTRYPOINT ["/usr/local/bin/upgrade-gates-entrypoint"]
+CMD ["bash"]
