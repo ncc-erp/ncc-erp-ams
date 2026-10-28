@@ -1,0 +1,190 @@
+{
+    "advisories": {
+        "aws/aws-sdk-php": [
+            {
+                "title": "AWS SDK for PHP has CloudFront Policy Document Injection via Special Characters",
+                "cve": null,
+                "link": "https://github.com/advisories/GHSA-27qh-8cxx-2cr5",
+                "reportedAt": "2026-03-27T19:54:58+00:00",
+                "sources": [
+                    {
+                        "name": "GitHub",
+                        "remoteId": "GHSA-27qh-8cxx-2cr5"
+                    }
+                ],
+                "severity": "high",
+                "advisoryId": "PKSA-4t1p-xpk2-nsss",
+                "packageName": "aws/aws-sdk-php",
+                "affectedVersions": ">=3.11.7,<=3.371.3"
+            },
+            {
+                "title": "Key Commitment Issues in S3 Encryption Clients",
+                "cve": "CVE-2025-14761",
+                "link": "https://aws.amazon.com/security/security-bulletins/AWS-2025-032/",
+                "reportedAt": "2025-12-17T20:15:00+00:00",
+                "sources": [
+                    {
+                        "name": "FriendsOfPHP/security-advisories",
+                        "remoteId": "aws/aws-sdk-php/CVE-2025-14761.yaml"
+                    },
+                    {
+                        "name": "GitHub",
+                        "remoteId": "GHSA-x8cp-jf6f-r4xh"
+                    }
+                ],
+                "severity": "medium",
+                "advisoryId": "PKSA-dxyf-6n16-t87m",
+                "packageName": "aws/aws-sdk-php",
+                "affectedVersions": ">=3.0.0,<3.368.0"
+            }
+        ],
+        "firebase/php-jwt": [
+            {
+                "title": "php-jwt contains weak encryption",
+                "cve": "CVE-2025-45769",
+                "link": "https://github.com/advisories/GHSA-2x45-7fc3-mxwq",
+                "reportedAt": "2025-07-31T21:31:53+00:00",
+                "sources": [
+                    {
+                        "name": "GitHub",
+                        "remoteId": "GHSA-2x45-7fc3-mxwq"
+                    }
+                ],
+                "severity": "low",
+                "advisoryId": "PKSA-y2cr-5h3j-g3ys",
+                "packageName": "firebase/php-jwt",
+                "affectedVersions": "<7.0.0"
+            }
+        ],
+        "laravel/framework": [
+            {
+                "title": "Laravel TokenGuard authentication bypass through non-string API credentials",
+                "cve": "CVE-2026-114509",
+                "link": "https://github.com/advisories/GHSA-f9x3-7vq9-cph6",
+                "reportedAt": "2026-10-23T21:50:27+00:00",
+                "sources": [
+                    {
+                        "name": "GitHub",
+                        "remoteId": "GHSA-f9x3-7vq9-cph6"
+                    }
+                ],
+                "severity": "critical",
+                "advisoryId": "PKSA-b41t-wbzk-9q51",
+                "packageName": "laravel/framework",
+                "affectedVersions": "<12.68.0|>=13.0.0,<13.29.0"
+            },
+            {
+                "title": "Laravel: XSS in Debug Page Information",
+                "cve": "CVE-2026-102279",
+                "link": "https://github.com/advisories/GHSA-jh5r-qr3c-85q8",
+                "reportedAt": "2026-09-29T18:24:25+00:00",
+                "sources": [
+                    {
+                        "name": "GitHub",
+                        "remoteId": "GHSA-jh5r-qr3c-85q8"
+                    }
+                ],
+                "severity": "low",
+                "advisoryId": "PKSA-d5tc-s1qs-h781",
+                "packageName": "laravel/framework",
+                "affectedVersions": ">=13.0.0,<13.30.0|<12.69.0"
+            },
+            {
+                "title": "Laravel Framework: Temporary Signed URL Path Confusion",
+                "cve": null,
+                "link": "https://github.com/advisories/GHSA-crmm-hgp2-wgrp",
+                "reportedAt": "2026-06-17T13:54:13+00:00",
+                "sources": [
+                    {
+                        "name": "GitHub",
+                        "remoteId": "GHSA-crmm-hgp2-wgrp"
+                    }
+                ],
+                "severity": "medium",
+                "advisoryId": "PKSA-m5cs-t1y6-qpcs",
+                "packageName": "laravel/framework",
+                "affectedVersions": "<12.61.1|>=13.0.0,<13.12.0"
+            },
+            {
+                "title": "Laravel Framework: CRLF injection in default email rule ",
+                "cve": null,
+                "link": "https://github.com/advisories/GHSA-5vg9-5847-vvmq",
+                "reportedAt": "2026-06-17T13:53:44+00:00",
+                "sources": [
+                    {
+                        "name": "GitHub",
+                        "remoteId": "GHSA-5vg9-5847-vvmq"
+                    }
+                ],
+                "severity": "high",
+                "advisoryId": "PKSA-3r5d-mb8f-1qw9",
+                "packageName": "laravel/framework",
+                "affectedVersions": "<12.60.0|>=13.0.0,<=13.9.0"
+            },
+            {
+                "title": "Laravel has a File Validation Bypass",
+                "cve": "CVE-2025-27515",
+                "link": "https://github.com/advisories/GHSA-78fx-h6xr-vch4",
+                "reportedAt": "2025-03-05T19:09:39+00:00",
+                "sources": [
+                    {
+                        "name": "GitHub",
+                        "remoteId": "GHSA-78fx-h6xr-vch4"
+                    }
+                ],
+                "severity": "medium",
+                "advisoryId": "PKSA-8qx3-n5y5-vvnd",
+                "packageName": "laravel/framework",
+                "affectedVersions": "<10.48.29|>=11.0.0,<11.44.1|>=12.0.0,<12.1.1"
+            }
+        ],
+        "league/flysystem": [
+            {
+                "title": "Flysystem: WhitespacePathNormalizer's control-character (CorruptedPathDetected) check is bypassed by malformed UTF-8 in the path, affecting every adapter",
+                "cve": "CVE-2026-102601",
+                "link": "https://github.com/advisories/GHSA-cxf4-7mrp-vvpr",
+                "reportedAt": "2026-09-29T18:10:14+00:00",
+                "sources": [
+                    {
+                        "name": "GitHub",
+                        "remoteId": "GHSA-cxf4-7mrp-vvpr"
+                    }
+                ],
+                "severity": "low",
+                "advisoryId": "PKSA-w9tt-7782-78jx",
+                "packageName": "league/flysystem",
+                "affectedVersions": "<=3.35.2"
+            }
+        ],
+        "symfony/dom-crawler": [
+            {
+                "title": "CVE-2026-45071: XXE (Local File Disclosure) in DomCrawler::addXmlContent() via validateOnParse = true",
+                "cve": "CVE-2026-45071",
+                "link": "https://symfony.com/cve-2026-45071",
+                "reportedAt": "2026-05-20T08:00:00+00:00",
+                "sources": [
+                    {
+                        "name": "GitHub",
+                        "remoteId": "GHSA-x6g4-fwcc-jj8w"
+                    },
+                    {
+                        "name": "FriendsOfPHP/security-advisories",
+                        "remoteId": "symfony/dom-crawler/CVE-2026-45071.yaml"
+                    }
+                ],
+                "severity": "low",
+                "advisoryId": "PKSA-5r1g-c7b7-y1zg",
+                "packageName": "symfony/dom-crawler",
+                "affectedVersions": ">=2.0.0,<3.0.0|>=3.0.0,<4.0.0|>=4.0.0,<5.0.0|>=5.0.0,<5.1.0|>=5.1.0,<5.2.0|>=5.2.0,<5.3.0|>=5.3.0,<5.4.0|>=5.4.0,<5.4.52|>=6.0.0,<6.1.0|>=6.1.0,<6.2.0|>=6.2.0,<6.3.0|>=6.3.0,<6.4.0|>=6.4.0,<6.4.40|>=7.0.0,<7.1.0|>=7.1.0,<7.2.0|>=7.2.0,<7.3.0|>=7.3.0,<7.4.0|>=7.4.0,<7.4.12|>=8.0.0,<8.0.12"
+            }
+        ]
+    },
+    "abandoned": {
+        "doctrine/reflection": "roave/better-reflection",
+        "patchwork/utf8": "symfony/polyfill-mbstring or symfony/string",
+        "swiftmailer/swiftmailer": "symfony/mailer",
+        "codeception/module-laravel5": "codeception/module-laravel",
+        "maximebf/debugbar": "php-debugbar/php-debugbar"
+    },
+    "filter": []
+}
