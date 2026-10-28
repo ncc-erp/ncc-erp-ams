@@ -10,6 +10,8 @@ services:
     - "8000:80"
     volumes:
     - ./logs:/var/www/html/storage/logs
+    - ./tests:/var/www/html/tests
+    - ./app/Http/Controllers/Api/UsersController.php:/var/www/html/app/Http/Controllers/Api/UsersController.php
     depends_on:
     - mariadb
     - redis

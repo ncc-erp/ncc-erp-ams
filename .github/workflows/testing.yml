@@ -79,6 +79,7 @@ jobs:
           echo "KOMU_API_URL=https://komu.com/api/v1" >> .env
           echo "KOMU_SECRET_KEY=12345678" >> .env
           echo "ENABLE_TESTING=true" >> .env
+          echo "MEZON_APP_TOKEN=${{ secrets.MEZON_APP_TOKEN }}" >> .env
 
           #Generate key for application
           php artisan key:generate
