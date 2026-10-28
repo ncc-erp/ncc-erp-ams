@@ -140,7 +140,7 @@ Sau đó agent chạy lại gate để đánh dấu xong.
   **Gate:**
   - `assert_file docs/upgrade/environment.md`
 
-- [ ] **T04 – Bộ smoke test hồi quy**
+- [x] **T04 – Bộ smoke test hồi quy**
   Viết feature test trong `tests/Feature/Upgrade/`, mỗi nhóm một file, tên class đúng như dưới (gate dùng tên này để filter):
   - `SessionLoginTest`: login đúng/sai mật khẩu qua web
   - `PassportApiTest`: tạo personal access token, gọi `GET` các endpoint hardware, users, locations, categories, models; có test token sai bị 401
@@ -156,6 +156,24 @@ Sau đó agent chạy lại gate để đánh dấu xong.
   **Gate:**
   - Mỗi class trên tồn tại và `run_tests <Class>` xanh
   - `require_approval T04`
+
+  **Ghi chú (đã duyệt trong `docs/upgrade/approvals/T04.md`):**
+  - Trang login hiện tại dùng Blade form thông thường, **không** nhúng component
+    Livewire, nên `LivewireLoginTest` kiểm tra component `App\Http\Livewire\LoginForm`
+    trực tiếp (`Livewire::test('login-form')`) và kiểm tra view
+    `resources/views/livewire/login-form.blade.php` thay vì kiểm tra component nằm
+    trong trang login.
+  - Validation của User/Supplier trả về **400** (kèm lỗi trong `messages`), không
+    phải 422 — 422 chỉ dùng cho lỗi của FormRequest (ví dụ rule mật khẩu).
+  - 4 lỗi thật của app đã phải sửa để test ở tầng HTTP chạy được:
+    `SecurityHeaders` (gọi `header_remove()` sau khi đã gửi header),
+    `ProfileController` (import sai `use Image`, thiếu
+    `Intervention\Image\Facades\Image` → upload avatar lỗi 500),
+    `Importer` (`Model::unguard()` không được `reguard()` lại → mass assignment
+    bị tắt vĩnh viễn sau một lần import) và `ItemImporter` (tạo Location mà không
+    set `branch_code` → import có location mới luôn fail).
+  - `app/Services/Saml.php` không còn crash khi app chưa có settings (cần cho
+    `php artisan route:list` và cho setup wizard).
 
 - [ ] **T05 – CI & deploy**
   Thêm `.github/workflows/ci.yml` (trên `pull_request`): dựng `docker-compose.test.yml`, chạy `run.sh` với task cuối cùng đã đánh dấu `[x]` trong `tasks.md` (parse file), `composer audit` (tạm `continue-on-error: true`).

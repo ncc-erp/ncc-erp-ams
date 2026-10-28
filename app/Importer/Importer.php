@@ -141,14 +141,21 @@ abstract class Importer
 
         DB::transaction(function () use (&$results) {
             Model::unguard();
-            $resultsCount = count($results);
-            foreach ($results as $row) {
-                $this->handle($row);
-                if ($this->progressCallback) {
-                    call_user_func($this->progressCallback, $resultsCount);
-                }
 
-                $this->log('------------- Action Summary ----------------');
+            try {
+                $resultsCount = count($results);
+                foreach ($results as $row) {
+                    $this->handle($row);
+                    if ($this->progressCallback) {
+                        call_user_func($this->progressCallback, $resultsCount);
+                    }
+
+                    $this->log('------------- Action Summary ----------------');
+                }
+            } finally {
+                // the mass assignment protection has to be restored, otherwise
+                // every model that is saved afterwards would be unguarded
+                Model::reguard();
             }
         });
     }

@@ -166,4 +166,18 @@ gate_common() {
     gate_common_database
     gate_common_artisan
     gate_common_tests
+    gate_common_restore_settings
+}
+
+gate_common_restore_settings() {
+    # the test suite migrates the database from scratch, the settings row is
+    # gone afterwards and every artisan command needs it
+    local output
+    output="$(cd "$GATE_ROOT" && php artisan db:seed --class='Database\Seeders\SettingsSeeder' --force 2>&1)"
+    if [ $? -eq 0 ]; then
+        gate_record PASS "common: the default settings are seeded again after the test suite"
+    else
+        printf '%s\n' "$output" | tail -15
+        gate_record FAIL "common: the default settings are seeded again after the test suite" "see output above"
+    fi
 }

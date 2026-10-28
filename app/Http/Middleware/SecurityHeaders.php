@@ -103,6 +103,12 @@ class SecurityHeaders
 
     private function removeUnwantedHeaders($headerList)
     {
+        // in a console or a test context the headers have usually been sent
+        // already, removing them would only raise a warning
+        if (headers_sent()) {
+            return;
+        }
+
         foreach ($headerList as $header) {
             header_remove($header);
         }

@@ -152,6 +152,14 @@ class Saml
         $setting = Setting::getSettings();
         $settings = [];
 
+        // as long as the application is not set up there are no settings at
+        // all, the application must not crash because of that
+        if (is_null($setting)) {
+            $this->_enabled = false;
+
+            return;
+        }
+
         $this->_enabled = $setting->saml_enabled == '1';
 
         if ($this->isEnabled()) {

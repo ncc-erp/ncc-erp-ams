@@ -449,6 +449,7 @@ class ItemImporter extends Importer
         $location->city = '';
         $location->state = '';
         $location->country = '';
+        $location->branch_code = $this->branchCodeForNewLocation();
         $location->user_id = $this->user_id;
 
         if ($location->save()) {
@@ -459,6 +460,19 @@ class ItemImporter extends Importer
         $this->logError($location, 'Location');
 
         return null;
+    }
+
+    /**
+     * The branch code for a location that is created by an import.
+     *
+     * The import does not know the branch of the location, so it uses the
+     * branch code of the first existing location and falls back to "CA".
+     */
+    protected function branchCodeForNewLocation(): string
+    {
+        $existing = Location::whereNotNull('branch_code')->where('branch_code', '!=', '')->orderBy('id')->first();
+
+        return $existing ? (string) $existing->branch_code : 'CA';
     }
 
     /**
