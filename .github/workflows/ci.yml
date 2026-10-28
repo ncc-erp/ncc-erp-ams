@@ -1,0 +1,52 @@
+name: Upgrade Gate
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+jobs:
+  upgrade-gate:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Determine the last finished gate task
+        id: gate
+        run: |
+          set -e
+          TASK=$(grep -oE '^- \[x\] \*\*T[0-9]{2}' tasks.md | grep -oE 'T[0-9]{2}' | sort | tail -1)
+          if [ -z "$TASK" ]; then
+            echo "no finished gate task found in tasks.md" >&2
+            exit 1
+          fi
+          echo "The gate suite runs up to $TASK"
+          echo "task=$TASK" >> $GITHUB_OUTPUT
+
+      - name: Build the test stack
+        run: docker compose -f docker-compose.test.yml build app
+
+      - name: Run the upgrade gate suite
+        run: |
+          docker compose -f docker-compose.test.yml run --rm app \
+            scripts/upgrade-gates/run.sh ${{ steps.gate.outputs.task }}
+
+      - name: Composer audit (deliberately non blocking)
+        # The audit is deliberately non blocking for the duration of the
+        # upgrade: it reports the advisories of the packages that are still
+        # waiting for their patch task. It becomes blocking in T40, when every
+        # remaining advisory has to be fixed or listed in
+        # docs/upgrade/accepted-risks.md.
+        continue-on-error: true
+        run: |
+          docker compose -f docker-compose.test.yml run --rm app \
+            composer audit --locked --no-plugins --format=summary

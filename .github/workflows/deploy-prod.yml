@@ -26,6 +26,15 @@ jobs:
           git fetch origin
           git reset --hard origin/${{ github.event.inputs.branch }}
 
+      - name: Install dependencies
+        run: |
+          set -e
+          cd $APP_DIR
+          composer install --no-dev --optimize-autoloader --no-interaction
+          php artisan config:cache
+          php artisan route:cache
+          php artisan view:clear
+
       - name: Check pending migration
         id: migration_step
         run: |
