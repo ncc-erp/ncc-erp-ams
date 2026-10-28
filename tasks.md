@@ -227,7 +227,7 @@ Sau đó agent chạy lại gate để đánh dấu xong.
   `OneLogin_Saml2_Auth` ném lỗi `idp_cert_or_fingerprint_not_found_and_required`
   và SAML bị tắt (`_enabled = false`).
 
-- [ ] **T10 – Vá Passport / JWT / oauth2-server**
+- [x] **T10 – Vá Passport / JWT / oauth2-server**
   Nâng `laravel/passport` lên 10.x mới nhất.
   **Gate:**
   - `assert_min_version laravel/passport 10.4.0`, `assert_min_version firebase/php-jwt 6.0.0`, `assert_no_advisory league/oauth2-server`
