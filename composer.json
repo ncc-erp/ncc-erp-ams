@@ -19,7 +19,6 @@
     "ext-pdo": "*",
     "alek13/slack": "^2.0",
     "bacon/bacon-qr-code": "^2.0",
-    "barryvdh/laravel-debugbar": "^3.6",
     "doctrine/cache": "^1.10",
     "doctrine/common": "^2.12",
     "doctrine/dbal": "^3.1",
@@ -65,6 +64,7 @@
     "watson/validating": "^6.1"
   },
   "require-dev": {
+    "barryvdh/laravel-debugbar": "^3.6",
     "codeception/module-asserts": "2.0.0",
     "codeception/module-laravel5": "1.1.1",
     "codeception/module-rest": "2.0.0",

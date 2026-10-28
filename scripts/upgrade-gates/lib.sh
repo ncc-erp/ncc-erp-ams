@@ -71,6 +71,20 @@ audit_json() {
 # package / version asserts
 # ---------------------------------------------------------------------------
 
+# Version of the framework that is currently installed.
+framework_version() {
+    php -r '
+        $lock = json_decode(file_get_contents($argv[1]), true);
+        foreach (($lock["packages"] ?? []) as $package) {
+            if (($package["name"] ?? "") === "laravel/framework") {
+                echo ltrim($package["version"], "v");
+                exit(0);
+            }
+        }
+        echo "0";
+    ' "$GATE_ROOT/composer.lock"
+}
+
 # version_ge <a> <b> -> true when the version a is greater than or equal to b
 version_ge() {
     local lowest

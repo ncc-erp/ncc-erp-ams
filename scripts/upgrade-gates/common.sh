@@ -6,20 +6,6 @@
 # for a task listed in partial.txt.
 # ---------------------------------------------------------------------------
 
-# Version of the framework that is currently installed.
-framework_version() {
-    php -r '
-        $lock = json_decode(file_get_contents($argv[1]), true);
-        foreach (($lock["packages"] ?? []) as $package) {
-            if (($package["name"] ?? "") === "laravel/framework") {
-                echo ltrim($package["version"], "v");
-                exit(0);
-            }
-        }
-        echo "0";
-    ' "$GATE_ROOT/composer.lock"
-}
-
 gate_common_checksum() {
     local lock="$GATE_DIR/checksums.sha256" output
     if [ ! -f "$lock" ]; then

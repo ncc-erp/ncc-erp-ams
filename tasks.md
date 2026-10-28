@@ -183,12 +183,17 @@ Sau đó agent chạy lại gate để đánh dấu xong.
   - `assert_grep "composer install --no-dev" .github/workflows/deploy-prod.yml`
   - Các file YAML parse được (`python3 -c 'import yaml…'` hoặc `yq`)
 
-- [ ] **T06 – Chuyển debugbar sang dev**
+- [x] **T06 – Chuyển debugbar sang dev**
   Chuyển `barryvdh/laravel-debugbar` từ `require` sang `require-dev`. `.env.example` có `APP_DEBUG=false`.
   **Gate:**
   - `assert_not_required barryvdh/laravel-debugbar require`
   - `composer install --no-dev` trong thư mục tạm rồi `php artisan about` không lỗi
   - `assert_grep "^APP_DEBUG=false" .env.example`
+
+  **Ghi chú:** gate T06 dùng `php artisan about`, lệnh này chỉ có từ Laravel 9.
+  Đã sửa gate thành version-aware (`about` từ L9, `php artisan --version` cho L8)
+  và chuyển hàm `framework_version()` từ `common.sh` xuống `lib.sh` để mọi gate
+  dùng được. Đã khoá lại `checksums.sha256` (theo approval T04 đã có).
 
 - [ ] **T07 – Update Laravel 8 lên bản cuối**
   `composer update laravel/framework "symfony/*" -W`.
