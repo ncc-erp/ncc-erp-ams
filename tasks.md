@@ -215,11 +215,17 @@ Sau đó agent chạy lại gate để đánh dấu xong.
   - `assert_min_version livewire/livewire 2.12.7`, `assert_no_advisory livewire/livewire`
   - `run_tests LivewireLoginTest`
 
-- [ ] **T09 – Vá SAML (critical)**
+- [x] **T09 – Vá SAML (critical)**
   `composer require onelogin/php-saml:^3.8.1`. Kiểm tra `app/Services/Saml.php`, `app/Http/Controllers/Auth/SamlController.php`.
   **Gate:**
   - `assert_min_version onelogin/php-saml 3.8.1`, `assert_no_advisory onelogin/php-saml`, `assert_no_advisory robrichards/xmlseclibs`
   - Test (trong `tests/Feature/UpgradeExtra/SamlMetadataTest.php`, agent viết): bật SAML với cert test, route metadata trả 200 và XML hợp lệ
+
+  **Ghi chú:** route SAML (`saml.metadata`, `saml.acs`, `saml.sls`, `saml.login`) do
+  `App\Providers\SamlServiceProvider` đăng ký, **không** nằm trong `routes/`.
+  Metadata của IdP trong test cần có `KeyDescriptor` (chứng thư X.509), nếu không
+  `OneLogin_Saml2_Auth` ném lỗi `idp_cert_or_fingerprint_not_found_and_required`
+  và SAML bị tắt (`_enabled = false`).
 
 - [ ] **T10 – Vá Passport / JWT / oauth2-server**
   Nâng `laravel/passport` lên 10.x mới nhất.
