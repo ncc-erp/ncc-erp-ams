@@ -195,11 +195,19 @@ Sau đó agent chạy lại gate để đánh dấu xong.
   và chuyển hàm `framework_version()` từ `common.sh` xuống `lib.sh` để mọi gate
   dùng được. Đã khoá lại `checksums.sha256` (theo approval T04 đã có).
 
-- [ ] **T07 – Update Laravel 8 lên bản cuối**
+- [x] **T07 – Update Laravel 8 lên bản cuối**
   `composer update laravel/framework "symfony/*" -W`.
   **Gate:**
   - `assert_min_version laravel/framework 8.83.28`
   - `assert_min_version symfony/http-foundation 5.4.54`, `symfony/mime 5.4.52`, `symfony/routing 5.4.53`, `symfony/http-kernel 5.4.20`
+
+  **Ghi chú:** Composer 2.10 mới có chính sách chặn cài package đang có advisory
+  (`policy.advisories.block`), nên **không** `composer update` được kể cả bản đã vá
+  (toàn bộ dòng Laravel 8 / Symfony 5.4 / Flysystem 1 đều dính advisory — đó chính là
+  lý do phải nâng cấp). Đã tạm thêm `config.policy.advisories.block: false` vào
+  `composer.json` (được người dùng duyệt); việc kiểm soát advisory vẫn do gate audit
+  đảm nhiệm (`assert_no_advisory` từng package ở T08–T39, `composer audit` exit 0 ở T40).
+  **Nhớ gỡ lại setting này ở T43** khi không còn advisory nào.
 
 - [ ] **T08 – Vá Livewire (RCE)**
   `composer require livewire/livewire:^2.12.7`.

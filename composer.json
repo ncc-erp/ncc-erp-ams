@@ -119,6 +119,11 @@
     "sort-packages": true,
     "optimize-autoloader": true,
     "discard-changes": true,
-    "process-timeout": 3000
+    "process-timeout": 3000,
+    "policy": {
+      "advisories": {
+        "block": false
+      }
+    }
   }
 }
