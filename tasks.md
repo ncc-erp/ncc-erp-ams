@@ -135,7 +135,7 @@ Sau đó agent chạy lại gate để đánh dấu xong.
     `scripts/upgrade-gates/build-production-image.sh` và ghi bằng chứng vào
     `docs/upgrade/gate-results/T42-build.log` để gate kiểm tra.
 
-- [ ] **T03 – Ghi nhận môi trường prod**
+- [x] **T03 – Ghi nhận môi trường prod**
   Tạo `docs/upgrade/environment.md`, liệt kê các mục cần người dùng cung cấp: PHP version, extension, web server, MySQL version trên server `ams-prod`, cách cài `vendor` hiện tại. Workflow `.github/workflows/deploy-prod.yml` hiện không chạy `composer install`. Chưa có thông tin thì để TODO và báo người dùng, không chặn task sau.
   **Gate:**
   - `assert_file docs/upgrade/environment.md`
