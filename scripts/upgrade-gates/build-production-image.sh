@@ -35,11 +35,17 @@ else
     exit 1
 fi
 
-if docker build -f Dockerfile.alpine -t "$IMAGE" . > /tmp/t42-build.log 2>&1; then
+if docker compose -f docker-compose.yml build snipeit > /tmp/t42-build.log 2>&1; then
     log "BUILD OK"
 else
     log "BUILD FAILED"
     tail -30 /tmp/t42-build.log >> "$LOG"
+    exit 1
+fi
+
+COMPOSE_IMAGE="$(docker compose -f docker-compose.yml config --images | awk '$0 ~ /(^|-)snipeit(:|$)/ { print; exit }')"
+if [ -z "$COMPOSE_IMAGE" ] || ! docker image inspect "$COMPOSE_IMAGE" >/dev/null 2>&1; then
+    log "RESULT FAILED - compose did not produce an inspectable image for snipeit"
     exit 1
 fi
 
@@ -48,7 +54,7 @@ docker rm -f "$IMAGE" >/dev/null 2>&1
 if docker run --rm -d --name "$IMAGE" -p "$PORT:80" \
     --env-file "$GATE_ROOT/.env.docker" \
     -e APACHE_LOG_DIR=/var/log/apache2 \
-    --entrypoint /bin/sh "$IMAGE" \
+    --entrypoint /bin/sh "$COMPOSE_IMAGE" \
     -c 'php artisan config:cache >/tmp/t42-config.log 2>&1 && exec httpd -DNO_DETACH' > /dev/null 2>&1; then
     sleep 30
     code="$(curl --max-time 15 -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$PORT/health" || true)"

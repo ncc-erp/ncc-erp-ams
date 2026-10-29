@@ -21,12 +21,14 @@
 - T39: 164 asserts passed.
 - T40: 167 asserts passed.
 - T41: 171 asserts passed.
-- T42: 175 asserts passed; production image returned HTTP 200 from `/health`.
+- T42: 4 infrastructure asserts passed; the production image returned HTTP 200 from `/health`.
 - T43: 178 asserts passed, including the final audit and report checkpoint.
 
 ## Remaining risk
 
 The frontend audit is recorded in `npm-audit.txt`: 128 legacy transitive vulnerabilities (7 low, 35 moderate, 48 high, 38 critical) remain in the Vue 2/AdminLTE-era asset tree. They are outside Composer/Laravel runtime resolution and should be handled as a separate frontend modernization effort; the production build itself is green.
+
+The operator still needs to fill in `docs/upgrade/environment.md`, verify the configured `PHP_FPM_SERVICE` on the deployment runner, and complete the staging checklist before production rollout.
 
 ## Rollback
 

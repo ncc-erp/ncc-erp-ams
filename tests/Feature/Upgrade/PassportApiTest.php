@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Upgrade;
 
+use PHPUnit\Framework\Attributes\DataProvider;
+
 /**
  * The Passport based API has to keep working: personal access tokens, the
  * read endpoints of the main resources and the rejection of invalid tokens.
@@ -18,9 +20,7 @@ class PassportApiTest extends UpgradeTestCase
         $this->assertDatabaseCount('oauth_access_tokens', 1);
     }
 
-    /**
-     * @dataProvider readOnlyEndpoints
-     */
+    #[DataProvider('readOnlyEndpoints')]
     public function testTheReadEndpointsAreReachableWithAToken(string $endpoint): void
     {
         $user = $this->createSuperUser();

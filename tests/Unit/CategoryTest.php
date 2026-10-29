@@ -29,7 +29,7 @@ class CategoryTest extends BaseTest
         ];
         $errors = $a->getErrors();
         foreach ($fields as $field => $fieldTitle) {
-            $this->assertEquals($errors->get($field)[0], "The ${fieldTitle} field is required.");
+            $this->assertEquals($errors->get($field)[0], "The {$fieldTitle} field is required.");
         }
     }
 

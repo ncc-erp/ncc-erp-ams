@@ -9,6 +9,7 @@ use App\Models\Statuslabel;
 use App\Models\Category;
 use App\Models\Supplier;
 use Carbon\Carbon;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\Unit\BaseTest;
 
 class AssetTest extends BaseTest
@@ -37,9 +38,7 @@ class AssetTest extends BaseTest
     // }
 
 
-    /**
-     * @test
-     */
+    #[Test]
     public function testWarrantyExpiresAttribute()
     {
         $status_label = Statuslabel::factory()->readyToDeploy()->create();

@@ -19,7 +19,7 @@ COMPOSER_LOCK="${COMPOSER_LOCK:-$GATE_ROOT/composer.lock}"
 GATE_PASS_COUNT=0
 GATE_FAIL_COUNT=0
 GATE_LOG_FILE="${GATE_LOG_FILE:-}"
-GATE_AUDIT_JSON=""
+GATE_AUDIT_JSON="${GATE_AUDIT_JSON:-}"
 GATE_TESTS_RUN=""
 GATE_JUNIT_FILE=""
 GATE_JUNIT_REPORT="/tmp/gate-junit-report.xml"
@@ -317,7 +317,7 @@ assert_no_advisory() {
         $data = json_decode(file_get_contents($argv[1]), true);
         $advisories = $data["advisories"] ?? [];
         echo count($advisories[$argv[2]] ?? []);
-    ' "$json")"
+    ' "$json" "$pkg")"
     if [ "${count:-1}" = "0" ]; then
         gate_record PASS "assert_no_advisory $pkg"
         return 0
@@ -559,6 +559,15 @@ gate_selftest() {
     }
 }
 JSON
+    cat > "$fixture/audit.json" <<'JSON'
+{
+    "advisories": {
+        "foo/bar": [
+            {"advisoryId": "TEST-1", "severity": "high"}
+        ]
+    }
+}
+JSON
     cat > "$fixture/composer.lock" <<'JSON'
 {
     "packages": [
@@ -617,6 +626,8 @@ JSON
     run_case "assert_file fail"              fail "assert_file '$fixture/app/missing.txt'"
     run_case "assert_json pass"              pass "assert_json '$fixture/data.json'"
     run_case "assert_json fail"              fail "assert_json '$fixture/broken.json'"
+    run_case "assert_no_advisory pass"       pass "GATE_AUDIT_JSON='$fixture/audit.json'; assert_no_advisory ghost/pkg"
+    run_case "assert_no_advisory fail"       fail "GATE_AUDIT_JSON='$fixture/audit.json'; assert_no_advisory foo/bar"
     run_case "assert_php_min pass"           pass "assert_php_min 7.0"
     run_case "assert_php_min fail"           fail "assert_php_min 99.0"
     run_case "require_approval pass"         pass "require_approval T99"

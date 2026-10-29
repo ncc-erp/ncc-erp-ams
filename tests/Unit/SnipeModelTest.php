@@ -2,6 +2,7 @@
 namespace Tests\Unit;
 
 use App\Models\SnipeModel;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\Unit\BaseTest;
 
 class SnipeModelTest extends BaseTest
@@ -13,9 +14,7 @@ class SnipeModelTest extends BaseTest
 
     // tests
 
-    /**
-     * @test
-     */
+    #[Test]
     public function it_sets_purchase_dates_appropriately()
     {
         $c = new SnipeModel;
@@ -25,9 +24,7 @@ class SnipeModelTest extends BaseTest
         $this->assertTrue($c->purchase_date === '2016-03-25 12:35:50');
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function it_sets_purchase_costs_appropriately()
     {
         $c = new SnipeModel;
@@ -39,9 +36,7 @@ class SnipeModelTest extends BaseTest
         $this->assertTrue($c->purchase_cost === 9.5);
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function it_nulls_blank_location_ids_but_not_others()
     {
         $c = new SnipeModel;
@@ -51,9 +46,7 @@ class SnipeModelTest extends BaseTest
         $this->assertTrue($c->location_id == 5);
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function it_nulls_blank_categories_but_not_others()
     {
         $c = new SnipeModel;
@@ -63,9 +56,7 @@ class SnipeModelTest extends BaseTest
         $this->assertTrue($c->category_id == 1);
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function it_nulls_blank_suppliers_but_not_others()
     {
         $c = new SnipeModel;
@@ -75,9 +66,7 @@ class SnipeModelTest extends BaseTest
         $this->assertTrue($c->supplier_id == 4);
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function it_nulls_blank_depreciations_but_not_others()
     {
         $c = new SnipeModel;
@@ -87,9 +76,7 @@ class SnipeModelTest extends BaseTest
         $this->assertTrue($c->depreciation_id == 4);
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function it_nulls_blank_manufacturers_but_not_others()
     {
         $c = new SnipeModel;

@@ -1,0 +1,15 @@
+Upgrade gate run
+task:   T32
+when:   2026-10-29T04:41:46Z
+php:    8.3.36
+branch: chore/upgrade-php-laravel
+commit: 97e55aa35
+
+
+== Gate T32 ==
+
+== T32 - laravelcollective/html replaced ==
+PASS  assert_not_installed laravelcollective/html
+PASS  run_test_classes FormPagesRenderTest (green)
+
+=== T32: PASS (2 asserts) ===

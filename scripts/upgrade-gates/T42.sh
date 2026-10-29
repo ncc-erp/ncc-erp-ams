@@ -29,4 +29,4 @@ else
 fi
 
 assert_no_grep "continue-on-error" ".github/workflows/ci.yml"
-assert_no_grep "php7|php:7|7\.4" Dockerfile Dockerfile.alpine Dockerfile.fpm-alpine Dockerfile.php8.1 docker-compose.yml install.sh ansible
+assert_no_grep "php7|php:7|7\.4|php8\.0|PHP 8\.1" Dockerfile Dockerfile.alpine Dockerfile.fpm-alpine Dockerfile.php8.1 docker-compose.yml install.sh snipeit.sh README.md SETUP.md .github/workflows ansible

@@ -23,7 +23,7 @@ The ERP-AMS is an open-source application used to track and manage the company's
 Before you begin, ensure you have met the following requirements:
 
 - [Visual Studio Code](https://code.visualstudio.com/download) installed.
-- [PHP 8.1](https://www.php.net/downloads) installed.
+- [PHP 8.3](https://www.php.net/downloads) installed.
 - [Composer 2.4.2](https://getcomposer.org/download/) installed.
 - [MySql 8.0](https://dev.mysql.com/downloads/installer/) installed.
 - [NodeJS](https://nodejs.org/en/download) installed

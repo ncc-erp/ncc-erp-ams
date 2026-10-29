@@ -362,6 +362,7 @@ Sau đó agent chạy lại gate để đánh dấu xong.
   - Chạy test với `error_reporting=E_ALL` và `failOnDeprecation`/`--fail-on-deprecation` cho code trong `app/` (deprecation từ `vendor/` thì bỏ qua)
 
 - [x] **T32 – Thay `laravelcollective/html`**
+  **Lựa chọn:** dùng `rdx/laravelcollective-html` bản `^6.4`, giữ namespace drop-in `Collective\\Html` để không phải sửa hàng loạt view; `FormPagesRenderTest` xác nhận các form chính vẫn render được.
   Mặc định dùng fork drop-in giữ namespace `Collective\Html` và có hỗ trợ L10–L13 (ví dụ `rdx/laravelcollective-html`). Nếu không phù hợp, chuyển sang `spatie/laravel-html` và sửa 97 file view. Ghi lựa chọn dưới task.
   **Gate (đầy đủ):**
   - `assert_not_installed laravelcollective/html`

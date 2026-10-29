@@ -342,6 +342,27 @@ case $distro in
 esac
 shopt -u nocasematch
 
+case "$distro" in
+  debian)
+    debian_major="${version%%.*}"
+    if ! [[ "$debian_major" =~ ^[0-9]+$ ]] || [ "$debian_major" -lt 11 ]; then
+      echo "Unsupported Debian version for PHP 8.3. Debian 11 or newer is required. Version found: $version"
+      exit 1
+    fi
+    ;;
+  ubuntu)
+    ubuntu_version="${version//./}"
+    if ! [[ "$ubuntu_version" =~ ^[0-9]+$ ]] || [ "$ubuntu_version" -lt 2004 ]; then
+      echo "Unsupported Ubuntu version for PHP 8.3. Ubuntu 20.04 or newer is required. Version found: $version"
+      exit 1
+    fi
+    ;;
+  *)
+    echo "Unsupported operating system for PHP 8.3. Use Debian 11+ or Ubuntu 20.04+. Detected: $distro $version"
+    exit 1
+    ;;
+esac
+
 echo -n "  Q. What is the FQDN of your server? ($(hostname --fqdn)): "
 read -r fqdn
 if [ -z "$fqdn" ]; then
@@ -388,7 +409,7 @@ case $distro in
     progress
 
     echo "* Installing Apache httpd, PHP, MariaDB and other requirements."
-    PACKAGES="mariadb-server mariadb-client apache2 libapache2-mod-php7.4 php7.4 php7.4-mcrypt php7.4-curl php7.4-mysql php7.4-gd php7.4-ldap php7.4-zip php7.4-mbstring php7.4-xml php7.4-bcmath curl git unzip"
+    PACKAGES="mariadb-server mariadb-client apache2 libapache2-mod-php8.3 php8.3 php8.3-curl php8.3-mysql php8.3-gd php8.3-ldap php8.3-zip php8.3-mbstring php8.3-xml php8.3-bcmath curl git unzip"
     install_packages
 
     echo "* Configuring Apache."
@@ -420,7 +441,7 @@ case $distro in
     progress
 
     echo "* Installing Apache httpd, PHP, MariaDB and other requirements."
-    PACKAGES="mariadb-server mariadb-client apache2 libapache2-mod-php7.3 php7.3 php7.3-mcrypt php7.3-curl php7.3-mysql php7.3-gd php7.3-ldap php7.3-zip php7.3-mbstring php7.3-xml php7.3-bcmath curl git unzip"
+    PACKAGES="mariadb-server mariadb-client apache2 libapache2-mod-php8.3 php8.3 php8.3-curl php8.3-mysql php8.3-gd php8.3-ldap php8.3-zip php8.3-mbstring php8.3-xml php8.3-bcmath curl git unzip"
     install_packages
 
     echo "* Configuring Apache."
@@ -452,7 +473,7 @@ case $distro in
     progress
 
     echo "* Installing Apache httpd, PHP, MariaDB and other requirements."
-    PACKAGES="mariadb-server mariadb-client apache2 libapache2-mod-php7.4 php7.4 php7.4-mcrypt php7.4-curl php7.4-mysql php7.4-gd php7.4-ldap php7.4-zip php7.4-mbstring php7.4-xml php7.4-bcmath curl git unzip"
+    PACKAGES="mariadb-server mariadb-client apache2 libapache2-mod-php8.3 php8.3 php8.3-curl php8.3-mysql php8.3-gd php8.3-ldap php8.3-zip php8.3-mbstring php8.3-xml php8.3-bcmath curl git unzip"
     install_packages
 
     echo "* Configuring Apache."
@@ -486,7 +507,7 @@ case $distro in
     progress
 
     echo "* Installing Apache httpd, PHP, MariaDB and other requirements."
-    PACKAGES="mariadb-server mariadb-client php7.4 php7.4-mcrypt php7.4-curl php7.4-mysql php7.4-gd php7.4-ldap php7.4-zip php7.4-mbstring php7.4-xml php7.4-bcmath curl git unzip"
+    PACKAGES="mariadb-server mariadb-client php8.3 php8.3-curl php8.3-mysql php8.3-gd php8.3-ldap php8.3-zip php8.3-mbstring php8.3-xml php8.3-bcmath curl git unzip"
     install_packages
 
     echo "* Configuring Apache."
@@ -511,20 +532,21 @@ case $distro in
   ;;
   ubuntu)
   if [ "${version//./}" -ge "1804" ]; then
-    # Install for Ubuntu 18.04
+    # Install for supported Ubuntu releases with PHP 8.3 from Ondrej's PPA.
     tzone=$(cat /etc/timezone)
 
+    log "apt-get install -y software-properties-common"
+    log "add-apt-repository -y ppa:ondrej/php"
     echo -n "* Updating installed packages."
     log "apt-get update && DEBIAN_FRONTEND=noninteractive apt-get -y upgrade" & pid=$!
     progress
 
     echo "* Installing Apache httpd, PHP, MariaDB and other requirements."
-    PACKAGES="mariadb-server mariadb-client apache2 libapache2-mod-php php php-mcrypt php-curl php-mysql php-gd php-ldap php-zip php-mbstring php-xml php-bcmath curl git unzip"
+    PACKAGES="mariadb-server mariadb-client apache2 libapache2-mod-php8.3 php8.3 php8.3-curl php8.3-mysql php8.3-gd php8.3-ldap php8.3-zip php8.3-mbstring php8.3-xml php8.3-bcmath curl git unzip"
     install_packages
 
     echo "* Configuring Apache."
     create_virtualhost
-    log "phpenmod mcrypt"
     log "phpenmod mbstring"
     log "a2enmod rewrite"
     log "a2ensite $APP_NAME.conf"
@@ -557,12 +579,11 @@ case $distro in
     progress
 
     echo "* Installing Apache httpd, PHP, MariaDB and other requirements."
-    PACKAGES="mariadb-server mariadb-client apache2 libapache2-mod-php7.4 php7.4 php7.4-mcrypt php7.4-curl php7.4-mysql php7.4-gd php7.4-ldap php7.4-zip php7.4-mbstring php7.4-xml php7.4-bcmath curl git unzip"
+    PACKAGES="mariadb-server mariadb-client apache2 libapache2-mod-php8.3 php8.3 php8.3-curl php8.3-mysql php8.3-gd php8.3-ldap php8.3-zip php8.3-mbstring php8.3-xml php8.3-bcmath curl git unzip"
     install_packages
 
     echo "* Configuring Apache."
     create_virtualhost
-    log "phpenmod mcrypt"
     log "phpenmod mbstring"
     log "a2enmod rewrite"
     log "a2ensite $APP_NAME.conf"
@@ -594,12 +615,11 @@ case $distro in
     progress
 
     echo "* Installing Apache httpd, PHP, MariaDB and other requirements."
-    PACKAGES="mariadb-server mariadb-client php7.4 php7.4-mcrypt php7.4-curl php7.4-mysql php7.4-gd php7.4-ldap php7.4-zip php7.4-mbstring php7.4-xml php7.4-bcmath curl git unzip"
+    PACKAGES="mariadb-server mariadb-client php8.3 php8.3-curl php8.3-mysql php8.3-gd php8.3-ldap php8.3-zip php8.3-mbstring php8.3-xml php8.3-bcmath curl git unzip"
     install_packages
 
     echo "* Configuring Apache."
     create_virtualhost
-    log "phpenmod mcrypt"
     log "phpenmod mbstring"
     log "a2enmod rewrite"
     log "a2ensite $APP_NAME.conf"
@@ -644,12 +664,11 @@ EOL
     progress
 
     echo "* Installing Apache httpd, PHP, MariaDB and other requirements."
-    PACKAGES="mariadb-server mariadb-client apache2 libapache2-mod-php7.2 php7.2 php7.2-mcrypt php7.2-curl php7.2-mysql php7.2-gd php7.2-ldap php7.2-zip php7.2-mbstring php7.2-xml php7.2-bcmath curl git unzip"
+    PACKAGES="mariadb-server mariadb-client apache2 libapache2-mod-php8.3 php8.3 php8.3-curl php8.3-mysql php8.3-gd php8.3-ldap php8.3-zip php8.3-mbstring php8.3-xml php8.3-bcmath curl git unzip"
     install_packages
 
     echo "* Configuring Apache."
     create_virtualhost
-    log "phpenmod mcrypt"
     log "phpenmod mbstring"
     log "a2enmod rewrite"
     log "a2ensite $APP_NAME.conf"
@@ -693,7 +712,7 @@ EOL
     log "rpm --import /etc/pki/rpm-gpg/IUS-COMMUNITY-GPG-KEY"
 
     echo "* Installing Apache httpd, PHP, MariaDB and other requirements."
-    PACKAGES="httpd mariadb-server git unzip php71u php71u-mysqlnd php71u-bcmath php71u-cli php71u-common php71u-embedded php71u-gd php71u-mbstring php71u-mcrypt php71u-ldap php71u-json php71u-simplexml php71u-process"
+    PACKAGES="httpd mariadb-server git unzip php83 php83-mysqlnd php83-bcmath php83-cli php83-common php83-embedded php83-gd php83-mbstring php83-ldap php83-json php83-simplexml php83-process"
     install_packages
 
     echo "* Configuring Apache."
@@ -730,7 +749,7 @@ EOL
     log "rpm --import /etc/pki/rpm-gpg/IUS-COMMUNITY-GPG-KEY"
 
     echo "* Installing Apache httpd, PHP, MariaDB and other requirements."
-    PACKAGES="httpd mariadb-server git unzip php71u php71u-mysqlnd php71u-bcmath php71u-cli php71u-common php71u-embedded php71u-gd php71u-mbstring php71u-mcrypt php71u-ldap php71u-json php71u-simplexml php71u-process"
+    PACKAGES="httpd mariadb-server git unzip php83 php83-mysqlnd php83-bcmath php83-cli php83-common php83-embedded php83-gd php83-mbstring php83-ldap php83-json php83-simplexml php83-process"
     install_packages
 
     echo "* Configuring Apache."
@@ -765,7 +784,7 @@ EOL
     tzone=$(timedatectl | gawk -F'[: ]' ' $9 ~ /zone/ {print $11}');
 
     echo "* Installing Apache httpd, PHP, MariaDB and other requirements."
-    PACKAGES="httpd mariadb-server git unzip php php-mysqlnd php-bcmath php-cli php-common php-embedded php-gd php-mbstring php-mcrypt php-ldap php-json php-simplexml"
+    PACKAGES="httpd mariadb-server git unzip php83 php83-mysqlnd php83-bcmath php83-cli php83-common php83-embedded php83-gd php83-mbstring php83-ldap php83-json php83-simplexml"
     install_packages
 
     echo "* Configuring Apache."

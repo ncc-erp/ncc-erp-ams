@@ -204,11 +204,11 @@ abstract class Importer
         $val = $default;
         $key = $this->lookupCustomKey($key);
 
-        $this->log("Custom Key: ${key}");
+        $this->log("Custom Key: {$key}");
         if (array_key_exists($key, $array)) {
             $val = Encoding::toUTF8(trim($array[$key]));
         }
-        $this->log("${key}: ${val}");
+        $this->log("{$key}: {$val}");
         return $val;
     }
 

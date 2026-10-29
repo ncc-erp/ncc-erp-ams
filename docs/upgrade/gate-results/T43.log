@@ -1,9 +1,9 @@
 Upgrade gate run
 task:   T43
-when:   2026-10-29T04:26:11Z
+when:   2026-10-29T04:47:52Z
 php:    8.3.36
 branch: chore/upgrade-php-laravel
-commit: eca0ffe33
+commit: 97e55aa35
 
 
 == Common gate ==
@@ -349,7 +349,7 @@ PASS  assert_file docs/upgrade/npm-audit.txt
 PASS  the production image builds and the container answers with HTTP 200/302 on /
 PASS  docker-compose.yml is a valid compose file
 PASS  assert_no_grep 'continue-on-error' in .github/workflows/ci.yml
-PASS  assert_no_grep 'php7|php:7|7\.4' in Dockerfile Dockerfile.alpine Dockerfile.fpm-alpine Dockerfile.php8.1 docker-compose.yml install.sh ansible
+PASS  assert_no_grep 'php7|php:7|7\.4|php8\.0|PHP 8\.1' in Dockerfile Dockerfile.alpine Dockerfile.fpm-alpine Dockerfile.php8.1 docker-compose.yml install.sh snipeit.sh README.md SETUP.md .github/workflows ansible
 
 == Gate T43 ==
 

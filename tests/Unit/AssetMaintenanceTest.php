@@ -2,6 +2,7 @@
 namespace Tests\Unit;
 
 use App\Models\AssetMaintenance;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\Unit\BaseTest;
 use Carbon\Carbon;
 
@@ -12,9 +13,7 @@ class AssetMaintenanceTest extends BaseTest
      */
     protected $tester;
 
-    /**
-     * @test
-     */
+    #[Test]
     public function it_zeros_out_warranty_if_blank()
     {
         $c = new AssetMaintenance;
@@ -24,9 +23,7 @@ class AssetMaintenanceTest extends BaseTest
         $this->assertTrue($c->is_warranty == 4);
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function it_sets_costs_appropriately()
     {
         $c = new AssetMaintenance();
@@ -38,9 +35,7 @@ class AssetMaintenanceTest extends BaseTest
         $this->assertTrue($c->cost === 9.5);
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function it_nulls_out_notes_if_blank()
     {
         $c = new AssetMaintenance;
@@ -50,9 +45,7 @@ class AssetMaintenanceTest extends BaseTest
         $this->assertTrue($c->notes === 'This is a long note');
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function it_nulls_out_completion_date_if_blank_or_invalid()
     {
         $c = new AssetMaintenance;

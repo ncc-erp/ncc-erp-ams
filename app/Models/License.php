@@ -168,7 +168,7 @@ class License extends Depreciable
             $logAction->item_type = self::class;
             $logAction->item_id = $license->id;
             $logAction->user_id = Auth::id() ?: 1; // We don't have an id while running the importer from CLI.
-            $logAction->note = "deleted ${change} seats";
+            $logAction->note = "deleted {$change} seats";
             $logAction->target_id = null;
             $logAction->logaction('delete seats');
 
@@ -199,7 +199,7 @@ class License extends Depreciable
             $logAction->item_type = self::class;
             $logAction->item_id = $license->id;
             $logAction->user_id = Auth::id() ?: 1; // Importer.
-            $logAction->note = "added ${change} seats";
+            $logAction->note = "added {$change} seats";
             $logAction->target_id = null;
             $logAction->logaction('add seats');
         }

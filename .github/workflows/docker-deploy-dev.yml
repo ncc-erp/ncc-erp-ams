@@ -121,7 +121,7 @@ jobs:
         run: docker rmi ncc-erp-ams-be:latest || true
 
       - name: Build Docker image
-        run: docker build -t ncc-erp-ams-be:latest -f Dockerfile.php8.0 .
+        run: docker build -t ncc-erp-ams-be:latest -f Dockerfile .
 
   deploy:
     runs-on: ams-dev

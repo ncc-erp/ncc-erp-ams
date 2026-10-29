@@ -31,20 +31,30 @@ jobs:
           set -e
           cd $APP_DIR
           composer install --no-dev --optimize-autoloader --no-interaction
-          php artisan config:cache
-          php artisan route:cache
+          php artisan optimize
           php artisan view:clear
 
-      - name: Check pending migration
+      - name: Run database migrations
         id: migration_step
         run: |
+          set -e
           cd $APP_DIR
-          php artisan migrate:status | grep 'No' > /tmp/pending_migration.txt || true
-          if [ -s /tmp/pending_migration.txt ]; then
-            echo "Pending migrations found."
-            php artisan migrate --force
+          php artisan migrate --force
+
+      - name: Restart application workers
+        run: |
+          set -e
+          cd $APP_DIR
+          php artisan queue:restart
+
+          PHP_FPM_SERVICE="${PHP_FPM_SERVICE:-php8.3-fpm}"
+          if command -v systemctl >/dev/null 2>&1 && systemctl list-unit-files "$PHP_FPM_SERVICE.service" --no-legend 2>/dev/null | grep -q "$PHP_FPM_SERVICE.service"; then
+            sudo systemctl reload "$PHP_FPM_SERVICE.service"
+          elif command -v service >/dev/null 2>&1 && service "$PHP_FPM_SERVICE" status >/dev/null 2>&1; then
+            sudo service "$PHP_FPM_SERVICE" reload
           else
-            echo "No pending migrations."
+            echo "PHP-FPM service '$PHP_FPM_SERVICE' was not found; set PHP_FPM_SERVICE on the runner."
+            exit 1
           fi
 
       - name: Rollback (Restore DB if migration error)

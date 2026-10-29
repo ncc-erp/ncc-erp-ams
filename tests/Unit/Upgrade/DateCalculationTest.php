@@ -5,6 +5,7 @@ namespace Tests\Unit\Upgrade;
 use App\Models\Actionlog;
 use App\Models\Asset;
 use Carbon\Carbon;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class DateCalculationTest extends TestCase
@@ -42,9 +43,7 @@ class DateCalculationTest extends TestCase
         );
     }
 
-    /**
-     * @dataProvider signedDateDifferenceProvider
-     */
+    #[DataProvider('signedDateDifferenceProvider')]
     public function testSignedLicenseDateDifferencesKeepTheirDirection(string $purchase, string $expiration, int $expected): void
     {
         $purchaseDate = Carbon::parse($purchase);
