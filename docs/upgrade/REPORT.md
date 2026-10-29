@@ -14,6 +14,7 @@
 - Laravel 11 migrations and the generated 64-table schema fixture match.
 - The production image uses PHP 8.3 and exposes a database-independent `/health` probe.
 - Frontend assets build successfully with `npm ci` and `npm run production`.
+- Unused frontend dependencies were removed and the lockfile was refreshed; webpack is pinned to 5.76.0 to remove its critical advisory while preserving Laravel Mix compatibility.
 
 ## Validation
 
@@ -26,7 +27,7 @@
 
 ## Remaining risk
 
-The frontend audit is recorded in `npm-audit.txt`: 128 legacy transitive vulnerabilities (7 low, 35 moderate, 48 high, 38 critical) remain in the Vue 2/AdminLTE-era asset tree. They are outside Composer/Laravel runtime resolution and should be handled as a separate frontend modernization effort; the production build itself is green.
+The frontend audit is recorded in `npm-audit.txt`: 32 vulnerabilities remain (6 low, 19 moderate, 7 high, 0 critical). The remaining high findings are concentrated in the Vue 2/AdminLTE 2/Bootstrap 3 and legacy table-export stack; resolving them requires a separate frontend modernization or package replacement effort. The production build itself is green.
 
 The operator still needs to fill in `docs/upgrade/environment.md`, verify the configured `PHP_FPM_SERVICE` on the deployment runner, and complete the staging checklist before production rollout.
 
