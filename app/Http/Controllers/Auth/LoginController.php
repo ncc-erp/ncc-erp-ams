@@ -117,7 +117,7 @@ class LoginController extends Controller
                 }
 
                 if ($user = Auth::user()) {
-                    $user->last_login = \Carbon::now();
+                    $user->last_login = \Carbon\Carbon::now();
                     $user->save();
                 }
             } catch (\Exception $e) {
@@ -296,7 +296,7 @@ class LoginController extends Controller
         }
 
         if ($user = Auth::user()) {
-            $user->last_login = \Carbon::now();
+            $user->last_login = \Carbon\Carbon::now();
             $user->activated = 1;
             $user->save();
         }

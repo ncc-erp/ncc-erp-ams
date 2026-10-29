@@ -3,10 +3,10 @@
         <label for="custom_fieldset" class="col-md-3 control-label">{{ trans('admin/models/general.fieldset') }}</label>
         <span wire:ignore> {{-- wire:ignore is because Select 2 mangles the dom in many awful ways, and so does iCheckbox --}}
             <div class="col-md-9">
-                {{ Form::select('custom_fieldset', Helper::customFieldsetList(), old('custom_fieldset', $fieldset_id), array('class'=>'select2 js-fieldset-field', 'style'=>'width:350px', 'aria-label'=>'custom_fieldset', 'wire:model' => 'fieldset_id', 'id' => 'glooobits')) }} {{-- when we have this wrapped in 'ignore', the wire:model won't work --}}
+                {{ Form::select('custom_fieldset', Helper::customFieldsetList(), old('custom_fieldset', $fieldset_id), array('class'=>'select2 js-fieldset-field', 'style'=>'width:350px', 'aria-label'=>'custom_fieldset', 'wire:model.live' => 'fieldset_id', 'id' => 'glooobits')) }} {{-- when we have this wrapped in 'ignore', the wire:model won't work --}}
                 {!! $errors->first('custom_fieldset', '<span class="alert-msg" aria-hidden="true"><br><i class="fas fa-times"></i> :message</span>') !!}
                 <label class="m-l-xs">
-                    {{ Form::checkbox('add_default_values', 1, Request::old('add_default_values', $add_default_values), ['class' => 'minimal', 'wire:model' => "add_default_values", 'id' => 'add_default_values']) }}
+                    {{ Form::checkbox('add_default_values', 1, Request::old('add_default_values', $add_default_values), ['class' => 'minimal', 'wire:model.live' => "add_default_values", 'id' => 'add_default_values']) }}
                     {{ trans('admin/models/general.add_default_values') }}
                 </label>
                 </span>
@@ -77,10 +77,10 @@
     $(function () {
         $('#glooobits').on('select2:select',function (event) { //'change' seems to be the jquery-compatible version but I think the select2 versions might be nicer.
             {{-- @this.set('fieldset_id',event.params.data.id) --}}
-            Livewire.first().set('fieldset_id',event.params.data.id) // I still don't know why @this does'nt work here?
+            Livewire.find(document.querySelector('[wire\\\\:id]').getAttribute('wire:id')).$set('fieldset_id', event.params.data.id)
         })
         $('#add_default_values').on('ifToggled',function (event) {
-            Livewire.first().set('add_default_values',event.target.checked)
+            Livewire.find(document.querySelector('[wire\\\\:id]').getAttribute('wire:id')).$set('add_default_values', event.target.checked)
         })
     })
     </script>

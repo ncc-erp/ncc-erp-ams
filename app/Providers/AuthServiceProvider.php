@@ -80,6 +80,8 @@ class AuthServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        Passport::$clientUuids = false;
+
         $this->commands([
             \Laravel\Passport\Console\InstallCommand::class,
             \Laravel\Passport\Console\ClientCommand::class,
@@ -179,10 +181,10 @@ class AuthServiceProvider extends ServiceProvider
             'self.edit_location'  => 'test',
             'self.checkout_assets'  => 'test',
         ]);
-        Passport::routes();
-        Passport::tokensExpireIn(Carbon::now()->addYears(config('passport.expiration_years')));
-        Passport::refreshTokensExpireIn(Carbon::now()->addYears(config('passport.expiration_years')));
-        Passport::personalAccessTokensExpireIn(Carbon::now()->addYears(config('passport.expiration_years')));
+        $expirationYears = (int) config('passport.expiration_years');
+        Passport::tokensExpireIn(Carbon::now()->addYears($expirationYears));
+        Passport::refreshTokensExpireIn(Carbon::now()->addYears($expirationYears));
+        Passport::personalAccessTokensExpireIn(Carbon::now()->addYears($expirationYears));
         Passport::withCookieSerialization();
         
 

@@ -1,32 +1,32 @@
-FROM alpine:3.14.2
+FROM alpine:3.20
 # Apache + PHP
 RUN  apk add --no-cache \
         apache2 \
-        php7 \
-        php7-common \
-        php7-apache2 \
-        php7-curl \
-        php7-ldap \
-        php7-mysqli \
-        php7-gd \
-        php7-xml \
-        php7-mbstring \
-        php7-zip \
-        php7-ctype \
-        php7-tokenizer \
-        php7-pdo_mysql \
-        php7-openssl \
-        php7-bcmath \
-        php7-phar \
-        php7-json \
-        php7-iconv \
-        php7-fileinfo \
-        php7-simplexml \
-        php7-session \
-        php7-dom \
-        php7-xmlwriter \
-        php7-xmlreader \
-        php7-sodium \
+        php83 \
+        php83-common \
+        php83-apache2 \
+        php83-curl \
+        php83-ldap \
+        php83-mysqli \
+        php83-gd \
+        php83-xml \
+        php83-mbstring \
+        php83-zip \
+        php83-ctype \
+        php83-tokenizer \
+        php83-pdo_mysql \
+        php83-openssl \
+        php83-bcmath \
+        php83-phar \
+        php83-json \
+        php83-iconv \
+        php83-fileinfo \
+        php83-simplexml \
+        php83-session \
+        php83-dom \
+        php83-xmlwriter \
+        php83-xmlreader \
+        php83-sodium \
         curl \
         wget \
         vim \
@@ -39,7 +39,7 @@ COPY docker/column-statistics.cnf /etc/mysql/conf.d/column-statistics.cnf
 # Where apache's PID lives
 RUN mkdir -p /run/apache2 && chown apache:apache /run/apache2
 
-RUN sed -i 's/variables_order = .*/variables_order = "EGPCS"/' /etc/php7/php.ini
+RUN sed -i 's/variables_order = .*/variables_order = "EGPCS"/' /etc/php83/php.ini
 COPY  docker/000-default-2.4.conf /etc/apache2/conf.d/default.conf
 
 # Enable mod_rewrite

@@ -60,6 +60,11 @@ return [
                  * Determines if it should avoid unreadable folders.
                  */
                 'ignore_unreadable_directories' => false,
+
+                /*
+                 * Keep absolute paths out of the backup archive entries.
+                 */
+                'relative_path' => null,
             ],
 
             'databases' => [
@@ -80,7 +85,14 @@ return [
          */
         'database_dump_compressor' => null,
 
+        'database_dump_file_timestamp_format' => null,
+        'database_dump_filename_base' => 'database',
+        'database_dump_file_extension' => '',
+
         'destination' => [
+
+            'compression_method' => ZipArchive::CM_DEFAULT,
+            'compression_level' => 9,
 
             /*
              * The filename prefix used for the backup zip file.
@@ -100,8 +112,10 @@ return [
          */
         'temporary_directory' => storage_path('app/backup-temp'),
 
-        //'encryption' => \ZipArchive::EM_AES_256,
-        'encryption' => null,
+        'password' => env('BACKUP_ARCHIVE_PASSWORD'),
+        'encryption' => 'default',
+        'tries' => 1,
+        'retry_delay' => 0,
     ],
 
     /*
@@ -129,7 +143,7 @@ return [
         'notifiable' => \Spatie\Backup\Notifications\Notifiable::class,
 
         'mail' => [
-            'to' => env('MAIL_BACKUP_NOTIFICATION_ADDRESS', null),
+            'to' => env('MAIL_BACKUP_NOTIFICATION_ADDRESS') ?: 'backup@example.com',
         ],
 
         'slack' => [

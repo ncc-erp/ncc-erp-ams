@@ -1,0 +1,15 @@
+Upgrade gate run
+task:   T36
+when:   2026-10-29T03:07:00Z
+php:    8.3.36
+branch: chore/upgrade-php-laravel
+commit: eca0ffe33
+
+
+== Gate T36 ==
+
+== T36 - Laravel 11 Carbon 3 ==
+PASS  run_test_classes DateCalculationTest (green)
+PASS  every diffIn* call in app/ handles the Carbon 3 float/signed result
+
+=== T36: PASS (2 asserts) ===

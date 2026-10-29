@@ -897,8 +897,7 @@ class ReportsController extends Controller
             $row[] = e($assetMaintenance->start_date);
             $row[] = e($assetMaintenance->completion_date);
             if (is_null($assetMaintenance->asset_maintenance_time)) {
-                $improvementTime = intval(Carbon::now()
-                                                 ->diffInDays(Carbon::parse($assetMaintenance->start_date)));
+            $improvementTime = abs((int) Carbon::now()->diffInDays(Carbon::parse($assetMaintenance->start_date)));
             } else {
                 $improvementTime = intval($assetMaintenance->asset_maintenance_time);
             }

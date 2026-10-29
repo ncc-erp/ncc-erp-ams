@@ -51,7 +51,7 @@ class PaveIt extends Command
         }
 
         // List all the tables in the database so we don't have to worry about missing some as the app grows
-        $tables = DB::connection()->getDoctrineSchemaManager()->listTableNames();
+        $tables = Schema::getTableListing();
 
         $except_tables = [
             'oauth_access_tokens',

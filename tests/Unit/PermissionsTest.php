@@ -12,7 +12,7 @@ use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Foundation\Testing\WithoutMiddleware;
 use Tests\Unit\BaseTest;
 
-class PermissionsTest extends BaseTest
+abstract class PermissionsTest extends BaseTest
 {
     // public function _before()
     // {

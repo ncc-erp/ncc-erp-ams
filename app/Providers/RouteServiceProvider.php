@@ -37,6 +37,11 @@ class RouteServiceProvider extends ServiceProvider
      */
     protected function mapWebRoutes()
     {
+        Route::get(
+            '/health',
+            [\App\Http\Controllers\HealthController::class, 'get']
+        )->name('health');
+
         Route::group([
             'middleware' => 'web',
             'namespace' => $this->namespace,

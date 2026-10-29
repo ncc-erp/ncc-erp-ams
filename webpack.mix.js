@@ -63,78 +63,63 @@ mix
 // Convert the skins to CSS
 mix.less(
   "./resources/assets/less/skins/skin-blue.less",
-  "css/dist/skins",
-  "./public/css/dist/skins/skin-blue.css"
+  "css/dist/skins/skin-blue.css"
 );
 mix.less(
   "./resources/assets/less/skins/skin-red.less",
-  "css/dist/skins",
-  "./public/css/dist/skins/skin-red.css"
+  "css/dist/skins/skin-red.css"
 );
 mix.less(
   "./resources/assets/less/skins/skin-contrast.less",
-  "css/dist/skins",
-  "./public/css/dist/skins/skin-contrast.css"
+  "css/dist/skins/skin-contrast.css"
 );
 mix.less(
   "./resources/assets/less/skins/skin-green.less",
-  "css/dist/skins",
-  "./public/css/dist/skins/skin-green.css"
+  "css/dist/skins/skin-green.css"
 );
 mix.less(
   "./resources/assets/less/skins/skin-green-dark.less",
-  "css/dist/skins",
-  "./public/css/dist/skins/skin-green-light.css"
+  "css/dist/skins/skin-green-light.css"
 );
 mix.less(
   "./resources/assets/less/skins/skin-black.less",
-  "css/dist/skins",
-  "./public/css/dist/skins/skin-black.css"
+  "css/dist/skins/skin-black.css"
 );
 mix.less(
   "./resources/assets/less/skins/skin-black-dark.less",
-  "css/dist/skins",
-  "./public/css/dist/skins/skin-black-light.css"
+  "css/dist/skins/skin-black-light.css"
 );
 mix.less(
   "./resources/assets/less/skins/skin-red-dark.less",
-  "css/dist/skins",
-  "./public/css/dist/skins/skin-red-light.css"
+  "css/dist/skins/skin-red-light.css"
 );
 mix.less(
   "./resources/assets/less/skins/skin-purple.less",
-  "css/dist/skins",
-  "./public/css/dist/skins/skin-purple.css"
+  "css/dist/skins/skin-purple.css"
 );
 mix.less(
   "./resources/assets/less/skins/skin-purple-dark.less",
-  "css/dist/skins",
-  "./public/css/dist/skins/skin-purple-light.css"
+  "css/dist/skins/skin-purple-light.css"
 );
 mix.less(
   "./resources/assets/less/skins/skin-yellow.less",
-  "css/dist/skins",
-  "./public/css/dist/skins/skin-yellow.css"
+  "css/dist/skins/skin-yellow.css"
 );
 mix.less(
   "./resources/assets/less/skins/skin-yellow-dark.less",
-  "css/dist/skins",
-  "./public/css/dist/skins/skin-yellow-light.css"
+  "css/dist/skins/skin-yellow-light.css"
 );
 mix.less(
   "./resources/assets/less/skins/skin-blue-dark.less",
-  "css/dist/skins",
-  "./public/css/dist/skins/skin-blue-light.css"
+  "css/dist/skins/skin-blue-light.css"
 );
 mix.less(
   "./resources/assets/less/skins/skin-orange-dark.less",
-  "css/dist/skins",
-  "./public/css/dist/skins/skin-orange-light.css"
+  "css/dist/skins/skin-orange-light.css"
 );
 mix.less(
   "./resources/assets/less/skins/skin-orange.less",
-  "css/dist/skins",
-  "./public/css/dist/skins/skin-orange.css"
+  "css/dist/skins/skin-orange.css"
 );
 
 /**

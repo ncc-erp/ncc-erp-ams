@@ -239,7 +239,7 @@ class ComponentsController extends Controller
 
             $component->assets()->attach($component->id, [
                 'component_id' => $component->id,
-                'created_at' => \Carbon::now(),
+                'created_at' => \Carbon\Carbon::now(),
                 'assigned_qty' => $request->get('assigned_qty', 1),
                 'user_id' => \Auth::id(),
                 'asset_id' => $request->get('assigned_to')
@@ -309,7 +309,7 @@ class ComponentsController extends Controller
 
             $asset = Asset::find($component_assets->asset_id);
 
-            event(new CheckoutableCheckedIn($component, $asset, \Auth::user(), $request->input('note'), \Carbon::now()));
+            event(new CheckoutableCheckedIn($component, $asset, \Auth::user(), $request->input('note'), \Carbon\Carbon::now()));
 
             return response()->json(Helper::formatStandardApiResponse('success', null,  trans('admin/components/message.checkin.success')));
 

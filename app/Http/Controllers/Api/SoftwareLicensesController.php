@@ -101,7 +101,7 @@ class SoftwareLicensesController extends Controller
         //Return error if expiration date less than purchase date
         $expirationDate = Carbon::parse($request->input('expiration_date'));
         $purchaseDate = Carbon::parse($request->input('purchase_date'));
-        if (($purchaseDate->diffInDays($expirationDate, false) < 0)) {
+        if (((int) $purchaseDate->diffInDays($expirationDate, false) < 0)) {
             return response()->json(
                 Helper::formatStandardApiResponse(
                     'error',
@@ -148,7 +148,7 @@ class SoftwareLicensesController extends Controller
             //Return error if expiration date less than purchase date
             $expirationDate = Carbon::parse($request->input('expiration_date'));
             $purchaseDate = Carbon::parse($request->input('purchase_date'));
-            if (($purchaseDate->diffInDays($expirationDate, false) < 0)) {
+            if (((int) $purchaseDate->diffInDays($expirationDate, false) < 0)) {
                 return response()->json(
                     Helper::formatStandardApiResponse(
                         'error',
@@ -239,7 +239,7 @@ class SoftwareLicensesController extends Controller
                         //Return error license expiration_date > current date 
                         $now = Carbon::now();
                         $expirationDate = Carbon::parse($license_last->expiration_date);
-                        if ($now->diffInDays($expirationDate, false) < 0) {
+                        if ((int) $now->diffInDays($expirationDate, false) < 0) {
                             return response()->json(
                                 Helper::formatStandardApiResponse(  
                                     'error',
@@ -332,7 +332,7 @@ class SoftwareLicensesController extends Controller
         //Check license expiration_date > current date 
         $now = Carbon::now();
         $expirationDate = Carbon::parse($license->expiration_date);
-        if ($now->diffInDays($expirationDate, false) < 0) {
+        if ((int) $now->diffInDays($expirationDate, false) < 0) {
             return response()->json(
                 Helper::formatStandardApiResponse(
                     'error',

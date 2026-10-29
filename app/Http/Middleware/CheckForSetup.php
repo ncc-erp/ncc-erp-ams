@@ -9,6 +9,9 @@ class CheckForSetup
 {
     public function handle($request, Closure $next, $guard = null)
     {
+        if ($request->is('health')) {
+            return $next($request);
+        }
 
         /**
          * This is dumb

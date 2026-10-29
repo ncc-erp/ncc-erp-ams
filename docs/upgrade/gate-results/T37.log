@@ -1,0 +1,16 @@
+Upgrade gate run
+task:   T37
+when:   2026-10-29T03:08:25Z
+php:    8.3.36
+branch: chore/upgrade-php-laravel
+commit: eca0ffe33
+
+
+== Gate T37 ==
+
+== T37 - Laravel 11 closing checkpoint ==
+PASS  assert_file docs/upgrade/manual-L11.md
+PASS  run_test_classes LegacyTokenTest (green)
+PASS  require_approval T37
+
+=== T37: PASS (3 asserts) ===

@@ -429,11 +429,6 @@ Route::group(['middleware' => 'web'], function () {
 
 Auth::routes();
 
-Route::get(
-    '/health', 
-    [HealthController::class, 'get']
-)->name('health');
-
 Route::middleware(['auth'])->get(
     '/',
     [DashboardController::class, 'index']

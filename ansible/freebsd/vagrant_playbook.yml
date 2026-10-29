@@ -52,22 +52,22 @@
         name: "{{ item }}"
         state: present
       with_items: 
-        - php72
-        - php72-zip    
-        - php72-zlib   
-        - php72-extensions 
-        - php72-mbstring 
-        - php72-openssl 
-        # - php72-mysqli 
-        - php72-curl 
-        - php72-soap 
-        - php72-pdo_mysql 
-        # - php72-pdo_pgsql
-        - php72-ldap
-        - php72-curl
-        - php72-fileinfo
-        - php72-bcmath
-        - php72-gd
+        - php83
+        - php83-zip
+        - php83-zlib
+        - php83-extensions
+        - php83-mbstring
+        - php83-openssl
+        # - php83-mysqli
+        - php83-curl
+        - php83-soap
+        - php83-pdo_mysql
+        # - php83-pdo_pgsql
+        - php83-ldap
+        - php83-curl
+        - php83-fileinfo
+        - php83-bcmath
+        - php83-gd
       become: true
 
     #
@@ -257,4 +257,4 @@
       service:
         name: apache24
         state: started
-      become: true     
+      become: true

@@ -1,0 +1,16 @@
+Upgrade gate run
+task:   T22
+when:   2026-10-29T02:38:54Z
+php:    8.1.34
+branch: chore/upgrade-php-laravel
+commit: eca0ffe33
+
+
+== Gate T22 ==
+
+== T22 - Laravel 9 trusted proxies ==
+PASS  assert_not_installed fideloper/proxy
+PASS  assert_no_grep 'Fideloper' in app config
+PASS  assert_grep 'Illuminate\\Http\\Middleware\\TrustProxies' in app/Http/Middleware/TrustProxies.php
+
+=== T22: PASS (3 asserts) ===

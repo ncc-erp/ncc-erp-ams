@@ -14,11 +14,6 @@ class FinfastRequestAsset extends Model
 
     protected $fillable = ['asset_id', 'finfast_request_id'];
 
-    protected $dates = [
-        'created_at',
-        'updated_at',
-    ];
-
     protected $casts = [
         'asset_id' => 'integer',
         'finfast_request_id' => 'integer',
@@ -32,4 +27,3 @@ class FinfastRequestAsset extends Model
     }
 
 }
-

@@ -45,11 +45,15 @@ fi
 
 docker rm -f "$IMAGE" >/dev/null 2>&1
 
-if docker run --rm -d --name "$IMAGE" -p "$PORT:80" "$IMAGE" > /dev/null 2>&1; then
+if docker run --rm -d --name "$IMAGE" -p "$PORT:80" \
+    --env-file "$GATE_ROOT/.env.docker" \
+    -e APACHE_LOG_DIR=/var/log/apache2 \
+    --entrypoint /bin/sh "$IMAGE" \
+    -c 'php artisan config:cache >/tmp/t42-config.log 2>&1 && exec httpd -DNO_DETACH' > /dev/null 2>&1; then
     sleep 30
-    code="$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$PORT/" || true)"
+    code="$(curl --max-time 15 -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$PORT/health" || true)"
     docker rm -f "$IMAGE" > /dev/null 2>&1
-    log "HTTP $code"
+    log "HTTP $code /health"
     if [ "$code" = "200" ] || [ "$code" = "302" ]; then
         log "RESULT OK"
         exit 0

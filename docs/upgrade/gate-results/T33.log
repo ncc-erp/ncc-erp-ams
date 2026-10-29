@@ -1,0 +1,18 @@
+Upgrade gate run
+task:   T33
+when:   2026-10-29T02:57:49Z
+php:    8.3.36
+branch: chore/upgrade-php-laravel
+commit: eca0ffe33
+
+
+== Gate T33 ==
+
+== T33 - Livewire 3 ==
+PASS  assert_min_version livewire/livewire >= 3.5.2 (installed 3.8.11)
+PASS  assert_no_advisory livewire/livewire
+PASS  assert_no_grep '\$this->emit\(|\$emit\(' in app resources/views
+PASS  run_test_classes LivewireLoginTest (green)
+PASS  run_test_classes CustomFieldSetDefaultValuesForModel (green)
+
+=== T33: PASS (5 asserts) ===

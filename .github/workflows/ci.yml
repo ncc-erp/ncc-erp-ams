@@ -40,13 +40,7 @@ jobs:
           docker compose -f docker-compose.test.yml run --rm app \
             scripts/upgrade-gates/run.sh ${{ steps.gate.outputs.task }}
 
-      - name: Composer audit (deliberately non blocking)
-        # The audit is deliberately non blocking for the duration of the
-        # upgrade: it reports the advisories of the packages that are still
-        # waiting for their patch task. It becomes blocking in T40, when every
-        # remaining advisory has to be fixed or listed in
-        # docs/upgrade/accepted-risks.md.
-        continue-on-error: true
+      - name: Composer audit
         run: |
           docker compose -f docker-compose.test.yml run --rm app \
             composer audit --locked --no-plugins --format=summary

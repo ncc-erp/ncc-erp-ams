@@ -1,0 +1,15 @@
+Upgrade gate run
+task:   T38
+when:   2026-10-29T03:09:13Z
+php:    8.3.36
+branch: chore/upgrade-php-laravel
+commit: eca0ffe33
+
+
+== Gate T38 ==
+
+== T38 - Laravel 12 ==
+PASS  assert_min_version laravel/framework >= 12.0.0 (installed 12.70.2)
+PASS  assert_no_advisory laravel/framework
+
+=== T38: PASS (2 asserts) ===

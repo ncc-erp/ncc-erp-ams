@@ -19,7 +19,7 @@ use Illuminate\Foundation\Testing\WithoutMiddleware;
 use Illuminate\Support\Facades\Notification;
 use Tests\Unit\BaseTest;
 
-class ImporterTest extends BaseTest
+abstract class ImporterTest extends BaseTest
 {
     /**
      * @var \UnitTester

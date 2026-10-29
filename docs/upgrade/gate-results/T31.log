@@ -1,0 +1,16 @@
+Upgrade gate run
+task:   T31
+when:   2026-10-29T02:49:59Z
+php:    8.3.36
+branch: chore/upgrade-php-laravel
+commit: eca0ffe33
+
+
+== Gate T31 ==
+
+== T31 - runtime raised to PHP 8.3 ==
+PASS  assert_php_min 8.3 (running 8.3.36)
+PASS  assert_composer_php_min 8.3 (constraint '^8.3')
+PASS  no PHP deprecation is triggered by code in app/ (vendor deprecations are ignored)
+
+=== T31: PASS (3 asserts) ===

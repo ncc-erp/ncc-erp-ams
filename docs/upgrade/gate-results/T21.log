@@ -1,0 +1,15 @@
+Upgrade gate run
+task:   T21
+when:   2026-10-29T02:38:54Z
+php:    8.1.34
+branch: chore/upgrade-php-laravel
+commit: eca0ffe33
+
+
+== Gate T21 ==
+
+== T21 - Laravel 9 ignition package ==
+PASS  assert_not_installed facade/ignition
+PASS  assert_no_grep 'Facade\\Ignition' in app config
+
+=== T21: PASS (2 asserts) ===

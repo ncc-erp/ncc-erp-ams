@@ -34,7 +34,7 @@ class PassportApiTest extends UpgradeTestCase
     /**
      * @return array<string, array<int, string>>
      */
-    public function readOnlyEndpoints(): array
+    public static function readOnlyEndpoints(): array
     {
         return [
             'hardware' => ['hardware'],

@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 LABEL maintainer="Brady Wetherington <bwetherington@grokability.com>"
 
 # No need to add `apt-get clean` here, reference:
@@ -14,15 +14,15 @@ RUN export DEBIAN_FRONTEND=noninteractive; \
 apt-utils \
 apache2 \
 apache2-bin \
-libapache2-mod-php7.4 \
-php7.4-curl \
-php7.4-ldap \
-php7.4-mysql \
-php7.4-gd \
-php7.4-xml \
-php7.4-mbstring \
-php7.4-zip \
-php7.4-bcmath \
+libapache2-mod-php8.3 \
+php8.3-curl \
+php8.3-ldap \
+php8.3-mysql \
+php8.3-gd \
+php8.3-xml \
+php8.3-mbstring \
+php8.3-zip \
+php8.3-bcmath \
 patch \
 curl \
 wget  \
@@ -38,7 +38,7 @@ autoconf \
 libc-dev \
 pkg-config \
 libmcrypt-dev \
-php7.4-dev \
+php8.3-dev \
 ca-certificates \
 unzip \
 dnsutils \
@@ -50,14 +50,14 @@ RUN php go-pear.phar
 
 RUN pecl install mcrypt-1.0.3
 
-RUN bash -c "echo extension=/usr/lib/php/20190902/mcrypt.so > /etc/php/7.4/mods-available/mcrypt.ini"
+RUN bash -c "echo extension=/usr/lib/php/20230831/mcrypt.so > /etc/php/8.3/mods-available/mcrypt.ini"
 
 RUN phpenmod mcrypt
 RUN phpenmod gd
 RUN phpenmod bcmath
 
-RUN sed -i 's/variables_order = .*/variables_order = "EGPCS"/' /etc/php/7.4/apache2/php.ini
-RUN sed -i 's/variables_order = .*/variables_order = "EGPCS"/' /etc/php/7.4/cli/php.ini
+RUN sed -i 's/variables_order = .*/variables_order = "EGPCS"/' /etc/php/8.3/apache2/php.ini
+RUN sed -i 's/variables_order = .*/variables_order = "EGPCS"/' /etc/php/8.3/cli/php.ini
 
 RUN useradd -m --uid 1000 --gid 50 docker
 

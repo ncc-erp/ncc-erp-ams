@@ -71,13 +71,20 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
+        \Laravel\Passport\Passport::$registersJsonApiRoutes = true;
+
+        $this->app->singleton(
+            \Laravel\Passport\ClientRepository::class,
+            fn () => new \App\Support\PassportClientRepository()
+        );
+
         // Only load rollbar if there is a rollbar key and the app is in production
         if (($this->app->environment('production')) && (config('logging.channels.rollbar.access_token'))) {
             $this->app->register(\Rollbar\Laravel\RollbarServiceProvider::class);
         } 
 
         // Only load dusk's service provider if the app is in local or develop mode
-        if ($this->app->environment(['local', 'develop'])) {
+        if ($this->app->environment(['local', 'develop']) && class_exists(\Laravel\Dusk\DuskServiceProvider::class)) {
             $this->app->register(\Laravel\Dusk\DuskServiceProvider::class);
         } 
     

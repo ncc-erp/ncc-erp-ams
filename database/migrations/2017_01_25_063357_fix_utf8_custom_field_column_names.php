@@ -42,9 +42,6 @@ class FixUtf8CustomFieldColumnNames extends Migration
      */
     public function up()
     {
-        $platform = Schema::getConnection()->getDoctrineSchemaManager()->getDatabasePlatform();
-        $platform->registerDoctrineTypeMapping('enum', 'string');
-
         if (! Schema::hasColumn('custom_fields', 'db_column')) {
             Schema::table('custom_fields', function ($table) {
                 $table->string('db_column')->nullable();

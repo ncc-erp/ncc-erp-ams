@@ -4,7 +4,7 @@ namespace App\Models;
 
 use App\Models\Traits\Searchable;
 use App\Presenters\Presentable;
-use Carbon;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -237,13 +237,13 @@ class Actionlog extends SnipeModel
     {
         $now = Carbon::now();
         $last_audit_date = $this->created_at;
-        $next_audit = $last_audit_date->addMonth($monthInterval);
-        $next_audit_days = $now->diffInDays($next_audit);
+        $next_audit = $last_audit_date->addMonth((int) $monthInterval);
+        $next_audit_days = abs((int) $now->diffInDays($next_audit));
 
         // Override the default setting for interval if the asset has its own next audit date
         if (($asset) && ($asset->next_audit_date)) {
-            $override_default_next = \Carbon::parse($asset->next_audit_date);
-            $next_audit_days = $override_default_next->diffInDays($now);
+            $override_default_next = Carbon::parse($asset->next_audit_date);
+            $next_audit_days = abs((int) $override_default_next->diffInDays($now));
         }
 
         return $next_audit_days;
@@ -261,10 +261,10 @@ class Actionlog extends SnipeModel
         $last_audit_date = Carbon::parse($this->created_at);
         // If there is an asset-specific next date already given,
         if (($asset) && ($asset->next_audit_date)) {
-            return \Carbon::parse($asset->next_audit_date);
+            return Carbon::parse($asset->next_audit_date);
         }
 
-        return  \Carbon::parse($last_audit_date)->addMonths($monthInterval)->toDateString();
+        return Carbon::parse($last_audit_date)->addMonths((int) $monthInterval)->toDateString();
     }
 
     /**
