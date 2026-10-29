@@ -4,13 +4,13 @@ modules:
         - \Helper\Api
         - REST:
             url: /api/v1
-            depends: Laravel5
+            depends: Laravel
             timeout: 10
         - Asserts
-        - Laravel5:
+        - Laravel:
             part: ORM
     config:
-        - Laravel5:
+        - Laravel:
             environment_file: .env.tests
             disable_middleware: true
             cleanup: true

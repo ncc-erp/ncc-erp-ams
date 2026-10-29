@@ -118,7 +118,6 @@ return [
         'alpha_space' => 'Lauke: atributo lauke yra simbolis, kuris nėra leidžiamas.',
         'email_array'      => 'Vienas ar keli el. Pašto adresai yra netinkami.',
         'hashed_pass'      => 'Jūsų dabartinis slaptažodis yra neteisingas',
-        'dumbpwd'          => 'Šis slaptažodis yra per dažnas.',
         'statuslabel_type' => 'Turite pasirinkti tinkamą statuso etiketės tipą',
     ],
 

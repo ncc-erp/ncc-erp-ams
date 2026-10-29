@@ -14,5 +14,5 @@ modules:
             url: 'https://snipe-it.local:8890'
             browser: 'firefox'
         - \Helper\Acceptance
-        - Laravel5:
+        - Laravel:
             part: ORM

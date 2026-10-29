@@ -118,7 +118,6 @@ return [
         'alpha_space' => 'O campo: atributo contém um caractere que não é permitido.',
         'email_array'      => 'Um ou mais endereços de e-mail são inválidos.',
         'hashed_pass'      => 'Sua senha atual está incorreta',
-        'dumbpwd'          => 'Essa senha é muito comum.',
         'statuslabel_type' => 'Você deve selecionar um tipo de etiqueta de status válido',
     ],
 

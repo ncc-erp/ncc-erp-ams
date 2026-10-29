@@ -4,4 +4,4 @@ gate_section "T08 - Livewire patched"
 
 assert_min_version "livewire/livewire" "2.12.7"
 assert_no_advisory "livewire/livewire"
-run_tests "LivewireLoginTest"
+run_test_classes_once "LivewireLoginTest"

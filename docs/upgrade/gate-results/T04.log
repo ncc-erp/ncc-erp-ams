@@ -1,9 +1,9 @@
 Upgrade gate run
 task:   T04
-when:   2026-10-28T09:58:13Z
+when:   2026-10-28T15:32:16Z
 php:    8.0.30
 branch: chore/upgrade-php-laravel
-commit: cf52cf128
+commit: 4e802d2d5
 
 
 == Common gate ==
@@ -50,105 +50,16 @@ PASS  assert_file docs/upgrade/environment.md
 
 == T04 - regression smoke test suite ==
 PASS  assert_file tests/Feature/Upgrade/SessionLoginTest.php
------ phpunit --filter SessionLoginTest output -----
-PHPUnit 9.5.19 [44m#StandWith[0m[43mUkraine[0m
-
-.....                                                               5 / 5 (100%)
-
-Time: 00:15.316, Memory: 54.50 MB
-
-OK (5 tests, 22 assertions)
-PASS  run_tests SessionLoginTest (5 tests green)
 PASS  assert_file tests/Feature/Upgrade/PassportApiTest.php
------ phpunit --filter PassportApiTest output -----
-PHPUnit 9.5.19 [44m#StandWith[0m[43mUkraine[0m
-
-........                                                            8 / 8 (100%)
-
-Time: 00:15.507, Memory: 56.50 MB
-
-OK (8 tests, 28 assertions)
-PASS  run_tests PassportApiTest (8 tests green)
 PASS  assert_file tests/Feature/Upgrade/AssetCrudTest.php
------ phpunit --filter AssetCrudTest output -----
-PHPUnit 9.5.19 [44m#StandWith[0m[43mUkraine[0m
-
-....                                                                4 / 4 (100%)
-
-Time: 00:15.287, Memory: 52.50 MB
-
-OK (4 tests, 16 assertions)
-PASS  run_tests AssetCrudTest (4 tests green)
 PASS  assert_file tests/Feature/Upgrade/UploadTest.php
------ phpunit --filter UploadTest output -----
-PHPUnit 9.5.19 [44m#StandWith[0m[43mUkraine[0m
-
-....                                                                4 / 4 (100%)
-
-Time: 00:15.469, Memory: 56.50 MB
-
-OK (4 tests, 21 assertions)
-PASS  run_tests UploadTest (4 tests green)
 PASS  assert_file tests/Feature/Upgrade/ValidationTest.php
------ phpunit --filter ValidationTest output -----
-PHPUnit 9.5.19 [44m#StandWith[0m[43mUkraine[0m
-
-.....                                                               5 / 5 (100%)
-
-Time: 00:15.347, Memory: 52.50 MB
-
-OK (5 tests, 24 assertions)
-PASS  run_tests ValidationTest (5 tests green)
 PASS  assert_file tests/Feature/Upgrade/MailTest.php
------ phpunit --filter MailTest output -----
-PHPUnit 9.5.19 [44m#StandWith[0m[43mUkraine[0m
-
-..                                                                  2 / 2 (100%)
-
-Time: 00:15.116, Memory: 48.50 MB
-
-OK (2 tests, 8 assertions)
-PASS  run_tests MailTest (2 tests green)
 PASS  assert_file tests/Feature/Upgrade/ImportTest.php
------ phpunit --filter ImportTest output -----
-PHPUnit 9.5.19 [44m#StandWith[0m[43mUkraine[0m
-
-..                                                                  2 / 2 (100%)
-
-Time: 00:15.062, Memory: 52.50 MB
-
-OK (2 tests, 18 assertions)
-PASS  run_tests ImportTest (2 tests green)
 PASS  assert_file tests/Feature/Upgrade/CorsTest.php
------ phpunit --filter CorsTest output -----
-PHPUnit 9.5.19 [44m#StandWith[0m[43mUkraine[0m
-
-..                                                                  2 / 2 (100%)
-
-Time: 00:14.609, Memory: 48.50 MB
-
-OK (2 tests, 5 assertions)
-PASS  run_tests CorsTest (2 tests green)
 PASS  assert_file tests/Feature/Upgrade/LivewireLoginTest.php
------ phpunit --filter LivewireLoginTest output -----
-PHPUnit 9.5.19 [44m#StandWith[0m[43mUkraine[0m
-
-....                                                                4 / 4 (100%)
-
-Time: 00:19.900, Memory: 54.50 MB
-
-OK (4 tests, 15 assertions)
-PASS  run_tests LivewireLoginTest (4 tests green)
 PASS  assert_file tests/Feature/Upgrade/PasswordRuleTest.php
------ phpunit --filter PasswordRuleTest output -----
-PHPUnit 9.5.19 [44m#StandWith[0m[43mUkraine[0m
-
-......                                                              6 / 6 (100%)
-
-Time: 00:16.186, Memory: 54.50 MB
-
-OK (6 tests, 19 assertions)
-PASS  run_tests PasswordRuleTest (6 tests green)
+PASS  run_test_classes SessionLoginTest PassportApiTest AssetCrudTest UploadTest ValidationTest MailTest ImportTest CorsTest LivewireLoginTest PasswordRuleTest (green)
 PASS  require_approval T04
 
-=== T04: PASS (47 asserts) ===
+=== T04: PASS (38 asserts) ===

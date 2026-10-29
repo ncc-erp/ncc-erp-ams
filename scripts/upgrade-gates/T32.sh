@@ -3,4 +3,4 @@
 gate_section "T32 - laravelcollective/html replaced"
 
 assert_not_installed "laravelcollective/html"
-run_tests "FormPagesRenderTest"
+run_test_classes_once "FormPagesRenderTest"

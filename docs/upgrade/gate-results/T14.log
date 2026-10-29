@@ -1,0 +1,191 @@
+Upgrade gate run
+task:   T14
+when:   2026-10-29T01:14:37Z
+php:    8.0.30
+branch: chore/upgrade-php-laravel
+commit: 4e802d2d5
+
+
+== Common gate ==
+PASS  common: gate files match checksums.sha256
+PASS  common: composer validate
+PASS  common: composer install
+PASS  common: php -l on app/ config/ routes/ database/
+PASS  common: php artisan migrate:fresh --force
+PASS  common: the default settings are seeded
+PASS  common: the passport keys are present
+PASS  common: php artisan --version
+PASS  common: php artisan route:list
+PASS  common: php artisan config:cache
+PASS  common: php artisan view:cache
+PASS  common: full PHPUnit suite is green
+PASS  common: the default settings are seeded again after the test suite
+
+== Gate T01 ==
+
+== T01 - branch and baseline audit ==
+PASS  branch is chore/upgrade-php-laravel
+PASS  assert_json docs/upgrade/audit-before.json
+
+== Gate T02 ==
+
+== T02 - gate test system ==
+PASS  assert_file scripts/upgrade-gates/run.sh
+PASS  assert_file scripts/upgrade-gates/lib.sh
+PASS  assert_file scripts/upgrade-gates/common.sh
+PASS  assert_file scripts/upgrade-gates/partial.txt
+PASS  assert_file docker-compose.test.yml
+PASS  assert_file scripts/upgrade-gates/.php-version
+PASS  gate scripts T01.sh .. T43.sh all exist
+PASS  bash -n on every gate script
+PASS  run.sh --selftest passes
+PASS  require_approval T02
+
+== Gate T03 ==
+
+== T03 - production environment record ==
+PASS  assert_file docs/upgrade/environment.md
+
+== Gate T04 ==
+
+== T04 - regression smoke test suite ==
+PASS  assert_file tests/Feature/Upgrade/SessionLoginTest.php
+PASS  assert_file tests/Feature/Upgrade/PassportApiTest.php
+PASS  assert_file tests/Feature/Upgrade/AssetCrudTest.php
+PASS  assert_file tests/Feature/Upgrade/UploadTest.php
+PASS  assert_file tests/Feature/Upgrade/ValidationTest.php
+PASS  assert_file tests/Feature/Upgrade/MailTest.php
+PASS  assert_file tests/Feature/Upgrade/ImportTest.php
+PASS  assert_file tests/Feature/Upgrade/CorsTest.php
+PASS  assert_file tests/Feature/Upgrade/LivewireLoginTest.php
+PASS  assert_file tests/Feature/Upgrade/PasswordRuleTest.php
+PASS  run_test_classes SessionLoginTest PassportApiTest AssetCrudTest UploadTest ValidationTest MailTest ImportTest CorsTest LivewireLoginTest PasswordRuleTest (green)
+PASS  require_approval T04
+
+== Gate T05 ==
+
+== T05 - CI and deploy workflow ==
+PASS  assert_file .github/workflows/ci.yml
+PASS  assert_grep 'upgrade-gates/run.sh' in .github/workflows/ci.yml
+PASS  assert_grep 'composer install --no-dev' in .github/workflows/deploy-prod.yml
+PASS  .github/workflows/ci.yml is valid YAML
+PASS  .github/workflows/deploy-prod.yml is valid YAML
+
+== Gate T06 ==
+
+== T06 - debugbar moved to require-dev ==
+PASS  assert_not_required barryvdh/laravel-debugbar (require)
+PASS  assert_grep '^APP_DEBUG=false' in .env.example
+PASS  composer install --no-dev succeeds in a clean directory
+PASS  php artisan --version works without dev dependencies
+
+== Gate T07 ==
+
+== T07 - Laravel 8 fully patched ==
+PASS  assert_min_version laravel/framework >= 8.83.28 (installed 8.83.29)
+PASS  assert_min_version symfony/http-foundation >= 5.4.54 (installed 5.4.54)
+PASS  assert_min_version symfony/mime >= 5.4.52 (installed 5.4.55)
+PASS  assert_min_version symfony/routing >= 5.4.53 (installed 5.4.54)
+PASS  assert_min_version symfony/http-kernel >= 5.4.20 (installed 5.4.54)
+
+== Gate T08 ==
+
+== T08 - Livewire patched ==
+PASS  assert_min_version livewire/livewire >= 2.12.7 (installed 2.12.8)
+PASS  assert_no_advisory livewire/livewire
+----- phpunit --filter LivewireLoginTest output -----
+PHPUnit 9.6.38 by Sebastian Bergmann and contributors.
+
+....                                                                4 / 4 (100%)
+
+Time: 00:13.594, Memory: 52.50 MB
+
+OK (4 tests, 13 assertions)
+PASS  run_tests LivewireLoginTest (4 tests green)
+
+== Gate T09 ==
+
+== T09 - SAML patched ==
+PASS  assert_min_version onelogin/php-saml >= 3.8.1 (installed 3.8.2)
+PASS  assert_no_advisory onelogin/php-saml
+PASS  assert_no_advisory robrichards/xmlseclibs
+----- phpunit --filter SamlMetadataTest output -----
+PHPUnit 9.6.38 by Sebastian Bergmann and contributors.
+
+..                                                                  2 / 2 (100%)
+
+Time: 00:13.928, Memory: 48.50 MB
+
+OK (2 tests, 10 assertions)
+PASS  run_tests SamlMetadataTest (2 tests green)
+
+== Gate T10 ==
+
+== T10 - Passport and JWT patched ==
+PASS  assert_min_version laravel/passport >= 10.4.0 (installed 10.4.2)
+PASS  assert_min_version firebase/php-jwt >= 6.0.0 (installed 6.11.1)
+PASS  assert_no_advisory league/oauth2-server
+----- phpunit --filter PassportApiTest output -----
+PHPUnit 9.6.38 by Sebastian Bergmann and contributors.
+
+........                                                            8 / 8 (100%)
+
+Time: 00:14.926, Memory: 56.50 MB
+
+OK (8 tests, 28 assertions)
+PASS  run_tests PassportApiTest (8 tests green)
+
+== Gate T11 ==
+
+== T11 - remaining dependencies updated ==
+PASS  assert_no_advisory guzzlehttp/guzzle
+PASS  assert_no_advisory guzzlehttp/psr7
+PASS  assert_no_advisory league/commonmark
+PASS  assert_no_advisory phpseclib/phpseclib
+PASS  assert_no_advisory nesbot/carbon
+PASS  assert_no_advisory enshrined/svg-sanitize
+PASS  assert_no_advisory mtdowling/jmespath.php
+PASS  assert_no_advisory maatwebsite/excel
+PASS  assert_no_advisory phpoffice/phpspreadsheet
+PASS  assert_no_advisory nyholm/psr7
+PASS  assert_no_advisory psy/psysh
+----- phpunit --filter UploadTest output -----
+PHPUnit 9.6.38 by Sebastian Bergmann and contributors.
+
+....                                                                4 / 4 (100%)
+
+Time: 00:15.993, Memory: 56.50 MB
+
+OK (4 tests, 21 assertions)
+PASS  run_tests UploadTest (4 tests green)
+----- phpunit --filter ImportTest output -----
+PHPUnit 9.6.38 by Sebastian Bergmann and contributors.
+
+..                                                                  2 / 2 (100%)
+
+Time: 00:14.312, Memory: 52.50 MB
+
+OK (2 tests, 18 assertions)
+PASS  run_tests ImportTest (2 tests green)
+
+== Gate T12 ==
+
+== T12 - mid-term audit ==
+PASS  assert_json docs/upgrade/audit-l8-patched.json
+PASS  assert_advisories_subset docs/upgrade/advisories-allowed-l8.txt
+PASS  assert_no_critical_advisories
+PASS  require_approval T12
+
+== Gate T13 ==
+
+== T13 - patchwork/utf8 removed ==
+PASS  assert_not_installed patchwork/utf8
+PASS  assert_no_grep 'Patchwork' in app config resources
+
+== Gate T14 ==
+
+== T14 - javiereguiluz/easyslugger removed ==
+PASS  assert_not_installed javiereguiluz/easyslugger
+PASS  assert_no_grep 'EasySlugger' in app config resources
+
+=== T14: PASS (84 asserts) ===

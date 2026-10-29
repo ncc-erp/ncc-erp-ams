@@ -118,7 +118,6 @@ return [
         'alpha_space' => 'Pole: attribute zawiera znak, który nie jest dozwolony.',
         'email_array'      => 'Jeden lub więcej adresów e-mail jest nieprawidłowy.',
         'hashed_pass'      => 'Twoje bieżące hasło jest niepoprawne',
-        'dumbpwd'          => 'To hasło jest zbyt powszechne.',
         'statuslabel_type' => 'Musisz wybrać odpowiedni typ etykiety statusu',
     ],
 

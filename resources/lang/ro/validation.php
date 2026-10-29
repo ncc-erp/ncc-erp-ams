@@ -118,7 +118,6 @@ return [
         'alpha_space' => 'Câmpul atributului: conține un caracter care nu este permis.',
         'email_array'      => 'Una sau mai multe adrese de e-mail este nevalidă.',
         'hashed_pass'      => 'Parola curentă este incorectă',
-        'dumbpwd'          => 'Această parolă este prea obișnuită.',
         'statuslabel_type' => 'Trebuie să selectați un tip de etichetă de stare validă',
     ],
 

@@ -118,7 +118,6 @@ return [
         'alpha_space' => 'Bidang atribut: berisi karakter yang tidak diizinkan.',
         'email_array'      => 'Satu atau lebih alamat email tidak valid.',
         'hashed_pass'      => 'Kata sandi Anda saat ini salah',
-        'dumbpwd'          => 'Password itu terlalu umum',
         'statuslabel_type' => 'Anda harus memilih jenis label status yang valid',
     ],
 

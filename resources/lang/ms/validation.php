@@ -118,7 +118,6 @@ return [
         'alpha_space' => 'Bidang: atribut mengandungi aksara yang tidak dibenarkan.',
         'email_array'      => 'Satu atau lebih alamat e-mel tidak sah.',
         'hashed_pass'      => 'Kata laluan semasa anda tidak betul',
-        'dumbpwd'          => 'Kata laluan itu terlalu umum.',
         'statuslabel_type' => 'Anda mesti memilih jenis label status yang sah',
     ],
 

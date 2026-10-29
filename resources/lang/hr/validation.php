@@ -118,7 +118,6 @@ return [
         'alpha_space' => 'Polje atributa sadrži znak koji nije dopušten.',
         'email_array'      => 'Jedna ili više adresa e-pošte nije važeća.',
         'hashed_pass'      => 'Vaša trenutačna zaporka nije točna',
-        'dumbpwd'          => 'Ta je lozinka prečestna.',
         'statuslabel_type' => 'Morate odabrati valjanu vrstu oznake statusa',
     ],
 

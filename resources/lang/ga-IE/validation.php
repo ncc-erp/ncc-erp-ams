@@ -118,7 +118,6 @@ return [
         'alpha_space' => 'An: sa réimse tréith tá carachtar nach bhfuil ceadaithe.',
         'email_array'      => 'Tá seoltaí ríomhphoist amháin nó níos mó neamhbhailí.',
         'hashed_pass'      => 'Tá do phasfhocal reatha mícheart',
-        'dumbpwd'          => 'Tá an focal faire sin ró-choitianta.',
         'statuslabel_type' => 'Ní mór duit cineál lipéad stádas bailí a roghnú',
     ],
 

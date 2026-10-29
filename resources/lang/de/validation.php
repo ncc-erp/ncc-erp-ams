@@ -118,7 +118,6 @@ return [
         'alpha_space' => 'Das :attribute Feld enthält ein nicht erlaubtes Zeichen.',
         'email_array'      => 'Eine oder mehrere Email Adressen sind ungültig.',
         'hashed_pass'      => 'Ihr derzeitiges Passwort ist nicht korrekt',
-        'dumbpwd'          => 'Das Passwort ist zu gebräuchlich.',
         'statuslabel_type' => 'Sie müssen einen gültigen Statuslabel-Typ auswählen',
     ],
 

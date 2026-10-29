@@ -247,33 +247,38 @@ Sau đó agent chạy lại gate để đánh dấu xong.
   - Không còn advisory severity `critical` nào
   - `require_approval T12`
 
-- [ ] **T13 – Bỏ `patchwork/utf8`**
+- [x] **T13 – Bỏ `patchwork/utf8`**
   Thay bằng `mb_*` / `Symfony\Component\String`. Gỡ package.
   **Gate:**
   - `assert_not_installed patchwork/utf8`, `assert_no_grep "Patchwork" app config resources`
 
-- [ ] **T14 – Bỏ `javiereguiluz/easyslugger`**
+- [x] **T14 – Bỏ `javiereguiluz/easyslugger`**
   Thay bằng `Illuminate\Support\Str::slug`. Gỡ package.
   **Gate:**
   - `assert_not_installed javiereguiluz/easyslugger`, `assert_no_grep "EasySlugger" app config resources`
 
-- [ ] **T15 – Bỏ `mediconesystems/livewire-datatables`**
+- [x] **T15 – Bỏ `mediconesystems/livewire-datatables`**
   Không được dùng trong `app/` và `resources/`. Xác nhận lại rồi gỡ.
   **Gate:**
   - `assert_not_installed mediconesystems/livewire-datatables`, `assert_no_grep "Mediconesystems|livewire-datatable" app resources config`
 
-- [ ] **T16 – Thay `unicodeveloper/laravel-password`**
+- [x] **T16 – Thay `unicodeveloper/laravel-password`**
   Rule `dumbpwd` dùng ở khoảng 64 file. Thay bằng `Illuminate\Validation\Rules\Password` hoặc custom rule `App\Rules\NotCommonPassword` giữ đúng hành vi. Gỡ package.
   **Gate:**
   - `assert_not_installed unicodeveloper/laravel-password`, `assert_no_grep "dumbpwd|Unicodeveloper" app resources config`
   - `run_tests PasswordRuleTest`
 
-- [ ] **T17 – Gỡ các pin cũ của Doctrine / lcobucci**
+- [x] **T17 – Gỡ các pin cũ của Doctrine / lcobucci**
   Xóa khỏi `composer.json`: `doctrine/cache`, `doctrine/common`, `doctrine/inflector`, `doctrine/instantiator`, `lcobucci/clock`, `lcobucci/jwt`, `phpdocumentor/reflection-docblock`, `phpspec/prophecy`, `paragonie/constant_time_encoding`. Grep trước xem `app/` có dùng trực tiếp không. Giữ `doctrine/dbal` tới L11.
   **Gate:**
   - `assert_not_required <pkg>` cho từng package trên (cả `require` và `require-dev`)
 
-- [ ] **T18 – Thay/gỡ Codeception (dev)**
+  **Ghi chú chung cho T13 – T18:** 6 task này đều xoá package khỏi `composer.json`
+  và cập nhật `composer.lock`, nên `composer.lock` dùng chung cho cả 6 → gộp
+  thành **một commit** (gate log của từng task vẫn lưu riêng trong
+  `docs/upgrade/gate-results/`).
+
+- [x] **T18 – Thay/gỡ Codeception (dev)**
   Hỏi người dùng: chuyển `codeception/module-laravel5` → `codeception/module-laravel`, hay gỡ hẳn Codeception (`tests/api`, `tests/functional`, `tests/acceptance`, `codecept.phar`, `codeception.yml`). Gỡ `phpunit/php-token-stream`.
   **Gate:**
   - `assert_not_installed codeception/module-laravel5`, `assert_not_installed phpunit/php-token-stream`

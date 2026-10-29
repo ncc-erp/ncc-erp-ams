@@ -118,7 +118,6 @@ return [
         'alpha_space' => 'Il campo attributo contiene un carattere non consentito.',
         'email_array'      => 'Uno o più indirizzi email non sono validi.',
         'hashed_pass'      => 'La tua password corrente non è corretta',
-        'dumbpwd'          => 'Quella password è troppo comune.',
         'statuslabel_type' => 'È necessario selezionare un tipo di etichetta di stato valido',
     ],
 

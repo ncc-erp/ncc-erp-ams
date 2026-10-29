@@ -118,7 +118,6 @@ return [
         'alpha_space' => 'Ang :field ng katangian ay naglalaman ng karakter na hindi pinapayagan.',
         'email_array'      => 'Imbalido ang isa o higit pang mga email address.',
         'hashed_pass'      => 'Ang iyong kasalukuyang password ay hindi wasto',
-        'dumbpwd'          => 'Ang password ay sobrang pangkaraniwan.',
         'statuslabel_type' => 'Kinakailangang pumili ng balidong uri ng label ng estado',
     ],
 

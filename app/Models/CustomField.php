@@ -3,9 +3,9 @@
 namespace App\Models;
 
 use App\Http\Traits\UniqueUndeletedTrait;
-use EasySlugger\Utf8Slugger;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Schema;
 use Watson\Validating\ValidatingTrait;
@@ -337,11 +337,11 @@ class CustomField extends Model
         $name = $original ? $original : $this->name;
         $id = $this->id ? $this->id : 'xx';
 
-        if (! function_exists('transliterator_transliterate')) {
-            $long_slug = '_snipeit_'.str_slug(\Patchwork\Utf8::utf8_encode(trim($name)), '_');
-        } else {
-            $long_slug = '_snipeit_'.Utf8Slugger::slugify($name, '_');
-        }
+        // Repair the name to valid UTF-8 first, so that badly encoded input
+        // can't produce an invalid database column name.
+        $name = mb_scrub(trim($name), 'UTF-8');
+
+        $long_slug = '_snipeit_'.Str::slug($name, '_');
 
         return substr($long_slug, 0, 50).'_'.$id;
     }

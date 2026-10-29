@@ -4,4 +4,4 @@ gate_section "T23 - Laravel 9 CORS middleware"
 
 assert_not_installed "fruitcake/laravel-cors"
 assert_no_grep "Fruitcake" app config
-run_tests "CorsTest"
+run_test_classes_once "CorsTest"

@@ -118,7 +118,6 @@ return [
         'alpha_space' => 'Fältet :attribute innehåller ett tecken som inte är tillåtet.',
         'email_array'      => 'En eller flera e-postadresser är ogiltiga.',
         'hashed_pass'      => 'Ditt nuvarande lösenord är felaktigt',
-        'dumbpwd'          => 'Det angivna lösenordet är för vanligt.',
         'statuslabel_type' => 'Du måste ange en giltig typ av statusetikett',
     ],
 

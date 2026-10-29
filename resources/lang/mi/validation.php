@@ -118,7 +118,6 @@ return [
         'alpha_space' => 'Ko te: kei roto i te waahi tohu he momo e kore e whakaaetia.',
         'email_array'      => 'Kotahi, neke atu ranei nga wahitau īmēra he muhu.',
         'hashed_pass'      => 'He hē tō kupuhipa o nāianei',
-        'dumbpwd'          => 'He noa rawa te kupuhipa.',
         'statuslabel_type' => 'Me tīpako i te momo tahua tohu whaimana',
     ],
 

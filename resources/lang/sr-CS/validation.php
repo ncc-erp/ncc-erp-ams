@@ -118,7 +118,6 @@ return [
         'alpha_space' => ':attribute polje sadrži znak koji nije dozvoljen.',
         'email_array'      => 'Jedna ili više email adresa nisu ispravne.',
         'hashed_pass'      => 'Vaša lozinka je neispravna',
-        'dumbpwd'          => 'Lozinka nije sigurna.',
         'statuslabel_type' => 'Morate odabrati ispravnu vrstu oznake statusa',
     ],
 

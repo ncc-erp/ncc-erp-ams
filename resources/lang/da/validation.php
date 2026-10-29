@@ -118,7 +118,6 @@ return [
         'alpha_space' => 'Attributfeltet indeholder et tegn, der ikke er tilladt.',
         'email_array'      => 'En eller flere e-mailadresser er ugyldige.',
         'hashed_pass'      => 'Din nuværende adgangskode er forkert',
-        'dumbpwd'          => 'Denne adgangskode er for almindelig.',
         'statuslabel_type' => 'Du skal vælge en gyldig statusetiketype',
     ],
 

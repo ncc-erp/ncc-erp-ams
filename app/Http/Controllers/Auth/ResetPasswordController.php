@@ -50,7 +50,7 @@ class ResetPasswordController extends Controller
         return [
             'token' => 'required',
             'username' => 'required',
-            'password' => 'confirmed|'.Setting::passwordComplexityRulesSaving('store'),
+            'password' => array_merge(['confirmed'], Setting::passwordComplexityRulesSaving('store')),
         ];
     }
 
@@ -83,7 +83,7 @@ class ResetPasswordController extends Controller
         $user = User::where('username', '=', $request->input('username'))->first();
 
         $broker = $this->broker();
-        if (strpos(Setting::passwordComplexityRulesSaving('store'), 'disallow_same_pwd_as_user_fields') !== false) {
+        if (in_array('disallow_same_pwd_as_user_fields', Setting::passwordComplexityRulesSaving('store'))) {
             $request->validate(
                 [
                 'password' => 'required|notIn:["'.$user->email.'","'.$user->username.'","'.$user->first_name.'","'.$user->last_name.'"',

@@ -118,7 +118,6 @@ return [
         'alpha_space' => 'I: Insimu yemfanelo iqukethe umlingiswa ongavunyelwe.',
         'email_array'      => 'Ikheli elilodwa noma ngaphezulu le-imeyili alivumelekile.',
         'hashed_pass'      => 'Iphasiwedi yakho yamanje ayilungile',
-        'dumbpwd'          => 'Lelo phasiwedi livame kakhulu.',
         'statuslabel_type' => 'Kumele ukhethe uhlobo lwelebula lesimo esivumelekile',
     ],
 

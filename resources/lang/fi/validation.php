@@ -118,7 +118,6 @@ return [
         'alpha_space' => ':attribute -kenttä sisältää merkin, jota ei sallita.',
         'email_array'      => 'Yksi tai useampi sähköpostiosoite on virheellinen.',
         'hashed_pass'      => 'Nykyinen salasanasi on virheellinen',
-        'dumbpwd'          => 'Salasana on liian yleinen.',
         'statuslabel_type' => 'Sinun on valittava kelvollinen tilamerkintätyyppi',
     ],
 

@@ -118,7 +118,6 @@ return [
         'alpha_space' => ':attribute 含有無效字元',
         'email_array'      => '一個或多個郵件地址不正確',
         'hashed_pass'      => '當前密碼不正確！',
-        'dumbpwd'          => '該密碼太常見。',
         'statuslabel_type' => '您必須選擇一個有效的狀態標籤',
     ],
 

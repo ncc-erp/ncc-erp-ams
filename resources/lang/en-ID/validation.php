@@ -118,7 +118,6 @@ return [
         'alpha_space' => 'Kolom :attribute mengandung karakter yang dilarang.',
         'email_array'      => 'Satu atau lebih alamat surel tidak valid.',
         'hashed_pass'      => 'Kata sandi anda saat ini salah',
-        'dumbpwd'          => 'Kata sandi itu terlalu umum.',
         'statuslabel_type' => 'Anda harus pilih jenis label status yang valid',
     ],
 

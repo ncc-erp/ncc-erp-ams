@@ -118,7 +118,6 @@ return [
         'alpha_space' => 'Mae\'r maes :attribute yn cynnwys cymeriad na chaniateir.',
         'email_array'      => 'Mae un neu fwy o gyfeiriadau e-bost yn annilys.',
         'hashed_pass'      => 'Mae eich cyfrinair cyfredol yn anghywir',
-        'dumbpwd'          => 'Mae\'r cyfrinair hwnnw\'n rhy gyffredin.',
         'statuslabel_type' => 'Rhaid i chi ddewis math label statws dilys',
     ],
 

@@ -2,7 +2,7 @@
 # Gate for T36 - L11 - Carbon 3
 gate_section "T36 - Laravel 11 Carbon 3"
 
-run_tests "DateCalculationTest"
+run_test_classes_once "DateCalculationTest"
 
 unsafe="$(grep -rEn 'diffIn[A-Za-z]*\(' app --include='*.php' \
     | grep -vE 'absolute|abs\(|\(int\)|carbon3-ok' | head -20 || true)"

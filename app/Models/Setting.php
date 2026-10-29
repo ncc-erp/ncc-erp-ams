@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Rules\NotCommonPassword;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
@@ -283,26 +285,29 @@ class Setting extends Model
      *
      * @return string
      */
-    public static function passwordComplexityRulesSaving($action = 'update'): string
+    public static function passwordComplexityRulesSaving($action = 'update'): array
     {
-        $security_rules = '';
         $settings = self::getSettings();
+
+        if ($action == 'update') {
+            $security_rules = ['nullable'];
+        } else {
+            $security_rules = ['required'];
+        }
+
+        $security_rules[] = 'min:'.$settings->pwd_secure_min;
 
         // Check if they have uncommon password enforcement selected in settings
         if ($settings->pwd_secure_uncommon == 1) {
-            $security_rules .= '|dumbpwd';
+            $security_rules[] = new NotCommonPassword();
         }
 
         // Check for any secure password complexity rules that may have been selected
         if ($settings->pwd_secure_complexity != '') {
-            $security_rules .= '|'.$settings->pwd_secure_complexity;
+            $security_rules = array_merge($security_rules, explode('|', $settings->pwd_secure_complexity));
         }
 
-        if ($action == 'update') {
-            return 'nullable|min:'.$settings->pwd_secure_min.$security_rules;
-        }
-
-        return 'required|min:'.$settings->pwd_secure_min.$security_rules;
+        return $security_rules;
     }
 
     /**

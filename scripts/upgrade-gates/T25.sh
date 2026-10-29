@@ -3,4 +3,4 @@
 gate_section "T25 - Laravel 9 mailer"
 
 assert_no_grep "Swift_|withSwiftMessage|SwiftMailer" app config resources
-run_tests "MailTest"
+run_test_classes_once "MailTest"

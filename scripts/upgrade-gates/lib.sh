@@ -20,6 +20,9 @@ GATE_PASS_COUNT=0
 GATE_FAIL_COUNT=0
 GATE_LOG_FILE="${GATE_LOG_FILE:-}"
 GATE_AUDIT_JSON=""
+GATE_TESTS_RUN=""
+GATE_JUNIT_FILE=""
+GATE_JUNIT_REPORT="/tmp/gate-junit-report.xml"
 
 # ---------------------------------------------------------------------------
 # plumbing
@@ -445,6 +448,75 @@ run_tests() {
         return 1
     fi
     gate_record PASS "run_tests $filter ($count tests green)"
+    return 0
+}
+
+run_test_classes() {
+    # run_test_classes <Class> [<Class>...]
+    #
+    # Runs all the given test classes in a single phpunit process and checks
+    # that every class ran at least one test and that none of them failed.
+    # This is a lot faster than one phpunit process per class.
+    local junit output code filter
+    junit="$(mktemp --suffix=.xml)"
+    filter="$(printf '%s|' "$@" | sed 's/|$//')"
+
+    output="$(cd "$GATE_ROOT" && php vendor/bin/phpunit --filter "($filter)" --log-junit "$junit" 2>&1)"
+    code=$?
+    printf '%s\n' "$output" | tail -8
+
+    local report
+    report="$(php "$GATE_DIR/tests-report.php" "$junit" "$@")"
+    local status=$?
+    printf '%s\n' "$report"
+
+    rm -f "$junit"
+
+    if [ "$status" -ne 0 ]; then
+        gate_record FAIL "run_test_classes $*" "see the report above"
+        return 1
+    fi
+    if [ "$code" -ne 0 ]; then
+        gate_record FAIL "run_test_classes $*" "phpunit exited with $code"
+        return 1
+    fi
+    gate_record PASS "run_test_classes $* (green)"
+    return 0
+}
+
+run_test_classes_once() {
+    # run_test_classes_once <Class> [<Class>...]
+    #
+    # Same as run_test_classes, but the classes that already ran in this gate
+    # run are skipped. The gate runner executes every gate of a task in one
+    # shell process, so a test class is only executed once per run.
+    local todo=()
+    local class
+    for class in "$@"; do
+        case " $GATE_TESTS_RUN " in
+            *" $class "*) ;;
+            *) todo+=("$class") ;;
+        esac
+    done
+
+    if [ ${#todo[@]} -eq 0 ]; then
+        gate_record PASS "run_test_classes_once $* (already green in this run)"
+        return 0
+    fi
+
+    # the common gate already ran the whole test suite, its report is used
+    # instead of starting another phpunit process
+    if [ -n "$GATE_JUNIT_FILE" ] && [ -f "$GATE_JUNIT_FILE" ]; then
+        if php "$GATE_DIR/tests-report.php" "$GATE_JUNIT_FILE" "${todo[@]}"; then
+            gate_record PASS "run_test_classes_once ${todo[*]} (green in the report of the common gate)"
+            GATE_TESTS_RUN="$GATE_TESTS_RUN $*"
+            return 0
+        fi
+    fi
+
+    run_test_classes "${todo[@]}" || return 1
+
+    GATE_TESTS_RUN="$GATE_TESTS_RUN $*"
     return 0
 }
 

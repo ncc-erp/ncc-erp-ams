@@ -3,6 +3,6 @@
 gate_section "T37 - Laravel 11 closing checkpoint"
 
 assert_file "docs/upgrade/manual-L11.md"
-run_tests "LegacyTokenTest"
+run_test_classes_once "LegacyTokenTest"
 
 require_approval T37

@@ -43,7 +43,7 @@ class SaveUserRequest extends FormRequest
                 $rules['first_name'] = 'required|string|min:1';
                 $rules['username'] = 'required_unless:ldap_import,1|string|min:1';
                 if ($this->request->get('ldap_import') == false) {
-                    $rules['password'] = Setting::passwordComplexityRulesSaving('store').'|confirmed';
+                    $rules['password'] = array_merge(Setting::passwordComplexityRulesSaving('store'), ['confirmed']);
                 }
                 break;
             }
@@ -52,7 +52,7 @@ class SaveUserRequest extends FormRequest
             case 'PUT':
                 $rules['first_name'] = 'required|string|min:1';
                 $rules['username'] = 'required_unless:ldap_import,1|string|min:1';
-                $rules['password'] = Setting::passwordComplexityRulesSaving('update').'|confirmed';
+                $rules['password'] = array_merge(Setting::passwordComplexityRulesSaving('update'), ['confirmed']);
                 break;
 
             // Save only what's passed

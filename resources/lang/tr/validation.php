@@ -118,7 +118,6 @@ return [
         'alpha_space' => ': Attribute alanı, izin verilmeyen bir karakter içeriyor.',
         'email_array'      => 'Bir veya daha fazla e-posta adresi geçersiz.',
         'hashed_pass'      => 'Geçerli şifre yanlış',
-        'dumbpwd'          => 'Bu şifre çok yaygındır.',
         'statuslabel_type' => 'Geçerli bir durum etiketi türü seçmelisiniz',
     ],
 

@@ -118,7 +118,6 @@ return [
         'alpha_space' => 'Polje atributa vsebuje znak, ki ni dovoljen.',
         'email_array'      => 'En ali več e-poštnih naslovov je napačnih.',
         'hashed_pass'      => 'Vaše trenutno geslo je napačno',
-        'dumbpwd'          => 'To geslo je preveč pogosto.',
         'statuslabel_type' => 'Izbrati morate veljavn status oznake',
     ],
 

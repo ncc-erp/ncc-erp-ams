@@ -118,7 +118,6 @@ return [
         'alpha_space' => ':attribute 항목에는 문자를 입력할 수 없습니다.',
         'email_array'      => '하나 이상의 이메일 주소가 유효하지 않습니다.',
         'hashed_pass'      => '현재 비밀번호가 잘못되었습니다.',
-        'dumbpwd'          => '그 비밀번호는 너무 일반적입니다.',
         'statuslabel_type' => '유효한 상태 라벨 형식을 선택해 주셔야 합니다',
     ],
 

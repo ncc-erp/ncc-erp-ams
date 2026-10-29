@@ -118,7 +118,6 @@ return [
         'alpha_space' => 'Die: attribuut veld bevat \'n karakter wat nie toegelaat word nie.',
         'email_array'      => 'Een of meer e-posadresse is ongeldig.',
         'hashed_pass'      => 'Jou huidige wagwoord is verkeerd',
-        'dumbpwd'          => 'Daardie wagwoord is te algemeen.',
         'statuslabel_type' => 'U moet \'n geldige statusetiket tipe kies',
     ],
 

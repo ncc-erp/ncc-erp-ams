@@ -118,7 +118,6 @@ return [
         'alpha_space' => 'Trường: attribute chứa một ký tự không được phép.',
         'email_array'      => 'Một hoặc nhiều địa chỉ email không hợp lệ.',
         'hashed_pass'      => 'Mật khẩu hiện tại của bạn không chính xác',
-        'dumbpwd'          => 'Mật khẩu đó quá phổ biến.',
         'statuslabel_type' => 'Bạn phải chọn một loại nhãn tình trạng hợp lệ',
     ],
 

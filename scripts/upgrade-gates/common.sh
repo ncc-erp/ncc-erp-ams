@@ -130,6 +130,11 @@ gate_common_tests() {
     local status=$?
     printf '%s\n' "$result"
 
+    # the report is kept, the task gates use it instead of starting another
+    # phpunit process for every test class
+    cp "$junit" "$GATE_JUNIT_REPORT"
+    GATE_JUNIT_FILE="$GATE_JUNIT_REPORT"
+
     rm -f "$junit"
 
     if [ "$status" -ne 0 ]; then
@@ -146,6 +151,8 @@ gate_common_tests() {
 
 gate_common() {
     gate_section "Common gate"
+    GATE_JUNIT_FILE=""
+
     gate_common_checksum
     gate_common_composer
     gate_common_lint

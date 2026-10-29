@@ -155,7 +155,7 @@ class ProfileController extends Controller
 
         $rules = [
             'current_password'     => 'required',
-            'password'         => Setting::passwordComplexityRulesSaving('store').'|confirmed',
+            'password'         => array_merge(Setting::passwordComplexityRulesSaving('store'), ['confirmed']),
         ];
 
         $validator = \Validator::make($request->all(), $rules);
@@ -173,7 +173,7 @@ class ProfileController extends Controller
             // There may be a more elegant way to do this in the future.
 
             // First let's see if that option is enabled in the settings
-            if (strpos(Setting::passwordComplexityRulesSaving('store'), 'disallow_same_pwd_as_user_fields') !== false) {
+            if (in_array('disallow_same_pwd_as_user_fields', Setting::passwordComplexityRulesSaving('store'))) {
                 if (($request->input('password') == $user->username) ||
                     ($request->input('password') == $user->email) ||
                     ($request->input('password') == $user->first_name) ||

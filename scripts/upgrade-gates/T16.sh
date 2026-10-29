@@ -4,4 +4,4 @@ gate_section "T16 - unicodeveloper/laravel-password replaced"
 
 assert_not_installed "unicodeveloper/laravel-password"
 assert_no_grep "dumbpwd|Unicodeveloper" app resources config
-run_tests "PasswordRuleTest"
+run_test_classes_once "PasswordRuleTest"

@@ -11,5 +11,4 @@ for pkg in guzzlehttp/guzzle guzzlehttp/psr7 league/commonmark phpseclib/phpsecl
     assert_no_advisory "$pkg"
 done
 
-run_tests "UploadTest"
-run_tests "ImportTest"
+run_test_classes_once "UploadTest" "ImportTest"

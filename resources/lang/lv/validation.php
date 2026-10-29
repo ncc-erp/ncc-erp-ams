@@ -118,7 +118,6 @@ return [
         'alpha_space' => 'Laukā: atribūta lauks ir rakstzīme, kas nav atļauta.',
         'email_array'      => 'Viena vai vairākas e-pasta adreses nav derīgas.',
         'hashed_pass'      => 'Jūsu pašreizējā parole nav pareiza',
-        'dumbpwd'          => 'Šī parole ir pārāk izplatīta.',
         'statuslabel_type' => 'Jums ir jāizvēlas derīgs statusa etiķetes veids',
     ],
 

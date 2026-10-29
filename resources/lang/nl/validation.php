@@ -118,7 +118,6 @@ return [
         'alpha_space' => ':attribute veld bevat een karakter wat niet is toegestaan.',
         'email_array'      => 'één of meer e-mail adressen kloppen niet.',
         'hashed_pass'      => 'Je huidige wachtwoord is incorrect',
-        'dumbpwd'          => 'Dat wachtwoord is te veelvoorkomend.',
         'statuslabel_type' => 'Selecteer een valide status label',
     ],
 

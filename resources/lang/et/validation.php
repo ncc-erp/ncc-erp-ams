@@ -118,7 +118,6 @@ return [
         'alpha_space' => 'Atribuudi väli sisaldab märk, mis pole lubatud.',
         'email_array'      => 'Üks või mitu e-posti aadressi on kehtetu.',
         'hashed_pass'      => 'Teie praegune parool on vale',
-        'dumbpwd'          => 'See parool on liiga levinud.',
         'statuslabel_type' => 'Peate valima kehtiva olekutüübi tüübi',
     ],
 

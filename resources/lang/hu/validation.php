@@ -118,7 +118,6 @@ return [
         'alpha_space' => 'A: attribútum mező olyan karaktert tartalmaz, amely nem megengedett.',
         'email_array'      => 'Egy vagy több e-mail cím érvénytelen.',
         'hashed_pass'      => 'A jelenlegi jelszava helytelen',
-        'dumbpwd'          => 'Ez a jelszó túl gyakori.',
         'statuslabel_type' => 'Meg kell határoznia egy érvényes állapotcímke típust',
     ],
 
