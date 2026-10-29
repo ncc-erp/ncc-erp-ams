@@ -14,16 +14,16 @@ before the deployment (see `docs/upgrade/REPORT.md`).
 | Deploy method | `git fetch` + `git reset --hard origin/<branch>` | `.github/workflows/deploy-prod.yml` |
 | Database migration | `php artisan migrate --force` after a `backup_db.sh` run | `.github/workflows/deploy-prod.yml` |
 | Rollback | `bash $APP_DIR/rollback_db.sh` when the migration fails | `.github/workflows/deploy-prod.yml` |
-| PHP constraint in `composer.json` | `>=7.4 <=8.1` | `composer.json` |
-| Docker image used for the dev stack | `Dockerfile.alpine` (`docker-compose.yml`) | `docker-compose.yml` |
-| Container PHP version | `php:7.4` era base image, see `Dockerfile` | `Dockerfile` |
+| Application PHP constraint | `^8.3` | `composer.json` |
+| Docker image used for the main Compose stack | `Dockerfile.alpine` with PHP 8.3 packages | `docker-compose.yml`, `Dockerfile.alpine` |
+| Production image verification | Main Compose image builds and `/health` returns HTTP 200 | `docs/upgrade/gate-results/T42-build.log` |
+| Deploy PHP-FPM default | `php8.3-fpm` (can be overridden by `PHP_FPM_SERVICE`) | `.github/workflows/deploy-prod.yml` |
+| Dependency installation during deploy | `composer install --no-dev --optimize-autoloader --no-interaction` | `.github/workflows/deploy-prod.yml` |
 
-> The deploy workflow does **not** run `composer install`.  The `vendor`
-> directory that is currently deployed is therefore whatever was committed or
-> left behind by an earlier manual deployment.  This is the single biggest
-> deployment risk of the upgrade: after the dependency changes of this branch
-> the deploy has to install the dependencies, otherwise the old `vendor`
-> directory is used with a new `composer.lock`.
+> The repository now installs `vendor` during deployment, but the actual
+> production PHP runtime and extension set still have to be verified on
+> `ams-prod` before rollout. The workflow also requires the runner's
+> `PHP_FPM_SERVICE` name and sudo permissions to be correct.
 
 ## TODO - has to be provided by the operator
 
